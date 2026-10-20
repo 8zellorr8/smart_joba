@@ -1,0 +1,57 @@
+{
+  "spec_version": "0.9",
+  "stage": 1,
+  "date": "2026-10-21",
+  "criteria": [
+    {
+      "id": "AC-010a",
+      "queue": 1,
+      "level": "Must-A",
+      "status": "partial",
+      "evidence": "stage-1-test-report.md"
+    },
+    {
+      "id": "AC-011a",
+      "queue": 1,
+      "level": "Must-A",
+      "status": "partial",
+      "evidence": "stage-1-test-report.md"
+    },
+    {
+      "id": "AC-024a",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-1-test-report.md"
+    },
+    {
+      "id": "AC-024b",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-1-test-report.md"
+    },
+    {
+      "id": "AC-024c",
+      "queue": 1,
+      "level": "Must-A",
+      "status": "passed",
+      "evidence": "stage-1-test-report.md"
+    },
+    {
+      "id": "AC-024d",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-1-test-report.md"
+    },
+    {
+      "id": "AC-026d",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-1-test-report.md"
+    }
+  ],
+  "unlisted_criteria": "not_run"
+}
