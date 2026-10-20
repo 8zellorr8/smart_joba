@@ -1,0 +1,33 @@
+# Local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Dependencies and generated files
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.next/
+dist/
+build/
+coverage/
+*.log
+tmp/
+.DS_Store
+Thumbs.db
+
+# Local databases and unreviewed source materials
+*.db
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+/data/raw/
+/uploads/
+/backups/
