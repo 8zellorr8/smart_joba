@@ -31,3 +31,16 @@ Thumbs.db
 /data/raw/
 /uploads/
 /backups/
+.local/
+.npm-cache/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+frontend/.npm-cache/
+playwright-report/
+test-results/
+pip-build-tracker-*/
+pip-ephem-wheel-cache-*/
+pip-install-*/
+pytest-cache-files-*/
+pytest-of-*/
