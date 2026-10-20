@@ -1,0 +1,843 @@
+{
+  "spec_version": "0.9",
+  "part": 2,
+  "baseline_version": "0.8",
+  "document": "part-2-agent-passports.md",
+  "scope": "Queue 1 acceptance ownership; no application implementation.",
+  "counts": {
+    "must": 73,
+    "must_a": 20,
+    "must_b": 53,
+    "module_owned": 66,
+    "integration_handover": 7
+  },
+  "level_source": "Part 1 approved workflow; levels preserve original priority and queue.",
+  "acceptance_text_policy": "check and result fields copied verbatim from v0.8.",
+  "owners": {
+    "import_s1": [
+      "AC-001a",
+      "AC-001b",
+      "AC-001c",
+      "AC-001d",
+      "AC-001e",
+      "AC-002a",
+      "AC-002c",
+      "AC-003a",
+      "AC-035b"
+    ],
+    "calendar_hours": [
+      "AC-007a",
+      "AC-007b",
+      "AC-008a",
+      "AC-008b",
+      "AC-008c",
+      "AC-008d"
+    ],
+    "editor_conflicts": [
+      "AC-004a",
+      "AC-004b",
+      "AC-004c",
+      "AC-004d",
+      "AC-005a",
+      "AC-005b",
+      "AC-021a",
+      "AC-021b"
+    ],
+    "generator": [
+      "AC-002b",
+      "AC-005c",
+      "AC-006a",
+      "AC-009a",
+      "AC-009b",
+      "AC-009c",
+      "AC-009d",
+      "AC-009e",
+      "AC-009f",
+      "AC-009g",
+      "AC-013c",
+      "AC-021c"
+    ],
+    "validator": [
+      "AC-015a",
+      "AC-016a",
+      "AC-016b",
+      "AC-016c"
+    ],
+    "accounts_permissions": [
+      "AC-010a",
+      "AC-010e",
+      "AC-012b",
+      "AC-012e",
+      "AC-024a",
+      "AC-024b",
+      "AC-024c",
+      "AC-024d",
+      "AC-026d"
+    ],
+    "versions_publication": [
+      "AC-010b",
+      "AC-010c",
+      "AC-010d",
+      "AC-010f",
+      "AC-017a",
+      "AC-017b",
+      "AC-017c",
+      "AC-017d",
+      "AC-035a"
+    ],
+    "xlsx_export": [
+      "AC-012a",
+      "AC-012c"
+    ],
+    "kk_interface": [
+      "AC-011a",
+      "AC-011b",
+      "AC-018b",
+      "AC-019a",
+      "AC-020a",
+      "AC-020b",
+      "AC-022a"
+    ],
+    "integration_handover": [
+      "AC-013a",
+      "AC-013b",
+      "AC-014a",
+      "AC-014b",
+      "AC-014c",
+      "AC-018a",
+      "AC-018c"
+    ]
+  },
+  "criteria": [
+    {
+      "id": "AC-001a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Повторить применение одного импорта",
+      "result": "Дубликаты не появились",
+      "level": "Must-A",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-001b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Загрузить изменённый файл без подтверждения применения",
+      "result": "Действующие данные остались прежними",
+      "level": "Must-B",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-001c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Открыть проблему импортированной строки",
+      "result": "Показана координата исходной ячейки",
+      "level": "Must-A",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-001d",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Удалить строку из повторно загружаемой книги.",
+      "result": "Соответствующая действующая запись не удалена автоматически.",
+      "level": "Must-B",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-001e",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Применить подтверждённое изменение импортированной записи.",
+      "result": "История записи содержит ссылку на исходную и новую редакции.",
+      "level": "Must-B",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-002a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Импортировать кабинет 0",
+      "result": "Нормализованный кабинет обозначен как неуказанный",
+      "level": "Must-B",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-002b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Запустить расчёт с обязательным неразрешённым вопросом",
+      "result": "Сервер отклонил запуск",
+      "level": "Must-A",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-002c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Импортировать строку с двумя неоднозначными ФИО, пустой подгруппой и отсутствующими часами.",
+      "result": "Исходная строка сохранена как неразрешённый вопрос, без фиктивного назначения.",
+      "level": "Must-B",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-003a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Загрузить S1 с одиночной служебной ячейкой I1048570 вне таблицы.",
+      "result": "Обрабатывается установленная область данных, а не миллион пустых строк.",
+      "level": "Must-B",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-004a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Проверить одинаковое время при непересекающихся датах",
+      "result": "Конфликт отсутствует",
+      "level": "Must-B",
+      "primary_owner": "editor_conflicts",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-004b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Назначить преподавателю пересекающиеся проведения",
+      "result": "Показан конфликт преподавателя",
+      "level": "Must-A",
+      "primary_owner": "editor_conflicts",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-004c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Проверить соприкасающиеся концом и началом интервалы",
+      "result": "Конфликт отсутствует",
+      "level": "Must-B",
+      "primary_owner": "editor_conflicts",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-004d",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Открыть обнаруженное пересечение преподавателя на повторяющихся занятиях.",
+      "result": "Отчёт содержит конкретные даты пересечения.",
+      "level": "Must-B",
+      "primary_owner": "editor_conflicts",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-005a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Назначить всей группе пересекающиеся занятия",
+      "result": "Показан конфликт группы",
+      "level": "Must-B",
+      "primary_owner": "editor_conflicts",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-005b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Назначить один эксклюзивный кабинет пересекающимся занятиям",
+      "result": "Показан конфликт кабинета",
+      "level": "Must-B",
+      "primary_owner": "editor_conflicts",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-005c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Подать на расчёт запись с неподдержанной моделью подгрупп.",
+      "result": "Расчёт выбранной области заблокирован до разрешения вопроса.",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-006a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Подать неподдержанное совместное занятие на расчёт.",
+      "result": "Расчёт выбранной области заблокирован.",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-007a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Разместить обычное занятие в запрещённом календарном периоде",
+      "result": "Валидатор отклонил размещение",
+      "level": "Must-A",
+      "primary_owner": "calendar_hours",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-007b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Открыть контрольную неделю с явно заданными границами вторник–понедельник.",
+      "result": "Отображаемый набор дат соответствует заданному исходному интервалу.",
+      "level": "Must-B",
+      "primary_owner": "calendar_hours",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-008a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "При настройке 45 минут проверить 10 проведений по 90 минут",
+      "result": "План равен 20 академическим часам",
+      "level": "Must-A",
+      "primary_owner": "calendar_hours",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-008b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Отменить одно из десяти проведений по 90 минут при настройке 45 минут на академический час.",
+      "result": "План становится равным 18 академическим часам.",
+      "level": "Must-B",
+      "primary_owner": "calendar_hours",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-008c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Изменить плановое расписание без регистрации факта.",
+      "result": "Операция не создаёт фактическое проведение.",
+      "level": "Must-B",
+      "primary_owner": "calendar_hours",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-008d",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Сопоставить план с отличающейся подтверждённой семестровой потребностью.",
+      "result": "Отдельно показан остаток относительно потребности.",
+      "level": "Must-B",
+      "primary_owner": "calendar_hours",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-009a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Остановить поиск по лимиту без найденного решения",
+      "result": "Показан time_limit_without_solution",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-009b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Изменить зависимые входные данные выполняемого расчёта",
+      "result": "Результат помечен stale",
+      "level": "Must-A",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-009c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Рассчитать расписание с закреплённым занятием",
+      "result": "Закреплённое назначение сохранено",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-009d",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Завершить расчёт допустимым решением",
+      "result": "Создан новый черновик",
+      "level": "Must-A",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-009e",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Рассчитать заведомо невозможную малую модель с завершённым доказательством.",
+      "result": "Статус результата — доказанная невозможность.",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-009f",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Остановить расчёт по лимиту с допустимым решением без доказательства оптимальности.",
+      "result": "Результат обозначен как допустимый, без утверждения об оптимуме.",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-009g",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Передать решателю некорректную модель в контрольном тесте.",
+      "result": "Показана ошибка модели, отличная от невозможности расписания.",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-010a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Составителю без права отправить прямой запрос утверждения",
+      "result": "Сервер отказал в доступе",
+      "level": "Must-A",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-010b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Попытаться изменить опубликованный снимок",
+      "result": "Изменение отклонено",
+      "level": "Must-B",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-010c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "После публикации открыть расписание читателем",
+      "result": "Показана действующая опубликованная версия",
+      "level": "Must-A",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-010d",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Сохранить правку со старой ревизией",
+      "result": "Получен конфликт ревизий",
+      "level": "Must-A",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-010e",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Автору попытаться утвердить свой черновик",
+      "result": "Утверждение отклонено по рабочей политике",
+      "level": "Must-B",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-010f",
+      "queue": 1,
+      "priority": "Must",
+      "check": "После утверждения изменить черновик и запросить публикацию по прежнему утверждению.",
+      "result": "Новая ревизия не опубликована на основании старого утверждения.",
+      "level": "Must-B",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-011a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Пройти основной путь на казахском",
+      "result": "Необработанные ключи перевода отсутствуют",
+      "level": "Must-A",
+      "primary_owner": "kk_interface",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-011b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Пройти основной конкурсный путь на KK только клавиатурой.",
+      "result": "Все обязательные действия доступны без мыши.",
+      "level": "Must-B",
+      "primary_owner": "kk_interface",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-012a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Открыть экспортированный XLSX",
+      "result": "Номер версии совпадает с выбранной публикацией",
+      "level": "Must-A",
+      "primary_owner": "xlsx_export",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-012b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Читателю запросить исходную книгу по прямому адресу",
+      "result": "Доступ запрещён",
+      "level": "Must-B",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-012c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Выгрузить исходный текст =HYPERLINK(...)",
+      "result": "Ячейка содержит текст вместо формулы",
+      "level": "Must-B",
+      "primary_owner": "xlsx_export",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-012e",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Отправить запрос изменения расписания без действующей авторизации.",
+      "result": "Данные расписания не изменились.",
+      "level": "Must-B",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-013a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Измерить цели NFR-004 на зафиксированном стенде и наборе.",
+      "result": "Сохранён отчёт измерений с фактическими отклонениями от целей.",
+      "level": "Must-B",
+      "primary_owner": "integration_handover",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-013b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Восстановить резервную копию в отдельную БД и сверить контрольные версии, события и источники.",
+      "result": "Контрольные данные восстановленной БД совпадают с копией.",
+      "level": "Must-B",
+      "primary_owner": "integration_handover",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-013c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Отменить или аварийно завершить фоновый расчёт.",
+      "result": "Действующая публикация осталась неизменной.",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-014a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Выполнить контрольный сценарий с отключённым интернетом",
+      "result": "Сценарий завершён локально",
+      "level": "Must-A",
+      "primary_owner": "integration_handover",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-014b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Провести конкурсную репетицию",
+      "result": "Продолжительность не превышает 300 секунд",
+      "level": "Must-A",
+      "primary_owner": "integration_handover",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-014c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Мама выполняет репетицию с объяснением фактических кода и алгоритма проекта.",
+      "result": "В показе названы входы, ограничения и способ проверки алгоритма.",
+      "level": "Must-A",
+      "primary_owner": "integration_handover",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-015a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Запустить предметную проверку контрольного расписания без HTTP-сервера и БД.",
+      "result": "Получен предметный отчёт проверки.",
+      "level": "Must-B",
+      "primary_owner": "validator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-016a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Сравнить быстрый поиск конфликтов с попарным эталоном на малых случайных и граничных наборах.",
+      "result": "Наборы обнаруженных конфликтов совпадают.",
+      "level": "Must-B",
+      "primary_owner": "validator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-016b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Передать независимому валидатору испорченный результат",
+      "result": "Результат признан недопустимым",
+      "level": "Must-A",
+      "primary_owner": "validator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-016c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Измерить поиск и проверку на согласованном контрольном наборе.",
+      "result": "В отчёте записаны фактические время и память.",
+      "level": "Must-B",
+      "primary_owner": "validator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-017a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Одновременно публиковать конфликтующие версии",
+      "result": "Действующей стала максимум одна версия",
+      "level": "Must-B",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-017b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Имитировать сбой публикации до фиксации транзакции",
+      "result": "Прежняя публикация осталась действующей",
+      "level": "Must-A",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-017c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Повторить публикацию с тем же ключом операции",
+      "result": "Вторая публикация не создана",
+      "level": "Must-B",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-017d",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Имитировать конфликт публикации, не снятый разрешёнными повторами.",
+      "result": "Возвращён контролируемый конфликт без изменения действующей публикации.",
+      "level": "Must-B",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-018a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "На чистой копии выполнить документированную сборку и обязательные проверки.",
+      "result": "Получена воспроизводимая сборка с отчётом проверок.",
+      "level": "Must-B",
+      "primary_owner": "integration_handover",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-018b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Удалить обязательный ключ KK из контрольной копии переводов.",
+      "result": "Проверка локализации обнаружила отсутствующий ключ.",
+      "level": "Must-B",
+      "primary_owner": "kk_interface",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-018c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Внести запрещённую зависимость в контрольную копию модуля.",
+      "result": "Архитектурная проверка обнаружила нарушение.",
+      "level": "Must-B",
+      "primary_owner": "integration_handover",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-019a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Открыть опубликованное занятие под читателем в KK-интерфейсе.",
+      "result": "Показаны текущие дата, область и версия.",
+      "level": "Must-B",
+      "primary_owner": "kk_interface",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-020a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Сравнить пустую базу с непустой базой без результатов выбранного фильтра.",
+      "result": "Показаны различающиеся состояния экрана.",
+      "level": "Must-B",
+      "primary_owner": "kk_interface",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-020b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Имитировать ошибку сервера при подтверждении импорта.",
+      "result": "Сообщение об успешном применении не показано.",
+      "level": "Must-B",
+      "primary_owner": "kk_interface",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-021a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Изменить одну дату повторяющегося занятия",
+      "result": "Остальные даты сохранили прежние параметры",
+      "level": "Must-A",
+      "primary_owner": "editor_conflicts",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-021b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Получить конфликт ревизий после заполнения формы правки.",
+      "result": "Введённые пользователем значения сохранены в форме.",
+      "level": "Must-B",
+      "primary_owner": "editor_conflicts",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-021c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Наблюдать длительную задачу расчёта.",
+      "result": "Показаны фактический этап и время без выдуманного процента завершения.",
+      "level": "Must-B",
+      "primary_owner": "generator",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-022a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Проверить обязательные KK-экраны на согласованных ширинах, с масштабированием и программой экранного доступа.",
+      "result": "Критические действия остаются доступными.",
+      "level": "Must-B",
+      "primary_owner": "kk_interface",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-024a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Войти с неверным паролем и с неизвестным аккаунтом",
+      "result": "Публичное сообщение одинаковое",
+      "level": "Must-B",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-024b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "После выхода обратиться прежней сессией к закрытому API",
+      "result": "Доступ запрещён",
+      "level": "Must-B",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-024c",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Выполнить вход подготовленным аккаунтом с подтверждённой ролью.",
+      "result": "Открыт разрешённый рабочий экран.",
+      "level": "Must-A",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-024d",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Выполнить серию частых неуспешных попыток входа сверх настроенного лимита.",
+      "result": "Последующие попытки ограничены.",
+      "level": "Must-B",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-026d",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Просмотреть журналы и аудит после операций входа.",
+      "result": "Пароли и секреты сессий отсутствуют.",
+      "level": "Must-B",
+      "primary_owner": "accounts_permissions",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-035a",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Использовать отчёт готовности A для конфликтного черновика B",
+      "result": "Публикация B отклонена",
+      "level": "Must-B",
+      "primary_owner": "versions_publication",
+      "test_status": "not_run"
+    },
+    {
+      "id": "AC-035b",
+      "queue": 1,
+      "priority": "Must",
+      "check": "Исправить один кабинет при нескольких независимых вопросах готовности.",
+      "result": "Остальные неразрешённые вопросы остаются открытыми.",
+      "level": "Must-B",
+      "primary_owner": "import_s1",
+      "test_status": "not_run"
+    }
+  ]
+}
