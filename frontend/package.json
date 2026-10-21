@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "node e2e/stage1-smoke.mjs",
-    "format:check": "prettier --check src e2e vite.config.ts tsconfig.json package.json index.html README.md"
+    "format:check": "prettier --check src e2e vite.config.ts tsconfig.json package.json index.html README.md",
+    "test:e2e:s1": "node e2e/s1-smoke.mjs"
   },
   "dependencies": {
     "react": "19.3.1",

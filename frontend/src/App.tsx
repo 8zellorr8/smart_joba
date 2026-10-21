@@ -4,6 +4,7 @@ import { api, ApiError } from "./api";
 import type { Role, Session, User, Workspace } from "./api";
 import { Icon } from "./icons";
 import { messages as t } from "./locales/kk";
+import { ImportPage } from "./ImportPage";
 
 type Screen = "loading" | "login" | "workspace" | "error";
 const roleNames: Record<Role, string> = {
@@ -264,13 +265,18 @@ function WorkspaceScreen({
   onLogout,
   busy,
   error,
+  csrfToken,
+  onExpired,
 }: {
   user: User;
   workspace: Workspace;
   onLogout: () => Promise<void>;
   busy: boolean;
   error: string;
+  csrfToken: string;
+  onExpired: () => void;
 }) {
+  const [view, setView] = useState<"overview" | "import">("overview");
   const activeRoles = workspace.role_codes;
   const isReader =
     activeRoles.length > 0 &&
@@ -283,7 +289,6 @@ function WorkspaceScreen({
         ? t.nextAdminDescription
         : t.nextApproverDescription;
   const upcomingItems = [
-    { title: t.import, icon: "file", permission: "import.write" },
     { title: t.calendar, icon: "clock", permission: "calendar.manage" },
     { title: t.editor, icon: "calendar", permission: "draft.edit" },
     { title: t.generator, icon: "spark", permission: "generator.run" },
@@ -306,11 +311,26 @@ function WorkspaceScreen({
         <div className="sidebar-divider" />
         <nav aria-label={t.navTitle}>
           <p className="nav-heading">{t.navTitle}</p>
-          <a href="#main" className="nav-current" aria-current="page">
+          <a
+            href="#main"
+            className={view === "overview" ? "nav-current" : "import-nav"}
+            aria-current={view === "overview" ? "page" : undefined}
+            onClick={() => setView("overview")}
+          >
             <Icon name="grid" size={20} />
             {t.overview}
-            <span className="nav-dot" />
+            {view === "overview" && <span className="nav-dot" />}
           </a>
+          {workspace.permissions.includes("import.source.read") && (
+            <button
+              className="import-nav"
+              aria-current={view === "import" ? "page" : undefined}
+              onClick={() => setView("import")}
+            >
+              <Icon name="file" size={20} />
+              {t.import}
+            </button>
+          )}
           {availableUpcoming.length > 0 && (
             <>
               <p className="nav-heading next-nav-heading">{t.nextTitle}</p>
@@ -346,7 +366,7 @@ function WorkspaceScreen({
           <div>
             <span className="breadcrumb-brand">{t.appName}</span>
             <span className="breadcrumb-separator">/</span>
-            <span>{t.overview}</span>
+            <span>{view === "import" ? t.import : t.overview}</span>
           </div>
           <div className="header-actions">
             <span className="language-label">
@@ -362,149 +382,175 @@ function WorkspaceScreen({
             </button>
           </div>
         </header>
+        <nav className="mobile-workspace-nav" aria-label={t.navTitle}>
+          <button
+            aria-current={view === "overview" ? "page" : undefined}
+            onClick={() => setView("overview")}
+          >
+            {t.overview}
+          </button>
+          {workspace.permissions.includes("import.source.read") && (
+            <button
+              aria-current={view === "import" ? "page" : undefined}
+              onClick={() => setView("import")}
+            >
+              {t.import}
+            </button>
+          )}
+        </nav>
         <main id="main" className="workspace-main" tabIndex={-1}>
-          <div className="page-heading">
-            <div>
-              <p className="eyebrow">{t.appDescription}</p>
-              <h1>{t.overview}</h1>
-            </div>
-            {workspace.scope.is_demo && (
-              <span className="demo-tag">
-                <span />
-                {t.demo}
-              </span>
-            )}
-          </div>
           {error && (
             <p role="alert" className="error-message workspace-error">
-              <Icon name="alert" size={19} />
               {error}
             </p>
           )}
-          <section className="welcome-card" aria-labelledby="welcome-title">
-            <div className="welcome-copy">
-              <span className="stage-pill">{t.stageLabel}</span>
-              <h2 id="welcome-title">{t.stageTitle}</h2>
-              <p>{t.stageDescription}</p>
-            </div>
-            <div className="welcome-icon" aria-hidden="true">
-              <Icon name="calendar" size={72} />
-              <span className="welcome-tick">
-                <Icon name="check" size={24} />
-              </span>
-            </div>
-          </section>
-          {workspace.scope.is_demo && (
-            <p className="demo-note">
-              <Icon name="alert" size={18} />
-              {t.demoDescription}
-            </p>
-          )}
-          <section className="identity-grid" aria-label={t.accountLabel}>
-            <article className="identity-card">
-              <span className="card-kicker">{t.accountLabel}</span>
-              <div className="person-line">
-                <span className="avatar" aria-hidden="true">
-                  {initials}
-                </span>
+          {view === "import" ? (
+            <ImportPage
+              scope={workspace.scope.id}
+              csrfToken={csrfToken}
+              canWrite={workspace.permissions.includes("import.write")}
+              onExpired={onExpired}
+            />
+          ) : (
+            <>
+              <div className="page-heading">
                 <div>
-                  <strong>{user.display_name}</strong>
-                  <span>{user.email}</span>
+                  <p className="eyebrow">{t.appDescription}</p>
+                  <h1>{t.overview}</h1>
                 </div>
+                {workspace.scope.is_demo && (
+                  <span className="demo-tag">
+                    <span />
+                    {t.demo}
+                  </span>
+                )}
               </div>
-            </article>
-            <article className="identity-card">
-              <span className="card-kicker">
-                {activeRoles.length === 1 ? t.roleLabel : t.rolePlural}
-              </span>
-              <div className="role-line">
-                <span className="card-icon">
-                  <Icon name="lock" size={21} />
-                </span>
-                <strong>
-                  {activeRoles
-                    .map((role) => roleNames[role] ?? t.unknownRole)
-                    .join(", ")}
-                </strong>
-              </div>
-            </article>
-            <article className="identity-card">
-              <span className="card-kicker">{t.scopeLabel}</span>
-              <div className="role-line">
-                <span className="card-icon">
-                  <Icon name="layers" size={21} />
-                </span>
-                <strong>{workspace.scope.name}</strong>
-              </div>
-            </article>
-          </section>
-          <div className="workspace-columns">
-            <section
-              className="panel permissions-panel"
-              aria-labelledby="permissions-title"
-            >
-              <div className="panel-heading">
-                <span className="panel-icon">
-                  <Icon name="lock" size={21} />
-                </span>
-                <div>
-                  <h2 id="permissions-title">{t.accessTitle}</h2>
-                  <p>{t.accessDescription}</p>
+              <section className="welcome-card" aria-labelledby="welcome-title">
+                <div className="welcome-copy">
+                  <span className="stage-pill">{t.stageLabel}</span>
+                  <h2 id="welcome-title">{t.stageTitle}</h2>
+                  <p>{t.stageDescription}</p>
                 </div>
-              </div>
-              {workspace.permissions.length > 0 ? (
-                <ul className="permission-list">
-                  {workspace.permissions.map((permission) => (
-                    <li key={permission}>
-                      <span className="permission-check">
-                        <Icon name="check" size={15} />
-                      </span>
-                      <span>
-                        {permissionNames[permission] ?? t.unknownPermission}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="empty-message">{t.noPermissions}</p>
-              )}
-              <div className="panel-footnote">
-                <Icon name="lock" size={14} />
-                {t.secureSession}
-              </div>
-            </section>
-            <div className="right-column">
-              <section className="panel stage-panel">
-                <span className="mini-kicker">{t.stageLabel}</span>
-                <h2>{t.currentStageTitle}</h2>
-                <ul className="stage-list">
-                  {t.currentStageItems.map((item) => (
-                    <li key={item}>
-                      <Icon name="check" size={17} />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-              <section className="next-step">
-                <span className="next-step-icon">
-                  <Icon name={isReader ? "calendar" : "file"} size={22} />
-                </span>
-                <div>
-                  <h2>{isReader ? t.noPublishedTitle : t.nextStepTitle}</h2>
-                  <p>{nextDescription}</p>
-                  <span className="upcoming-label">
-                    <Icon name="clock" size={14} />
-                    {t.upcoming}
+                <div className="welcome-icon" aria-hidden="true">
+                  <Icon name="calendar" size={72} />
+                  <span className="welcome-tick">
+                    <Icon name="check" size={24} />
                   </span>
                 </div>
               </section>
-            </div>
-          </div>
-          <footer className="workspace-footer">
-            <span>{t.footer}</span>
-            <span>{t.stageFooter}</span>
-          </footer>
+              {workspace.scope.is_demo && (
+                <p className="demo-note">
+                  <Icon name="alert" size={18} />
+                  {t.demoDescription}
+                </p>
+              )}
+              <section className="identity-grid" aria-label={t.accountLabel}>
+                <article className="identity-card">
+                  <span className="card-kicker">{t.accountLabel}</span>
+                  <div className="person-line">
+                    <span className="avatar" aria-hidden="true">
+                      {initials}
+                    </span>
+                    <div>
+                      <strong>{user.display_name}</strong>
+                      <span>{user.email}</span>
+                    </div>
+                  </div>
+                </article>
+                <article className="identity-card">
+                  <span className="card-kicker">
+                    {activeRoles.length === 1 ? t.roleLabel : t.rolePlural}
+                  </span>
+                  <div className="role-line">
+                    <span className="card-icon">
+                      <Icon name="lock" size={21} />
+                    </span>
+                    <strong>
+                      {activeRoles
+                        .map((role) => roleNames[role] ?? t.unknownRole)
+                        .join(", ")}
+                    </strong>
+                  </div>
+                </article>
+                <article className="identity-card">
+                  <span className="card-kicker">{t.scopeLabel}</span>
+                  <div className="role-line">
+                    <span className="card-icon">
+                      <Icon name="layers" size={21} />
+                    </span>
+                    <strong>{workspace.scope.name}</strong>
+                  </div>
+                </article>
+              </section>
+              <div className="workspace-columns">
+                <section
+                  className="panel permissions-panel"
+                  aria-labelledby="permissions-title"
+                >
+                  <div className="panel-heading">
+                    <span className="panel-icon">
+                      <Icon name="lock" size={21} />
+                    </span>
+                    <div>
+                      <h2 id="permissions-title">{t.accessTitle}</h2>
+                      <p>{t.accessDescription}</p>
+                    </div>
+                  </div>
+                  {workspace.permissions.length > 0 ? (
+                    <ul className="permission-list">
+                      {workspace.permissions.map((permission) => (
+                        <li key={permission}>
+                          <span className="permission-check">
+                            <Icon name="check" size={15} />
+                          </span>
+                          <span>
+                            {permissionNames[permission] ?? t.unknownPermission}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="empty-message">{t.noPermissions}</p>
+                  )}
+                  <div className="panel-footnote">
+                    <Icon name="lock" size={14} />
+                    {t.secureSession}
+                  </div>
+                </section>
+                <div className="right-column">
+                  <section className="panel stage-panel">
+                    <span className="mini-kicker">{t.stageLabel}</span>
+                    <h2>{t.currentStageTitle}</h2>
+                    <ul className="stage-list">
+                      {t.currentStageItems.map((item) => (
+                        <li key={item}>
+                          <Icon name="check" size={17} />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                  <section className="next-step">
+                    <span className="next-step-icon">
+                      <Icon name={isReader ? "calendar" : "file"} size={22} />
+                    </span>
+                    <div>
+                      <h2>{isReader ? t.noPublishedTitle : t.nextStepTitle}</h2>
+                      <p>{nextDescription}</p>
+                      <span className="upcoming-label">
+                        <Icon name="clock" size={14} />
+                        {t.upcoming}
+                      </span>
+                    </div>
+                  </section>
+                </div>
+              </div>
+              <footer className="workspace-footer">
+                <span>{t.footer}</span>
+                <span>{t.stageFooter}</span>
+              </footer>
+            </>
+          )}
         </main>
       </div>
     </div>
@@ -568,11 +614,14 @@ export function App() {
   useEffect(() => {
     function check() {
       if (document.visibilityState === "visible" && screen === "workspace")
-        void bootstrap();
+        void api
+          .session()
+          .then(receiveSession)
+          .catch((problem) => setError(errorMessage(problem)));
     }
     document.addEventListener("visibilitychange", check);
     return () => document.removeEventListener("visibilitychange", check);
-  }, [screen, bootstrap]);
+  }, [screen, receiveSession]);
 
   async function logout() {
     setBusy(true);
@@ -646,6 +695,8 @@ export function App() {
           onLogout={logout}
           busy={busy}
           error={error}
+          csrfToken={session.csrf_token}
+          onExpired={() => void bootstrap()}
         />
       )}
     </>

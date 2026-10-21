@@ -1,0 +1,238 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "check": "unauthenticated_workspace_401",
+      "passed": true
+    },
+    {
+      "check": "html_language_kk",
+      "passed": true
+    },
+    {
+      "check": "login_viewport_320",
+      "passed": true
+    },
+    {
+      "check": "login_viewport_360",
+      "passed": true
+    },
+    {
+      "check": "login_viewport_768",
+      "passed": true
+    },
+    {
+      "check": "login_viewport_1280",
+      "passed": true
+    },
+    {
+      "check": "invalid_login_clears_password_preserves_email",
+      "passed": true
+    },
+    {
+      "check": "login_server_role",
+      "role": "admin",
+      "passed": true
+    },
+    {
+      "check": "reload_restores_session",
+      "role": "admin",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_320",
+      "role": "admin",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_360",
+      "role": "admin",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_768",
+      "role": "admin",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_1280",
+      "role": "admin",
+      "passed": true
+    },
+    {
+      "check": "no_persistent_browser_state",
+      "role": "admin",
+      "passed": true
+    },
+    {
+      "check": "logout_revokes_server_session",
+      "role": "admin",
+      "passed": true
+    },
+    {
+      "check": "login_server_role",
+      "role": "scheduler",
+      "passed": true
+    },
+    {
+      "check": "reload_restores_session",
+      "role": "scheduler",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_320",
+      "role": "scheduler",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_360",
+      "role": "scheduler",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_768",
+      "role": "scheduler",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_1280",
+      "role": "scheduler",
+      "passed": true
+    },
+    {
+      "check": "no_persistent_browser_state",
+      "role": "scheduler",
+      "passed": true
+    },
+    {
+      "check": "logout_revokes_server_session",
+      "role": "scheduler",
+      "passed": true
+    },
+    {
+      "check": "login_server_role",
+      "role": "approver",
+      "passed": true
+    },
+    {
+      "check": "reload_restores_session",
+      "role": "approver",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_320",
+      "role": "approver",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_360",
+      "role": "approver",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_768",
+      "role": "approver",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_1280",
+      "role": "approver",
+      "passed": true
+    },
+    {
+      "check": "no_persistent_browser_state",
+      "role": "approver",
+      "passed": true
+    },
+    {
+      "check": "logout_revokes_server_session",
+      "role": "approver",
+      "passed": true
+    },
+    {
+      "check": "login_server_role",
+      "role": "teacher",
+      "passed": true
+    },
+    {
+      "check": "reload_restores_session",
+      "role": "teacher",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_320",
+      "role": "teacher",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_360",
+      "role": "teacher",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_768",
+      "role": "teacher",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_1280",
+      "role": "teacher",
+      "passed": true
+    },
+    {
+      "check": "no_persistent_browser_state",
+      "role": "teacher",
+      "passed": true
+    },
+    {
+      "check": "logout_revokes_server_session",
+      "role": "teacher",
+      "passed": true
+    },
+    {
+      "check": "login_server_role",
+      "role": "student",
+      "passed": true
+    },
+    {
+      "check": "reload_restores_session",
+      "role": "student",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_320",
+      "role": "student",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_360",
+      "role": "student",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_768",
+      "role": "student",
+      "passed": true
+    },
+    {
+      "check": "workspace_viewport_1280",
+      "role": "student",
+      "passed": true
+    },
+    {
+      "check": "no_persistent_browser_state",
+      "role": "student",
+      "passed": true
+    },
+    {
+      "check": "logout_revokes_server_session",
+      "role": "student",
+      "passed": true
+    },
+    {
+      "check": "no_external_browser_requests",
+      "passed": true
+    }
+  ],
+  "external_request_count": 0
+}

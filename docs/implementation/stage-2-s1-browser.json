@@ -1,0 +1,125 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "check": "scheduler_import_screen",
+      "passed": true
+    },
+    {
+      "check": "invalid_workbook_explained",
+      "passed": true
+    },
+    {
+      "check": "preview_http_201",
+      "passed": true
+    },
+    {
+      "check": "agreed_range_ignores_stray_cell",
+      "passed": true
+    },
+    {
+      "check": "zero_room_preserved_and_unspecified",
+      "passed": true
+    },
+    {
+      "check": "formula_never_evaluated",
+      "passed": true
+    },
+    {
+      "check": "vacancy_remains_question",
+      "passed": true
+    },
+    {
+      "check": "explicit_review_saved",
+      "passed": true
+    },
+    {
+      "check": "apply_http_200",
+      "passed": true
+    },
+    {
+      "check": "remaining_questions_visible_after_apply",
+      "passed": true
+    },
+    {
+      "check": "repeated_apply_idempotent",
+      "passed": true
+    },
+    {
+      "check": "preview_http_201",
+      "passed": true
+    },
+    {
+      "check": "reupload_preserves_confirmed_review_without_duplicates",
+      "passed": true
+    },
+    {
+      "check": "apply_http_200",
+      "passed": true
+    },
+    {
+      "check": "preview_http_201",
+      "passed": true
+    },
+    {
+      "check": "changes_shown_before_apply",
+      "passed": true
+    },
+    {
+      "check": "changed_source_review_confirmed",
+      "passed": true
+    },
+    {
+      "check": "apply_http_200",
+      "passed": true
+    },
+    {
+      "check": "history_links_old_and_new_sources",
+      "passed": true
+    },
+    {
+      "check": "import_viewport_320",
+      "passed": true
+    },
+    {
+      "check": "import_viewport_360",
+      "passed": true
+    },
+    {
+      "check": "import_viewport_768",
+      "passed": true
+    },
+    {
+      "check": "import_viewport_1280",
+      "passed": true
+    },
+    {
+      "check": "mobile_import_navigation_fits",
+      "passed": true
+    },
+    {
+      "check": "mobile_import_navigation_accessible",
+      "passed": true
+    },
+    {
+      "check": "admin_read_only_no_write_controls",
+      "passed": true
+    },
+    {
+      "check": "student_has_no_import_entry",
+      "passed": true
+    },
+    {
+      "check": "student_direct_source_download_denied",
+      "passed": true
+    },
+    {
+      "check": "no_persistent_browser_credentials",
+      "passed": true
+    },
+    {
+      "check": "no_external_requests",
+      "passed": true
+    }
+  ]
+}
