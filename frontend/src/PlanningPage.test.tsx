@@ -207,9 +207,9 @@ it("restores a saved running job by ID and shows stage and time without percent"
   vi.mocked(planningApi.job).mockResolvedValue(running);
   localStorage.setItem("smart-joba-job:scope", running.id);
   setup();
-  expect(
-    await screen.findByText(jobStatuses.running, { selector: "p" }),
-  ).toBeVisible();
+  await waitFor(() =>
+    expect(screen.getByRole("status")).toHaveTextContent(jobStatuses.running),
+  );
   expect(screen.getByText(/Шешім іздеу/)).toHaveTextContent("2.5");
   expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: pm.cancel })).toBeEnabled();
@@ -236,7 +236,9 @@ it("approver can see results and validation but cannot run or cancel", async () 
   vi.mocked(planningApi.jobs).mockResolvedValue([job("running")]);
   vi.mocked(planningApi.job).mockResolvedValue(job("running"));
   setup(false);
-  await screen.findByText(jobStatuses.running, { selector: "p" });
+  await waitFor(() =>
+    expect(screen.getByRole("status")).toHaveTextContent(jobStatuses.running),
+  );
   expect(
     screen.queryByRole("button", { name: pm.start }),
   ).not.toBeInTheDocument();

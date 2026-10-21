@@ -86,14 +86,6 @@
   font-weight: 600;
   overflow-wrap: anywhere;
 }
-.import-state {
-  display: inline-block;
-  background: #e8f0e9;
-  color: #204c3e;
-  border-radius: 6px;
-  padding: 7px 10px;
-  font-size: 14px;
-}
 .import-source {
   display: block;
   color: #1c5a49;
@@ -168,12 +160,6 @@
 }
 .import-table .button {
   font-size: 13px;
-}
-.import-question-status {
-  color: #80541b;
-}
-.import-ready-status {
-  color: #1f644b;
 }
 .import-pagination {
   display: flex;

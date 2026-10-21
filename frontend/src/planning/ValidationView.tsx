@@ -121,15 +121,20 @@ export function ValidationView({
         report.conflicts_truncated) && <p role="alert">{pm.truncated}</p>}
       <h3>{pm.hours}</h3>
       <p>{pm.academic}</p>
-      <div className="planning-table" tabIndex={0}>
+      <div
+        className="planning-table"
+        role="region"
+        aria-label={pm.hours}
+        tabIndex={0}
+      >
         <table>
           <thead>
             <tr>
-              <th>{pm.subject}</th>
-              <th>{pm.group}</th>
-              <th>{pm.required}</th>
-              <th>{pm.planned}</th>
-              <th>{pm.remaining}</th>
+              <th scope="col">{pm.subject}</th>
+              <th scope="col">{pm.group}</th>
+              <th scope="col">{pm.required}</th>
+              <th scope="col">{pm.planned}</th>
+              <th scope="col">{pm.remaining}</th>
             </tr>
           </thead>
           <tbody>

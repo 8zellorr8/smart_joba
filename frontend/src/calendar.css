@@ -1,12 +1,6 @@
 .calendar-page {
   max-width: 1280px;
 }
-.calendar-page .page-heading p:not(.eyebrow) {
-  margin-top: 14px;
-  max-width: 850px;
-  line-height: 1.7;
-  font-size: 14px;
-}
 .calendar-notice {
   padding: 14px 18px;
   margin-bottom: 20px;
@@ -170,21 +164,6 @@
 .calendar-page th {
   background: #fafbf7;
   font-weight: 600;
-}
-.calendar-badge {
-  display: inline-block;
-  border-radius: 5px;
-  padding: 4px 8px;
-  font-size: 12px;
-  line-height: 1.5;
-}
-.calendar-badge.is-allowed {
-  color: #285a38;
-  background: #edf4e5;
-}
-.calendar-badge.is-blocked {
-  color: #7c4e27;
-  background: #fbefdc;
 }
 .calendar-result {
   border-top: 1px solid #e0e7da;

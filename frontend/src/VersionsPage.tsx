@@ -23,6 +23,8 @@ import { ValidationView } from "./planning/ValidationView";
 import "./editor.css";
 import "./planning.css";
 import "./publication.css";
+import { PageHeading } from "./ui/PageHeading";
+import { StatusBadge, statusTone } from "./ui/StatusBadge";
 
 interface Props {
   scope: string;
@@ -249,11 +251,12 @@ export function VersionsPage(props: Props) {
       aria-labelledby="versions-title"
       aria-busy={busy}
     >
-      <div className="page-heading">
-        <p className="eyebrow">{vm.version}</p>
-        <h1 id="versions-title">{vm.title}</h1>
-        <p>{vm.intro}</p>
-      </div>
+      <PageHeading
+        id="versions-title"
+        eyebrow={vm.version}
+        title={vm.title}
+        description={vm.intro}
+      />
       {error && (
         <p role="alert" className="error-message">
           {error}
@@ -317,10 +320,20 @@ export function VersionsPage(props: Props) {
               {version.academic_year} ·{" "}
               {kind === "synthetic" ? pm.synthetic : pm.college}
             </p>
-            <p role="status">
-              {vm.status}: {versionStatuses[version.status]} · {vm.revision}:{" "}
-              {version.revision} · {vm.workflow}: {version.workflow_revision}
-            </p>
+            <div role="status" aria-atomic="true" className="version-summary">
+              <span>
+                {vm.status}:{" "}
+                <StatusBadge tone={statusTone("version", version.status)}>
+                  {versionStatuses[version.status]}
+                </StatusBadge>
+              </span>
+              <span>
+                {vm.revision}: {version.revision}
+              </span>
+              <span>
+                {vm.workflow}: {version.workflow_revision}
+              </span>
+            </div>
             {version.status !== "draft" && <p>{vm.readonly}</p>}
             {version.submission?.stale && (
               <p role="alert" className="planning-warning">

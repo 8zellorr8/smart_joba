@@ -17,6 +17,8 @@ import {
 } from "./locales/imports.kk";
 import "./imports.css";
 import { demoFileName, demoName } from "./demo-labels";
+import { PageHeading } from "./ui/PageHeading";
+import { StatusBadge } from "./ui/StatusBadge";
 
 interface Props {
   scope: string;
@@ -200,13 +202,12 @@ export function ImportPage({ scope, csrfToken, canWrite, onExpired }: Props) {
       aria-labelledby="import-title"
       aria-busy={busy}
     >
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">{im.subtitle}</p>
-          <h1 id="import-title">{im.title}</h1>
-          <p>{im.description}</p>
-        </div>
-      </div>
+      <PageHeading
+        id="import-title"
+        eyebrow={im.subtitle}
+        title={im.title}
+        description={im.description}
+      />
       <div aria-live="polite" aria-atomic="true">
         {error && (
           <p role="alert" className="error-message import-notice">
@@ -361,7 +362,11 @@ export function ImportPage({ scope, csrfToken, canWrite, onExpired }: Props) {
                 </p>
               </div>
               <div>
-                <span className="import-state">{label(batch.status)}</span>
+                <StatusBadge
+                  tone={batch.status === "applied" ? "success" : "warning"}
+                >
+                  {label(batch.status)}
+                </StatusBadge>
                 <a
                   href={`/api/imports/${batch.id}/source`}
                   className="import-source"
@@ -406,13 +411,13 @@ export function ImportPage({ scope, csrfToken, canWrite, onExpired }: Props) {
               <table className="import-table">
                 <thead>
                   <tr>
-                    <th>{im.location}</th>
-                    <th>{fieldNames.group}</th>
-                    <th>{fieldNames.subject}</th>
-                    <th>{fieldNames.teacher}</th>
-                    <th>{fieldNames.weekly_hours}</th>
-                    <th>{fieldNames.room}</th>
-                    <th>{im.status}</th>
+                    <th scope="col">{im.location}</th>
+                    <th scope="col">{fieldNames.group}</th>
+                    <th scope="col">{fieldNames.subject}</th>
+                    <th scope="col">{fieldNames.teacher}</th>
+                    <th scope="col">{fieldNames.weekly_hours}</th>
+                    <th scope="col">{fieldNames.room}</th>
+                    <th scope="col">{im.status}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -455,17 +460,13 @@ export function ImportPage({ scope, csrfToken, canWrite, onExpired }: Props) {
                         {demoName(row.normalized.room ?? "—", batch.data_kind)}
                       </td>
                       <td>
-                        <span
-                          className={
-                            row.issues.length
-                              ? "import-question-status"
-                              : "import-ready-status"
-                          }
+                        <StatusBadge
+                          tone={row.issues.length ? "warning" : "info"}
                         >
                           {row.issues.length
                             ? `${im.needsReview} (${row.issues.length})`
                             : im.noQuestions}
-                        </span>
+                        </StatusBadge>
                         <small>{im[row.action]}</small>
                       </td>
                     </tr>
