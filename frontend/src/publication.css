@@ -1,0 +1,51 @@
+.version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0;
+}
+.version-page .planning-checks {
+  margin: 12px 0 20px;
+}
+.version-page textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.version-page .editor-panel > label {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0;
+}
+.version-page .planning-rules input[type="checkbox"] {
+  width: auto;
+}
+.version-history {
+  padding-left: 24px;
+}
+.version-history li {
+  margin: 16px 0;
+  padding-left: 8px;
+}
+.version-history p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.publication-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+.publication-meta div {
+  min-width: 0;
+}
+.publication-meta dt {
+  color: var(--text-muted, #52635b);
+  font-size: 13px;
+}
+.publication-meta dd {
+  margin: 5px 0;
+  overflow-wrap: anywhere;
+}
+.publication-table table {
+  min-width: 900px;
+}

@@ -8,6 +8,9 @@ import { ImportPage } from "./ImportPage";
 import { CalendarPage } from "./CalendarPage";
 import { EditorPage } from "./EditorPage";
 import { PlanningPage } from "./PlanningPage";
+import { VersionsPage } from "./VersionsPage";
+import { PublicationsPage } from "./PublicationsPage";
+import { vm } from "./locales/publication.kk";
 import { pm } from "./locales/planning.kk";
 
 type Screen = "loading" | "login" | "workspace" | "error";
@@ -284,21 +287,28 @@ function WorkspaceScreen({
   onExpired: () => void;
 }) {
   const [view, setViewState] = useState<
-    "overview" | "import" | "calendar" | "editor" | "planning"
+    | "overview"
+    | "import"
+    | "calendar"
+    | "editor"
+    | "planning"
+    | "versions"
+    | "publications"
   >("overview");
   const [planningDirty, setPlanningDirty] = useState(false);
   function setView(next: typeof view) {
     if (
-      view === "planning" &&
-      next !== "planning" &&
+      (view === "planning" || view === "versions") &&
+      next !== view &&
       planningDirty &&
       !window.confirm(pm.leaveDirty)
     )
       return;
-    if (next !== "planning") setPlanningDirty(false);
+    if (next !== view) setPlanningDirty(false);
     setViewState(next);
   }
   const [editorDraftId, setEditorDraftId] = useState<string | undefined>();
+  const [versionFocus, setVersionFocus] = useState<string | undefined>();
   const activeRoles = workspace.role_codes;
   const isReader =
     activeRoles.length > 0 &&
@@ -317,7 +327,6 @@ function WorkspaceScreen({
     workspace.permissions.includes("draft.read") ||
     workspace.permissions.includes("catalog.manage");
   const upcomingItems = [
-    { title: t.publication, icon: "layers", permission: "draft.approve" },
     { title: t.export, icon: "download", permission: "publication.export" },
   ] as const;
   const availableUpcoming = upcomingItems.filter((item) =>
@@ -390,6 +399,28 @@ function WorkspaceScreen({
                 : pm.title}
             </button>
           )}
+          {workspace.permissions.includes("draft.read") && (
+            <button
+              className="import-nav"
+              aria-current={view === "versions" ? "page" : undefined}
+              onClick={() => setView("versions")}
+            >
+              <Icon name="layers" size={20} />
+              {t.publication}
+            </button>
+          )}
+          {workspace.permissions.some((p) =>
+            p.startsWith("publication.read"),
+          ) && (
+            <button
+              className="import-nav"
+              aria-current={view === "publications" ? "page" : undefined}
+              onClick={() => setView("publications")}
+            >
+              <Icon name="calendar" size={20} />
+              {vm.publication}
+            </button>
+          )}
           {availableUpcoming.length > 0 && (
             <>
               <p className="nav-heading next-nav-heading">{t.nextTitle}</p>
@@ -436,7 +467,11 @@ function WorkspaceScreen({
                       : t.rooms
                     : view === "planning"
                       ? pm.title
-                      : t.overview}
+                      : view === "versions"
+                        ? t.publication
+                        : view === "publications"
+                          ? vm.publication
+                          : t.overview}
             </span>
           </div>
           <div className="header-actions">
@@ -447,7 +482,7 @@ function WorkspaceScreen({
               className="button button-quiet"
               onClick={() => {
                 if (
-                  view === "planning" &&
+                  (view === "planning" || view === "versions") &&
                   planningDirty &&
                   !window.confirm(pm.leaveDirty)
                 )
@@ -504,6 +539,24 @@ function WorkspaceScreen({
                 : pm.title}
             </button>
           )}
+          {workspace.permissions.includes("draft.read") && (
+            <button
+              aria-current={view === "versions" ? "page" : undefined}
+              onClick={() => setView("versions")}
+            >
+              {t.publication}
+            </button>
+          )}
+          {workspace.permissions.some((p) =>
+            p.startsWith("publication.read"),
+          ) && (
+            <button
+              aria-current={view === "publications" ? "page" : undefined}
+              onClick={() => setView("publications")}
+            >
+              {vm.publication}
+            </button>
+          )}
         </nav>
         <main id="main" className="workspace-main" tabIndex={-1}>
           {error && (
@@ -511,7 +564,31 @@ function WorkspaceScreen({
               {error}
             </p>
           )}
-          {view === "planning" ? (
+          {view === "versions" ? (
+            <VersionsPage
+              initialVersionId={versionFocus}
+              onSelectedVersion={setVersionFocus}
+              scope={workspace.scope.id}
+              userId={user.id}
+              csrfToken={csrfToken}
+              canSubmit={workspace.permissions.includes("draft.submit")}
+              canApprove={workspace.permissions.includes("draft.approve")}
+              canReject={workspace.permissions.includes("draft.reject")}
+              canPublish={workspace.permissions.includes("draft.publish")}
+              canEdit={workspace.permissions.includes("draft.edit")}
+              onExpired={onExpired}
+              onDirtyChange={setPlanningDirty}
+              onOpenDraft={(id) => {
+                setEditorDraftId(id);
+                setView("editor");
+              }}
+            />
+          ) : view === "publications" ? (
+            <PublicationsPage
+              scope={workspace.scope.id}
+              onExpired={onExpired}
+            />
+          ) : view === "planning" ? (
             <PlanningPage
               onDirtyChange={setPlanningDirty}
               scope={workspace.scope.id}
@@ -527,6 +604,10 @@ function WorkspaceScreen({
             />
           ) : view === "editor" ? (
             <EditorPage
+              onOpenVersion={(id) => {
+                setVersionFocus(id);
+                setView("versions");
+              }}
               initialDraftId={editorDraftId}
               scope={workspace.scope.id}
               csrfToken={csrfToken}
@@ -675,10 +756,19 @@ function WorkspaceScreen({
                     <div>
                       <h2>{isReader ? t.noPublishedTitle : t.nextStepTitle}</h2>
                       <p>{nextDescription}</p>
-                      <span className="upcoming-label">
-                        <Icon name="clock" size={14} />
-                        {t.upcoming}
-                      </span>
+                      {isReader ? (
+                        <button
+                          className="button button-quiet"
+                          onClick={() => setView("publications")}
+                        >
+                          {vm.publication}
+                        </button>
+                      ) : (
+                        <span className="upcoming-label">
+                          <Icon name="clock" size={14} />
+                          {t.export} · {t.upcoming}
+                        </span>
+                      )}
                     </div>
                   </section>
                 </div>

@@ -152,6 +152,8 @@ export interface ScheduleDraft {
   context_id: string;
   name: string;
   status: string;
+  version_number?: number;
+  workflow_revision?: number;
   academic_year: string;
   data_kind: string;
   revision: number;

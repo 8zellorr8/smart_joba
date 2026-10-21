@@ -29,6 +29,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public code: string,
+    public params: Record<string, unknown> = {},
   ) {
     super(code);
   }
@@ -50,6 +51,7 @@ export async function request<T>(
   }
   if (!response.ok) {
     let code = "request_failed";
+    let params: Record<string, unknown> = {};
     try {
       const body: unknown = await response.json();
       if (body && typeof body === "object" && "error" in body) {
@@ -61,11 +63,20 @@ export async function request<T>(
           typeof error.code === "string"
         )
           code = error.code;
+        if (
+          error &&
+          typeof error === "object" &&
+          "params" in error &&
+          error.params &&
+          typeof error.params === "object" &&
+          !Array.isArray(error.params)
+        )
+          params = error.params as Record<string, unknown>;
       }
     } catch {
       /* An HTML proxy error must not appear as product text. */
     }
-    throw new ApiError(response.status, code);
+    throw new ApiError(response.status, code, params);
   }
   if (response.status === 204) return undefined as T;
   try {

@@ -1,0 +1,24 @@
+{
+  "control": "SYNTHETIC engineering resource-index control; not college capacity acceptance",
+  "layer": "pure UTC resource index; excludes HTTP, SQL and full snapshot JSON loading",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14",
+  "logical_cpus": 12,
+  "ram_bytes": 16888246272,
+  "active_snapshots": 20,
+  "registry_events": 20000,
+  "candidate_events": 1000,
+  "checked_resource_types": [
+    "teacher",
+    "group",
+    "room"
+  ],
+  "elapsed_seconds_without_allocation_tracking": 0.457195,
+  "elapsed_seconds_with_allocation_tracking": 3.412804,
+  "sample_interval_seconds": 0.01,
+  "sampled_process_peak_rss_bytes": 70279168,
+  "index_python_allocation_peak_bytes": 6821025,
+  "conflicts": 0,
+  "truncated": false,
+  "half_open_boundary_passed": true
+}

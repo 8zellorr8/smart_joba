@@ -17,6 +17,7 @@ import type { OneDateValues } from "./editor/OneDateForm";
 import { RoomPanel } from "./editor/RoomPanel";
 import { ConflictReport } from "./editor/ConflictReport";
 import { demoName } from "./demo-labels";
+import { vm } from "./locales/publication.kk";
 import "./editor.css";
 
 const emptyData: EditorData = {
@@ -46,6 +47,7 @@ export function EditorPage({
   canRead,
   canManageRooms,
   initialDraftId,
+  onOpenVersion,
   onExpired,
 }: {
   scope: string;
@@ -54,6 +56,7 @@ export function EditorPage({
   canRead: boolean;
   canManageRooms: boolean;
   initialDraftId?: string;
+  onOpenVersion?: (id: string) => void;
   onExpired: () => void;
 }) {
   const [data, setData] = useState<EditorData>(emptyData);
@@ -399,9 +402,27 @@ export function EditorPage({
                     {draft.data_kind === "synthetic"
                       ? em.synthetic
                       : em.college}{" "}
-                    · {em.revision} {draft.revision}
+                    ·{" "}
+                    {draft.version_number && (
+                      <>
+                        {vm.number} {draft.version_number} ·{" "}
+                      </>
+                    )}
+                    {em.revision} {draft.revision}
                   </p>
                 </div>
+                {onOpenVersion && (
+                  <button
+                    className="button button-quiet"
+                    disabled={busy}
+                    onClick={() => {
+                      if (!selection || window.confirm(vm.leaveDirty))
+                        onOpenVersion(draft.id);
+                    }}
+                  >
+                    {vm.title}
+                  </button>
+                )}
                 {canEdit && (
                   <button
                     className="button button-primary"

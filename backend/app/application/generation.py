@@ -6,6 +6,7 @@ from sqlalchemy import func, select, text
 
 from .auth import ApiError, audit
 from .planning_inputs import PlanningInputs, current_dependencies
+from .version_numbers import next_version_number
 from ..domain.planning import ALGORITHM_VERSION, MAX_CANDIDATES, MAX_EVENTS, readiness
 from ..domain.validation import validate_schedule
 from ..domain.permissions import permissions_for
@@ -129,7 +130,7 @@ class GenerationService:
                         audit(db, "solver.finish", "editor_size_limit", str(job.id), job.created_by)
                         return
                     draft = ScheduleDraft(context_id=context.id, name=f"Автоматты жоба · {job.snapshot['semester']} · {str(job.id)[:8]}", revision=1,
-                        status="draft", dependencies={}, created_by=job.created_by)
+                        status="draft", dependencies={}, created_by=job.created_by, version_number=next_version_number(db, context.id))
                     db.add(draft); db.flush()
                     buckets = defaultdict(list)
                     for event in result["events"]:
@@ -159,7 +160,7 @@ class GenerationService:
             draft, context, user = self.editor.access(db, token, draft_id)
             if draft.revision != body["expected_revision"]: raise ApiError("EDITOR_STALE", 409)
             selection = {**body, "base_draft_id": str(draft.id)}
-            snapshot = self.inputs.build(db, context, selection)
+            snapshot = self.inputs.build(db, context, selection, allow_frozen=True)
             rows = self.editor.rows(db, draft)
             demand_ids = {d["id"] for d in snapshot["demands"]}
             events = [dict(e) for row in rows for e in row.occurrences

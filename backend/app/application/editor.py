@@ -1,4 +1,4 @@
-"""Revisioned manual drafts. No solver, publication or registration of facts.
+"""Revisioned content edits; workflow and publication live in separate services.
 
 Every operation derives scope from the draft and locks Scope -> Context -> Draft.
 Scope locks also serialize shared calendar/room/source changes during a command.
@@ -10,6 +10,7 @@ from sqlalchemy import select
 
 from .auth import ApiError, audit
 from .imports import ImportService
+from .version_numbers import next_version_number
 from ..domain.calendar import amount_text, calculate_plan, calendar_dates, dates_between, minute_of_day
 from ..domain.permissions import permissions_for
 from ..domain.schedule import find_conflicts, replace_one
@@ -140,6 +141,7 @@ class EditorService:
                 raise ApiError("ACCESS_DENIED", 403)
             if not name.strip(): raise ApiError("EDITOR_NAME_REQUIRED", 422)
             draft = ScheduleDraft(context_id=context_id, name=name.strip(), revision=1, status="draft", created_by=user.id,
+                                  version_number=next_version_number(db, context_id),
                                   dependencies={"context_revision": context.revision, "calendars": {}, "rooms": {}})
             db.add(draft); db.flush()
             self.record(db, draft, context, [], user.id, request_id)
@@ -324,6 +326,7 @@ class EditorService:
         if resource_id: events = [e for e in events if e[view + "_id"] == resource_id]
         report = self.report(db, draft, context, series)
         return {"id": str(draft.id), "context_id": str(context.id), "name": draft.name, "status": draft.status,
+                "version_number": draft.version_number, "workflow_revision": draft.workflow_revision,
                 "academic_year": context.academic_year, "data_kind": context.data_kind, "revision": draft.revision,
                 "dependencies": report["dependencies"], "stale": report["stale"], "report": report,
                 "series": [{"id": str(s.id), "template": s.template, "count": len(s.occurrences)} for s in series],
@@ -333,13 +336,3 @@ class EditorService:
         with self.factory.begin() as db:
             draft, context, _ = self.access(db, token, draft_id)
             return self.dto(db, draft, context, self.rows(db, draft), start, end, view, resource_id, offset, limit)
-
-    def submit_guard(self, token, draft_id, body):
-        with self.factory.begin() as db:
-            draft, context, _ = self.access(db, token, draft_id, write=True)
-            series = self.rows(db, draft)
-            self.require_expected(db, draft, context, series, body)
-            report = self.report(db, draft, context, series)
-            if report["has_errors"]: raise ApiError("DRAFT_HAS_ERRORS", 422)
-            # The transition belongs to the versions/publication module; no fake success.
-            raise ApiError("STAGE_NOT_IMPLEMENTED", 501)

@@ -1,0 +1,327 @@
+{
+  "spec_version": "0.9",
+  "stage": 6,
+  "modules": [
+    "З7 Версии и публикация"
+  ],
+  "date_started": "2026-10-21",
+  "date_completed": "2026-10-22",
+  "base_commit": "621d11fb679e313295d05c9090317983adbc03b1",
+  "code_fingerprint_sha256": "4188eee92185f48464059dcbcc4c46d7e82abab0aa3c304516d7160665acdd73",
+  "fingerprinted_files": 112,
+  "fingerprint_definition": "Sorted relative paths + null + LF-normalized bytes + null for .py/.ts/.tsx/.css under backend/app,migrations,tests,frontend/src,scripts, plus backend/requirements.lock.txt and frontend/package{,-lock}.json",
+  "automated": {
+    "backend": {
+      "passed": 268,
+      "failed": 0,
+      "seconds": 275.35,
+      "warnings": 1
+    },
+    "targeted_after_strengthening_two_tests": {
+      "passed": 2,
+      "failed": 0,
+      "deselected": 35,
+      "seconds": 8.49,
+      "product_logic_changed": false
+    },
+    "frontend": {
+      "passed": 74,
+      "failed": 0,
+      "files": 7,
+      "seconds": 6.26
+    },
+    "build": "passed",
+    "prettier": "passed",
+    "kk_missing_required_key_control": "passed",
+    "alembic_upgrade_and_check": "passed",
+    "pip_check": "passed",
+    "compileall": "passed",
+    "git_diff_check": "passed"
+  },
+  "acceptance": [
+    {
+      "id": "AC-010a",
+      "level": "Must-A",
+      "responsibility": "joint",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac010a_direct_approval_is_rejected_for_scheduler_and_admin",
+        "test_direct_approval_cannot_be_granted_by_client_role_or_scope_parameters"
+      ]
+    },
+    {
+      "id": "AC-010d",
+      "level": "Must-A",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac021b_stale_revision_does_not_overwrite_saved_occurrences",
+        "test_rejection_needs_reason_and_old_workflow_command_cannot_cross_a_reopen_cycle"
+      ]
+    },
+    {
+      "id": "AC-017b",
+      "level": "Must-A",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_rollback_after_pointer_switch_preserves_previous_publication_and_allows_retry"
+      ]
+    },
+    {
+      "id": "AC-010c",
+      "level": "Must-A",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_exact_revision_workflow_publishes_a_reader_snapshot_without_internal_data",
+        "B6-13",
+        "B6-15",
+        "B6-16",
+        "B6-20"
+      ]
+    },
+    {
+      "id": "AC-010b",
+      "level": "Must-B",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_publication_and_workflow_records_are_immutable_in_postgresql",
+        "test_published_source_cannot_be_edited_and_fork_keeps_original_unchanged"
+      ]
+    },
+    {
+      "id": "AC-010f",
+      "level": "Must-B",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_published_source_cannot_be_edited_and_fork_keeps_original_unchanged",
+        "test_old_approval_and_readiness_never_authorize_changed_inputs"
+      ]
+    },
+    {
+      "id": "AC-010e",
+      "level": "Must-B",
+      "responsibility": "joint",
+      "module_status": "passed",
+      "evidence": [
+        "test_author_with_an_added_approver_role_still_cannot_approve_own_content"
+      ]
+    },
+    {
+      "id": "AC-017a",
+      "level": "Must-B",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_concurrent_conflicting_profiles_cannot_both_become_active"
+      ]
+    },
+    {
+      "id": "AC-017c",
+      "level": "Must-B",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_idempotent_replay_and_a_different_request_with_the_same_key",
+        "test_concurrent_retries_commit_exactly_one_publication"
+      ]
+    },
+    {
+      "id": "AC-017d",
+      "level": "Must-B",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_exhausted_global_lock_retry_returns_a_controlled_conflict_without_writes"
+      ]
+    },
+    {
+      "id": "AC-035a",
+      "level": "Must-B",
+      "responsibility": "owner",
+      "module_status": "passed",
+      "evidence": [
+        "test_a_report_for_version_a_is_rejected_for_version_b",
+        "test_readiness_a_cannot_publish_a_conflicting_unapproved_draft_b"
+      ]
+    },
+    {
+      "id": "AC-013c",
+      "level": "Must-B",
+      "responsibility": "integration",
+      "module_status": "passed",
+      "evidence": [
+        "test_generator_cancellation_and_real_child_crash_leave_active_publication_unchanged"
+      ]
+    },
+    {
+      "id": "AC-013b",
+      "level": "Must-B",
+      "responsibility": "integration",
+      "module_status": "passed",
+      "evidence": [
+        "private_restore_all_33_tables_match"
+      ]
+    },
+    {
+      "id": "AC-018b",
+      "level": "Must-B",
+      "responsibility": "joint",
+      "module_status": "passed",
+      "evidence": [
+        "private_control_intact_compiles_missing_required_published_is_TS2741"
+      ]
+    },
+    {
+      "id": "AC-019a",
+      "level": "Must-B",
+      "responsibility": "joint",
+      "module_status": "passed",
+      "evidence": [
+        "test_publication_area_caption_is_part_of_the_immutable_snapshot",
+        "B6-13",
+        "B6-15",
+        "B6-16",
+        "B6-20"
+      ]
+    }
+  ],
+  "manual": {
+    "browser": "IAB with actual local API/PostgreSQL/worker and built frontend",
+    "data_kind": "synthetic",
+    "cases": [
+      {
+        "id": "B6-01",
+        "status": "passed"
+      },
+      {
+        "id": "B6-02",
+        "status": "passed"
+      },
+      {
+        "id": "B6-03",
+        "status": "passed"
+      },
+      {
+        "id": "B6-04",
+        "status": "passed"
+      },
+      {
+        "id": "B6-05",
+        "status": "passed"
+      },
+      {
+        "id": "B6-06",
+        "status": "passed"
+      },
+      {
+        "id": "B6-07",
+        "status": "passed"
+      },
+      {
+        "id": "B6-08",
+        "status": "passed"
+      },
+      {
+        "id": "B6-09",
+        "status": "passed"
+      },
+      {
+        "id": "B6-10",
+        "status": "passed"
+      },
+      {
+        "id": "B6-11",
+        "status": "passed"
+      },
+      {
+        "id": "B6-12",
+        "status": "passed"
+      },
+      {
+        "id": "B6-13",
+        "status": "passed"
+      },
+      {
+        "id": "B6-14",
+        "status": "passed"
+      },
+      {
+        "id": "B6-15",
+        "status": "passed"
+      },
+      {
+        "id": "B6-16",
+        "status": "passed"
+      },
+      {
+        "id": "B6-17",
+        "status": "passed"
+      },
+      {
+        "id": "B6-18",
+        "status": "passed"
+      },
+      {
+        "id": "B6-19",
+        "status": "passed"
+      },
+      {
+        "id": "B6-20",
+        "status": "passed"
+      }
+    ],
+    "archive_dropdown_fix": "regression test passed; final built UI reloaded; no extra publication created solely to repeat transition",
+    "private_screenshot": ".local/qa/stage6-publication.png",
+    "small_viewport_320_360": "not_run",
+    "full_keyboard_competition_path": "not_run",
+    "full_screen_reader_audit": "not_run"
+  },
+  "restore": {
+    "passed": true,
+    "snapshot_export_used": true,
+    "all_tables_match": true,
+    "tables_verified": 33,
+    "published_snapshots": 2,
+    "current_heads": 1,
+    "revision": "0006_publication",
+    "alembic_check": "passed",
+    "foreign_keys_validated": true,
+    "source_database_unchanged": true,
+    "environment_unchanged": true,
+    "private_detail": ".local/qa/stage6-restore-result.json"
+  },
+  "benchmark_file": "stage-6-publication-benchmark.json",
+  "limits": {
+    "active_registry_events": 200000,
+    "diagnostics": 200,
+    "publication_lock_attempts": 3,
+    "lock_retry_pause_seconds": 0.05,
+    "body_bytes": 131072,
+    "reader_page_default": 100,
+    "reader_page_maximum": 500
+  },
+  "assumptions": [
+    "Q-007: author and approver differ, as documented in the contract",
+    "Scope represents college; shared physical resources use canonical confirmed UUIDs",
+    "Replacement is a complete exact context/semester/group-set profile; partial overlap is blocked",
+    "Unregistered external occupancy remains explicitly unverified"
+  ],
+  "privacy": {
+    "raw_college_sources_in_commit": false,
+    "local_database_in_commit": false,
+    "local_accounts_in_commit": false,
+    "real_S1_applied": false,
+    "real_college_publication_created": false
+  },
+  "pending": [
+    "XLSX export of an exact published snapshot (separate next module)",
+    "Full offline competition path, clean installation on another machine and 5-minute rehearsal by mom",
+    "College confirmations and real college-scale acceptance",
+    "Full keyboard, small viewport and screen-reader integration checks",
+    "Registration/reset, preferences, substitutions, comparison, RU/EN remain in original queues"
+  ]
+}
