@@ -17,7 +17,10 @@ import type { OneDateValues } from "./editor/OneDateForm";
 import { RoomPanel } from "./editor/RoomPanel";
 import { ConflictReport } from "./editor/ConflictReport";
 import { demoName } from "./demo-labels";
-import { vm } from "./locales/publication.kk";
+import { vm, versionStatuses } from "./locales/publication.kk";
+import type { VersionStatus } from "./publication-api";
+import { PageHeading } from "./ui/PageHeading";
+import { StatusBadge, statusTone } from "./ui/StatusBadge";
 import "./editor.css";
 
 const emptyData: EditorData = {
@@ -237,13 +240,12 @@ export function EditorPage({
       aria-labelledby="editor-title"
       aria-busy={busy}
     >
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">{em.eyebrow}</p>
-          <h1 id="editor-title">{canRead ? em.title : em.rooms}</h1>
-          <p>{canRead ? em.intro : em.roomHint}</p>
-        </div>
-      </div>
+      <PageHeading
+        id="editor-title"
+        eyebrow={em.eyebrow}
+        title={canRead ? em.title : em.rooms}
+        description={canRead ? em.intro : em.roomHint}
+      />
       <div className="editor-feedback" aria-live="polite">
         {error && (
           <p className="error-message" role="alert">
@@ -436,6 +438,14 @@ export function EditorPage({
                   </button>
                 )}
               </div>
+              <div className="editor-version-state">
+                <StatusBadge tone={statusTone("version", draft.status)}>
+                  {Object.hasOwn(versionStatuses, draft.status)
+                    ? versionStatuses[draft.status as VersionStatus]
+                    : vm.error}
+                </StatusBadge>
+                {draft.status !== "draft" && <p>{vm.readonly}</p>}
+              </div>
               {draft.stale && (
                 <p className="notice editor-stale">{em.reviewSources}</p>
               )}
@@ -550,22 +560,27 @@ export function EditorPage({
                     {em.show}
                   </button>
                 </form>
-                <div className="editor-table-wrap">
-                  <table>
+                <div
+                  className="editor-table-wrap"
+                  role="region"
+                  aria-label={em.title}
+                  tabIndex={0}
+                >
+                  <table className="editor-events-table">
                     <caption>
                       {demoName(draft.name, draft.data_kind)} · {em.revision}{" "}
                       {draft.revision}
                     </caption>
                     <thead>
                       <tr>
-                        <th>{em.date}</th>
-                        <th>{em.time}</th>
-                        <th>{em.group}</th>
-                        <th>{em.subject}</th>
-                        <th>{em.teacher}</th>
-                        <th>{em.room}</th>
-                        <th>{em.status}</th>
-                        {canEdit && <th>{em.actions}</th>}
+                        <th scope="col">{em.date}</th>
+                        <th scope="col">{em.time}</th>
+                        <th scope="col">{em.group}</th>
+                        <th scope="col">{em.subject}</th>
+                        <th scope="col">{em.teacher}</th>
+                        <th scope="col">{em.room}</th>
+                        <th scope="col">{em.status}</th>
+                        {canEdit && <th scope="col">{em.actions}</th>}
                       </tr>
                     </thead>
                     <tbody>
@@ -588,7 +603,11 @@ export function EditorPage({
                           <td>{demoName(e.teacher, draft.data_kind)}</td>
                           <td>{demoName(e.room, draft.data_kind)}</td>
                           <td>
-                            {e.cancelled ? em.cancelled : em.active}
+                            <StatusBadge
+                              tone={e.cancelled ? "neutral" : "info"}
+                            >
+                              {e.cancelled ? em.cancelled : em.active}
+                            </StatusBadge>
                             {e.pinned && <small>{em.pinned}</small>}
                           </td>
                           {canEdit && (

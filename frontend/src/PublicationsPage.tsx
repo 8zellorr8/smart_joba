@@ -12,6 +12,8 @@ import { pm } from "./locales/planning.kk";
 import "./editor.css";
 import "./planning.css";
 import "./publication.css";
+import { PageHeading } from "./ui/PageHeading";
+import { StatusBadge } from "./ui/StatusBadge";
 
 const emptyFilter = (): PublicationFilter => ({
   start: "",
@@ -109,11 +111,12 @@ export function PublicationsPage({
       aria-labelledby="publications-title"
       aria-busy={busy}
     >
-      <div className="page-heading">
-        <p className="eyebrow">{vm.current}</p>
-        <h1 id="publications-title">{vm.publication}</h1>
-        <p>{vm.publicIntro}</p>
-      </div>
+      <PageHeading
+        id="publications-title"
+        eyebrow={vm.current}
+        title={vm.publication}
+        description={vm.publicIntro}
+      />
       {error && (
         <p role="alert" className="error-message">
           {error}
@@ -178,10 +181,14 @@ export function PublicationsPage({
             {vm.number} {value.version_number} ·{" "}
             {demoName(value.name, value.data_kind)}
           </h2>
-          <p>
-            {value.data_kind === "synthetic" ? pm.synthetic : pm.college} ·{" "}
-            {value.is_current ? vm.current : vm.archived}
-          </p>
+          <div className="publication-summary">
+            <span>
+              {value.data_kind === "synthetic" ? pm.synthetic : pm.college}
+            </span>
+            <StatusBadge tone={value.is_current ? "success" : "neutral"}>
+              {value.is_current ? vm.current : vm.archived}
+            </StatusBadge>
+          </div>
           <dl className="publication-meta">
             <div>
               <dt>{vm.scope}</dt>
@@ -291,12 +298,12 @@ export function PublicationsPage({
               </caption>
               <thead>
                 <tr>
-                  <th>{vm.date}</th>
-                  <th>{vm.time}</th>
-                  <th>{vm.group}</th>
-                  <th>{vm.subject}</th>
-                  <th>{vm.teacher}</th>
-                  <th>{vm.room}</th>
+                  <th scope="col">{vm.date}</th>
+                  <th scope="col">{vm.time}</th>
+                  <th scope="col">{vm.group}</th>
+                  <th scope="col">{vm.subject}</th>
+                  <th scope="col">{vm.teacher}</th>
+                  <th scope="col">{vm.room}</th>
                 </tr>
               </thead>
               <tbody>

@@ -1,0 +1,405 @@
+@font-face {
+  font-family: Inter;
+  src: url("./assets/fonts/InterVariable.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --ui-text: #213d38;
+  --ui-muted: #52645e;
+  --ui-accent: #1b5c4b;
+  --ui-surface: #ffffff;
+  --ui-border: #d7e1d8;
+  --ui-control-border: #80968a;
+  --ui-surface-soft: #f3f6f0;
+  --ui-focus: #98601c;
+  --ui-radius: 10px;
+  --ui-card-radius: 16px;
+  --ui-card-padding: clamp(18px, 2.2vw, 26px);
+  --ui-control-height: 48px;
+  --ui-shadow: 0 2px 7px #213d3805;
+  color: var(--ui-text);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+.workspace-main {
+  line-height: 1.6;
+}
+
+.workspace-main .page-heading h1 {
+  font-size: clamp(26px, 2.4vw, 32px);
+  line-height: 1.2;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  color: var(--ui-text);
+}
+
+.workspace-main .page-heading--document {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.page-heading--document .eyebrow {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
+  font-weight: 650;
+  color: var(--ui-muted);
+}
+
+.workspace-main .page-heading--document h1 {
+  max-inline-size: 32ch;
+  margin: 0;
+}
+
+.workspace-main .page-heading--document .page-description {
+  max-inline-size: 72ch;
+  font-size: 16px;
+  line-height: 1.65;
+  margin: 2px 0 0;
+  color: var(--ui-muted);
+  overflow-wrap: anywhere;
+}
+
+.workspace-main :is(.panel, .calendar-panel, .editor-panel) {
+  padding: var(--ui-card-padding);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-card-radius);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow);
+}
+
+.workspace-main :is(.panel, .calendar-panel, .editor-panel) h2 {
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 650;
+  color: var(--ui-text);
+  overflow-wrap: anywhere;
+}
+
+.workspace-main :is(.calendar-panel, .editor-panel) h3 {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.workspace-main :is(.calendar-panel, .editor-panel) p {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.workspace-main
+  :is(
+    input:not([type="checkbox"], [type="radio"], [type="hidden"]),
+    select,
+    textarea
+  ) {
+  min-height: var(--ui-control-height);
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--ui-control-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.workspace-main textarea {
+  resize: vertical;
+  min-height: 112px;
+}
+
+.workspace-main input:is([type="date"], [type="time"]) {
+  height: var(--ui-control-height);
+}
+
+.workspace-main :is(input, select, textarea):disabled {
+  background: var(--ui-surface-soft);
+  color: var(--ui-muted);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.workspace-main :is(input, select, textarea):not(:disabled):hover {
+  border-color: var(--ui-accent);
+}
+
+.version-page label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.version-page .planning-checks label {
+  display: flex;
+  align-items: center;
+}
+
+.version-page fieldset {
+  min-width: 0;
+  padding: 0;
+  margin: 20px 0;
+  border: 0;
+}
+
+.version-page legend {
+  padding: 0;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.workspace-main :is(input[type="checkbox"], input[type="radio"]) {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  accent-color: var(--ui-accent);
+}
+
+.button {
+  min-height: var(--ui-control-height);
+  max-width: 100%;
+  padding: 11px 17px;
+  border-radius: var(--ui-radius);
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 600;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.button-quiet {
+  border-color: var(--ui-control-border);
+  color: var(--ui-accent);
+}
+
+.button:disabled {
+  background: #edf1eb;
+  border-color: #b5c3b8;
+  color: #5c6d62;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+:is(button, a, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--ui-focus);
+  outline-offset: 3px;
+}
+
+.workspace-main
+  :is(
+    .editor-table-wrap,
+    .calendar-table-wrap,
+    .import-table-scroll,
+    .planning-table
+  ) {
+  max-width: 100%;
+  max-height: min(70dvh, 40rem);
+  overflow: auto;
+  position: relative;
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  scrollbar-gutter: stable;
+}
+
+.workspace-main table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.workspace-main :is(th, td) {
+  padding: 12px 14px;
+  vertical-align: top;
+  border: 0;
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.workspace-main thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #edf3ec;
+  color: var(--ui-text);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 650;
+  box-shadow: 0 1px 0 var(--ui-border);
+}
+
+.workspace-main tbody tr:nth-child(even):not(.editor-row-cancelled) {
+  background: #f8faf6;
+}
+
+.workspace-main tbody tr:hover,
+.workspace-main tbody tr:focus-within {
+  background: #edf4ed;
+}
+
+.workspace-main caption {
+  text-align: left;
+  padding: 12px 14px;
+  background: var(--ui-surface-soft);
+  color: var(--ui-muted);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.workspace-main .editor-link {
+  min-height: 36px;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 7px 0;
+}
+
+.workspace-main .publication-table table {
+  min-width: 42rem;
+}
+
+.workspace-main .planning-table table {
+  min-width: 34rem;
+}
+
+.workspace-main .editor-hours-table table {
+  min-width: 42rem;
+}
+
+.editor-events-table :is(th, td):nth-child(3),
+.editor-events-table :is(th, td):nth-child(6) {
+  min-width: 120px;
+}
+
+.editor-events-table :is(th, td):nth-child(4) {
+  min-width: 150px;
+}
+
+.editor-events-table :is(th, td):nth-child(5) {
+  min-width: 130px;
+}
+
+.editor-events-table :is(th, td):nth-child(7) {
+  min-width: 100px;
+}
+
+.editor-events-table :is(th, td):nth-child(8) {
+  min-width: 220px;
+}
+
+.status-badge {
+  --status-color: #4d6158;
+  --status-bg: #eef2ee;
+  --status-border: #cad6cc;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-inline-size: 100%;
+  padding: 5px 10px;
+  border: 1px solid var(--status-border);
+  border-radius: 999px;
+  background: var(--status-bg);
+  color: var(--status-color);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  vertical-align: middle;
+}
+
+.status-badge--info {
+  --status-color: #254b80;
+  --status-bg: #edf3ff;
+  --status-border: #c5d5ef;
+}
+
+.status-badge--success {
+  --status-color: #1c5b42;
+  --status-bg: #eaf4ed;
+  --status-border: #bcd9c5;
+}
+
+.status-badge--warning {
+  --status-color: #7a4c10;
+  --status-bg: #fff4d9;
+  --status-border: #e5ce98;
+}
+
+.status-badge--danger {
+  --status-color: #963c35;
+  --status-bg: #fff0ec;
+  --status-border: #e9c5bd;
+}
+
+.version-summary,
+.publication-summary,
+.editor-version-state {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 14px 0;
+  color: var(--ui-muted);
+}
+
+.version-history {
+  padding-left: 24px;
+}
+
+.version-history li {
+  border-inline-start: 2px solid var(--ui-border);
+  margin: 0;
+  padding: 0 0 20px 16px;
+}
+
+.version-history li:last-child {
+  padding-bottom: 0;
+}
+
+.version-history p {
+  margin-top: 6px;
+}
+
+.publication-meta {
+  padding: 16px 0;
+  border-block: 1px solid var(--ui-border);
+  margin: 18px 0;
+}
+
+@media (max-width: 650px) {
+  .workspace-main .page-heading--document {
+    margin-bottom: 22px;
+  }
+
+  .workspace-main .page-heading--document .page-description {
+    font-size: 15px;
+  }
+
+  .version-actions > .button {
+    flex: 1 1 100%;
+  }
+}

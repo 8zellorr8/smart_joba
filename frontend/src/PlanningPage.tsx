@@ -17,6 +17,8 @@ import {
 import { Diagnostics, ValidationView } from "./planning/ValidationView";
 import { demoName } from "./demo-labels";
 import { RulesForm } from "./planning/RulesForm";
+import { PageHeading } from "./ui/PageHeading";
+import { StatusBadge, statusTone } from "./ui/StatusBadge";
 import "./editor.css";
 import "./planning.css";
 
@@ -220,11 +222,12 @@ export function PlanningPage({
       aria-labelledby="planning-title"
       aria-busy={busy}
     >
-      <div className="page-heading">
-        <p className="eyebrow">{canManage ? pm.conditions : pm.subtitle}</p>
-        <h1 id="planning-title">{canManage ? pm.conditions : pm.title}</h1>
-        <p>{pm.intro}</p>
-      </div>
+      <PageHeading
+        id="planning-title"
+        eyebrow={canManage ? pm.conditions : pm.subtitle}
+        title={canManage ? pm.conditions : pm.title}
+        description={pm.intro}
+      />
       {error && (
         <p role="alert" className="error-message">
           {error}
@@ -512,7 +515,9 @@ export function PlanningPage({
                 {job && (
                   <div>
                     <p role="status" className="planning-job-status">
-                      {jobStatuses[job.status] ?? pm.error}
+                      <StatusBadge tone={statusTone("solver", job.status)}>
+                        {jobStatuses[job.status] ?? pm.error}
+                      </StatusBadge>
                     </p>
                     <p>
                       {pm.stage}: {jobStages[job.stage] ?? pm.error} ·{" "}

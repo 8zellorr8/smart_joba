@@ -14,6 +14,8 @@ import type {
 } from "./calendar-api";
 import { cm, dayKinds, weekdays, calendarErrors } from "./locales/calendar.kk";
 import { im } from "./locales/imports.kk";
+import { PageHeading } from "./ui/PageHeading";
+import { StatusBadge } from "./ui/StatusBadge";
 import "./calendar.css";
 const unitNames: Record<string, string> = {
   source_hour: im.source_hour,
@@ -291,13 +293,12 @@ export function CalendarPage({
       aria-labelledby="calendar-title"
       aria-busy={busy}
     >
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">{cm.eyebrow}</p>
-          <h1 id="calendar-title">{cm.title}</h1>
-          <p>{cm.intro}</p>
-        </div>
-      </div>
+      <PageHeading
+        id="calendar-title"
+        eyebrow={cm.eyebrow}
+        title={cm.title}
+        description={cm.intro}
+      />
       <div aria-live="polite">
         {error && (
           <p role="alert" className="error-message calendar-notice">
@@ -927,17 +928,22 @@ export function CalendarPage({
                   </button>
                 </form>
                 {days.length > 0 && (
-                  <div className="calendar-table-wrap">
+                  <div
+                    className="calendar-table-wrap"
+                    role="region"
+                    aria-label={cm.datesTitle}
+                    tabIndex={0}
+                  >
                     <table>
                       <caption>
                         {from} — {to}
                       </caption>
                       <thead>
                         <tr>
-                          <th>{cm.date}</th>
-                          <th>{cm.day}</th>
-                          <th>{cm.periodKind}</th>
-                          <th>{cm.status}</th>
+                          <th scope="col">{cm.date}</th>
+                          <th scope="col">{cm.day}</th>
+                          <th scope="col">{cm.periodKind}</th>
+                          <th scope="col">{cm.status}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -947,11 +953,11 @@ export function CalendarPage({
                             <td>{weekdays[day.weekday]}</td>
                             <td>{dayKinds[day.kind]}</td>
                             <td>
-                              <span
-                                className={`calendar-badge ${day.allowed ? "is-allowed" : "is-blocked"}`}
+                              <StatusBadge
+                                tone={day.allowed ? "success" : "warning"}
                               >
                                 {day.allowed ? cm.allowed : cm.blocked}
-                              </span>
+                              </StatusBadge>
                               {day.exception && (
                                 <small>{day.exception.reason}</small>
                               )}
@@ -1157,14 +1163,19 @@ export function CalendarPage({
                           ` · ${cm.unresolvedDemand}`}
                       </p>
                     )}
-                    <div className="calendar-table-wrap">
+                    <div
+                      className="calendar-table-wrap"
+                      role="region"
+                      aria-label={cm.hoursTitle}
+                      tabIndex={0}
+                    >
                       <table>
                         <caption>{cm.hoursTitle}</caption>
                         <thead>
                           <tr>
-                            <th>{cm.date}</th>
-                            <th>{cm.slots}</th>
-                            <th>{cm.status}</th>
+                            <th scope="col">{cm.date}</th>
+                            <th scope="col">{cm.slots}</th>
+                            <th scope="col">{cm.status}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1175,11 +1186,17 @@ export function CalendarPage({
                                 {o.start}–{o.end}
                               </td>
                               <td>
-                                <span
-                                  className={`calendar-badge ${o.status === "planned" ? "is-allowed" : "is-blocked"}`}
+                                <StatusBadge
+                                  tone={
+                                    o.status === "planned"
+                                      ? "info"
+                                      : o.status === "cancelled"
+                                        ? "neutral"
+                                        : "warning"
+                                  }
                                 >
                                   {cm.planStatus[o.status]}
-                                </span>
+                                </StatusBadge>
                               </td>
                             </tr>
                           ))}

@@ -77,17 +77,22 @@ export function ConflictReport({
         </div>
       )}
       {report.hours.length > 0 && (
-        <div className="editor-table-wrap">
+        <div
+          className="editor-table-wrap editor-hours-table"
+          role="region"
+          aria-label={em.hours}
+          tabIndex={0}
+        >
           <table>
             <caption>{em.hours}</caption>
             <thead>
               <tr>
-                <th>{em.group}</th>
-                <th>{em.subject}</th>
-                <th>{em.semester}</th>
-                <th>{em.required}</th>
-                <th>{em.planned}</th>
-                <th>{em.remaining}</th>
+                <th scope="col">{em.group}</th>
+                <th scope="col">{em.subject}</th>
+                <th scope="col">{em.semester}</th>
+                <th scope="col">{em.required}</th>
+                <th scope="col">{em.planned}</th>
+                <th scope="col">{em.remaining}</th>
               </tr>
             </thead>
             <tbody>

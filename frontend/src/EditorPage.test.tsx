@@ -7,6 +7,7 @@ import { editorApi } from "./editor-api";
 import type { EditorData, ScheduleDraft } from "./editor-api";
 import { emptyCalendar } from "./CalendarPage";
 import { em } from "./locales/editor.kk";
+import { vm, versionStatuses } from "./locales/publication.kk";
 
 vi.mock("./editor-api", () => ({
   editorApi: {
@@ -188,6 +189,37 @@ beforeEach(() => {
   vi.mocked(editorApi.get).mockResolvedValue(draft());
 });
 describe("manual schedule editor", () => {
+  it("explains a published version while keeping editing disabled and the exact version link available", async () => {
+    const published = { ...draft(), status: "published", version_number: 5 };
+    vi.mocked(editorApi.get).mockResolvedValue(published);
+    const onOpenVersion = vi.fn();
+    render(
+      <EditorPage
+        scope="scope"
+        csrfToken="csrf"
+        canEdit
+        canRead
+        canManageRooms={false}
+        onExpired={vi.fn()}
+        onOpenVersion={onOpenVersion}
+      />,
+    );
+    expect(await screen.findByText(versionStatuses.published)).toBeVisible();
+    expect(screen.getByText(vm.readonly)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: em.createSeries }),
+    ).toBeDisabled();
+    const edit = screen.getByRole("button", {
+      name: `${em.oneEdit} · 2026-09-01`,
+    });
+    expect(edit).toBeDisabled();
+    await userEvent.click(edit);
+    await userEvent.click(screen.getByRole("button", { name: vm.title }));
+    expect(onOpenVersion).toHaveBeenCalledWith("draft");
+    expect(editorApi.one).not.toHaveBeenCalled();
+    expect(editorApi.series).not.toHaveBeenCalled();
+    expect(editorApi.create).not.toHaveBeenCalled();
+  });
   it("approver reads the draft without edit or create actions", async () => {
     setup(false);
     await screen.findByRole("table", { name: /SYNTHETIC editor/ });
