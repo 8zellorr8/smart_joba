@@ -7,6 +7,8 @@ import { messages as t } from "./locales/kk";
 import { ImportPage } from "./ImportPage";
 import { CalendarPage } from "./CalendarPage";
 import { EditorPage } from "./EditorPage";
+import { PlanningPage } from "./PlanningPage";
+import { pm } from "./locales/planning.kk";
 
 type Screen = "loading" | "login" | "workspace" | "error";
 const roleNames: Record<Role, string> = {
@@ -281,9 +283,22 @@ function WorkspaceScreen({
   csrfToken: string;
   onExpired: () => void;
 }) {
-  const [view, setView] = useState<
-    "overview" | "import" | "calendar" | "editor"
+  const [view, setViewState] = useState<
+    "overview" | "import" | "calendar" | "editor" | "planning"
   >("overview");
+  const [planningDirty, setPlanningDirty] = useState(false);
+  function setView(next: typeof view) {
+    if (
+      view === "planning" &&
+      next !== "planning" &&
+      planningDirty &&
+      !window.confirm(pm.leaveDirty)
+    )
+      return;
+    if (next !== "planning") setPlanningDirty(false);
+    setViewState(next);
+  }
+  const [editorDraftId, setEditorDraftId] = useState<string | undefined>();
   const activeRoles = workspace.role_codes;
   const isReader =
     activeRoles.length > 0 &&
@@ -302,7 +317,6 @@ function WorkspaceScreen({
     workspace.permissions.includes("draft.read") ||
     workspace.permissions.includes("catalog.manage");
   const upcomingItems = [
-    { title: t.generator, icon: "spark", permission: "generator.run" },
     { title: t.publication, icon: "layers", permission: "draft.approve" },
     { title: t.export, icon: "download", permission: "publication.export" },
   ] as const;
@@ -364,6 +378,18 @@ function WorkspaceScreen({
                 : t.rooms}
             </button>
           )}
+          {canReadEditor && (
+            <button
+              className="import-nav"
+              aria-current={view === "planning" ? "page" : undefined}
+              onClick={() => setView("planning")}
+            >
+              <Icon name="spark" size={20} />
+              {workspace.permissions.includes("catalog.manage")
+                ? pm.conditions
+                : pm.title}
+            </button>
+          )}
           {availableUpcoming.length > 0 && (
             <>
               <p className="nav-heading next-nav-heading">{t.nextTitle}</p>
@@ -408,7 +434,9 @@ function WorkspaceScreen({
                     ? workspace.permissions.includes("draft.read")
                       ? t.editor
                       : t.rooms
-                    : t.overview}
+                    : view === "planning"
+                      ? pm.title
+                      : t.overview}
             </span>
           </div>
           <div className="header-actions">
@@ -417,7 +445,15 @@ function WorkspaceScreen({
             </span>
             <button
               className="button button-quiet"
-              onClick={() => void onLogout()}
+              onClick={() => {
+                if (
+                  view === "planning" &&
+                  planningDirty &&
+                  !window.confirm(pm.leaveDirty)
+                )
+                  return;
+                void onLogout();
+              }}
               disabled={busy}
             >
               <Icon name="logout" size={18} />
@@ -458,6 +494,16 @@ function WorkspaceScreen({
                 : t.rooms}
             </button>
           )}
+          {canReadEditor && (
+            <button
+              aria-current={view === "planning" ? "page" : undefined}
+              onClick={() => setView("planning")}
+            >
+              {workspace.permissions.includes("catalog.manage")
+                ? pm.conditions
+                : pm.title}
+            </button>
+          )}
         </nav>
         <main id="main" className="workspace-main" tabIndex={-1}>
           {error && (
@@ -465,8 +511,23 @@ function WorkspaceScreen({
               {error}
             </p>
           )}
-          {view === "editor" ? (
+          {view === "planning" ? (
+            <PlanningPage
+              onDirtyChange={setPlanningDirty}
+              scope={workspace.scope.id}
+              csrfToken={csrfToken}
+              canRun={workspace.permissions.includes("generator.run")}
+              canRead={workspace.permissions.includes("draft.read")}
+              canManage={workspace.permissions.includes("catalog.manage")}
+              onExpired={onExpired}
+              onOpenDraft={(id) => {
+                setEditorDraftId(id);
+                setView("editor");
+              }}
+            />
+          ) : view === "editor" ? (
             <EditorPage
+              initialDraftId={editorDraftId}
               scope={workspace.scope.id}
               csrfToken={csrfToken}
               canRead={workspace.permissions.includes("draft.read")}

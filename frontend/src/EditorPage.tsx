@@ -44,6 +44,7 @@ export function EditorPage({
   canEdit,
   canRead,
   canManageRooms,
+  initialDraftId,
   onExpired,
 }: {
   scope: string;
@@ -51,6 +52,7 @@ export function EditorPage({
   canEdit: boolean;
   canRead: boolean;
   canManageRooms: boolean;
+  initialDraftId?: string;
   onExpired: () => void;
 }) {
   const [data, setData] = useState<EditorData>(emptyData);
@@ -74,7 +76,9 @@ export function EditorPage({
         setData(loaded);
         setContext(loaded.contexts[0]?.id ?? "");
         if (canRead && loaded.drafts.length) {
-          const first = await editorApi.get(loaded.drafts[0].id);
+          const first = await editorApi.get(
+            initialDraftId ?? loaded.drafts[0].id,
+          );
           if (active) setDraft(first);
         }
       })
@@ -84,7 +88,7 @@ export function EditorPage({
     return () => {
       active = false;
     };
-  }, [scope, canRead]);
+  }, [scope, canRead, initialDraftId]);
   useEffect(() => {
     if (!draft) return;
     let active = true;
