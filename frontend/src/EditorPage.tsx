@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "./api";
 import { editorApi } from "./editor-api";
 import type {
@@ -22,6 +22,8 @@ import type { VersionStatus } from "./publication-api";
 import { PageHeading } from "./ui/PageHeading";
 import { StatusBadge, statusTone } from "./ui/StatusBadge";
 import "./editor.css";
+import { WeekPanel } from "./timetable/WeekPanel";
+import { wb } from "./locales/workbench.kk";
 
 const emptyData: EditorData = {
   rooms: [],
@@ -50,6 +52,7 @@ export function EditorPage({
   canRead,
   canManageRooms,
   initialDraftId,
+  initialMode = "list",
   onOpenVersion,
   onExpired,
 }: {
@@ -59,9 +62,12 @@ export function EditorPage({
   canRead: boolean;
   canManageRooms: boolean;
   initialDraftId?: string;
+  initialMode?: "week" | "list";
   onOpenVersion?: (id: string) => void;
   onExpired: () => void;
 }) {
+  const [mode, setMode] = useState(initialMode);
+  const weekQuery = useRef<DraftView | null>(null);
   const [data, setData] = useState<EditorData>(emptyData);
   const [draft, setDraft] = useState<ScheduleDraft | null>(null);
   const [context, setContext] = useState("");
@@ -107,6 +113,7 @@ export function EditorPage({
           if (
             active &&
             (fresh.revision !== draft.revision ||
+              fresh.status !== draft.status ||
               JSON.stringify(fresh.dependencies) !==
                 JSON.stringify(draft.dependencies))
           ) {
@@ -225,6 +232,7 @@ export function EditorPage({
       selection &&
       draft &&
       (loaded.revision !== draft.revision ||
+        loaded.status !== draft.status ||
         JSON.stringify(loaded.dependencies) !==
           JSON.stringify(draft.dependencies))
     ) {
@@ -236,16 +244,58 @@ export function EditorPage({
   }
   return (
     <section
-      className="editor-page"
+      className={`editor-page ${mode === "week" ? "week-mode" : ""}`}
       aria-labelledby="editor-title"
       aria-busy={busy}
     >
-      <PageHeading
-        id="editor-title"
-        eyebrow={em.eyebrow}
-        title={canRead ? em.title : em.rooms}
-        description={canRead ? em.intro : em.roomHint}
-      />
+      <div className="schedule-page-heading">
+        <PageHeading
+          id="editor-title"
+          eyebrow={em.eyebrow}
+          title={canRead ? (mode === "week" ? wb.weekly : em.title) : em.rooms}
+          description={
+            canRead
+              ? mode === "week" && draft
+                ? draft.data_kind === "synthetic"
+                  ? wb.demo
+                  : draft.academic_year
+                : em.intro
+              : em.roomHint
+          }
+        />
+        {canRead && (
+          <div className="schedule-display-toggle" aria-label="Кесте пішімі">
+            <button
+              className="button button-quiet"
+              aria-pressed={mode === "week"}
+              disabled={busy || !!selection}
+              onClick={() => {
+                weekQuery.current = view;
+                setMode("week");
+              }}
+            >
+              {wb.week}
+            </button>
+            <button
+              className="button button-quiet"
+              aria-pressed={mode === "list"}
+              disabled={busy || !!selection}
+              onClick={() => {
+                if (mode === "week" && draft && weekQuery.current)
+                  void act(async () => {
+                    const next = weekQuery.current!;
+                    acceptView(await editorApi.get(draft.id, next));
+                    setView(next);
+                    setMode("list");
+                  });
+                else setMode("list");
+              }}
+            >
+              {wb.list}
+            </button>
+          </div>
+        )}
+      </div>
       <div className="editor-feedback" aria-live="polite">
         {error && (
           <p className="error-message" role="alert">
@@ -398,16 +448,33 @@ export function EditorPage({
             <>
               <div className="editor-draft-heading">
                 <div>
-                  <h2>{demoName(draft.name, draft.data_kind)}</h2>
+                  <div className="editor-version-identity">
+                    <h2>
+                      {mode === "week" && draft.version_number
+                        ? `${vm.number} ${draft.version_number}`
+                        : demoName(draft.name, draft.data_kind)}
+                    </h2>
+                    {mode === "week" && (
+                      <StatusBadge tone={statusTone("version", draft.status)}>
+                        {Object.hasOwn(versionStatuses, draft.status)
+                          ? versionStatuses[draft.status as VersionStatus]
+                          : vm.error}
+                      </StatusBadge>
+                    )}
+                  </div>
                   <p>
                     {draft.academic_year} ·{" "}
-                    {draft.data_kind === "synthetic"
-                      ? em.synthetic
-                      : em.college}{" "}
-                    ·{" "}
-                    {draft.version_number && (
+                    {mode === "list" && (
                       <>
-                        {vm.number} {draft.version_number} ·{" "}
+                        {draft.data_kind === "synthetic"
+                          ? em.synthetic
+                          : em.college}{" "}
+                        ·{" "}
+                        {draft.version_number && (
+                          <>
+                            {vm.number} {draft.version_number} ·{" "}
+                          </>
+                        )}
                       </>
                     )}
                     {em.revision} {draft.revision}
@@ -438,14 +505,20 @@ export function EditorPage({
                   </button>
                 )}
               </div>
-              <div className="editor-version-state">
-                <StatusBadge tone={statusTone("version", draft.status)}>
-                  {Object.hasOwn(versionStatuses, draft.status)
-                    ? versionStatuses[draft.status as VersionStatus]
-                    : vm.error}
-                </StatusBadge>
-                {draft.status !== "draft" && <p>{vm.readonly}</p>}
-              </div>
+              {mode === "list" ? (
+                <div className="editor-version-state">
+                  <StatusBadge tone={statusTone("version", draft.status)}>
+                    {Object.hasOwn(versionStatuses, draft.status)
+                      ? versionStatuses[draft.status as VersionStatus]
+                      : vm.error}
+                  </StatusBadge>
+                  {draft.status !== "draft" && <p>{vm.readonly}</p>}
+                </div>
+              ) : (
+                draft.status !== "draft" && (
+                  <p className="editor-version-state">{vm.readonly}</p>
+                )
+              )}
               {draft.stale && (
                 <p className="notice editor-stale">{em.reviewSources}</p>
               )}
@@ -470,7 +543,7 @@ export function EditorPage({
                   onClose={() => setSelection(null)}
                 />
               )}
-              {selection?.mode === "one" && (
+              {mode === "list" && selection?.mode === "one" && (
                 <OneDateForm
                   key={selection.event.id}
                   event={selection.event}
@@ -481,217 +554,255 @@ export function EditorPage({
                   onClose={() => setSelection(null)}
                 />
               )}
-              <section className="editor-panel">
-                <h2>{em.view}</h2>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void act(async () => {
-                      const loaded = await editorApi.get(draft.id, {
-                        ...view,
-                        offset: 0,
-                      });
-                      acceptView(loaded);
-                      setView((v) => ({ ...v, offset: 0 }));
-                    });
+              {mode === "week" && (
+                <WeekPanel
+                  key={draft.id}
+                  source={{ kind: "draft", value: draft, data }}
+                  initialFilter={weekQuery.current ?? view}
+                  onQuery={(query) => {
+                    weekQuery.current = query;
                   }}
-                >
-                  <div className="editor-grid">
-                    <label>
-                      {em.start}
-                      <input
-                        type="date"
-                        value={view.start}
-                        onChange={(e) =>
-                          setView({ ...view, start: e.target.value })
-                        }
+                  canEdit={editable}
+                  onExpired={onExpired}
+                  onStale={() => setRemoteStale(true)}
+                  onEdit={(event) => {
+                    setSelection({ mode: "one", event });
+                    setNotice("");
+                  }}
+                  onCloseEditor={() => setSelection(null)}
+                  editor={
+                    selection?.mode === "one" ? (
+                      <OneDateForm
+                        key={selection.event.id}
+                        event={selection.event}
+                        data={data}
+                        kind={draft.data_kind}
+                        busy={busy || remoteStale}
+                        onSave={saveOne}
+                        onClose={() => setSelection(null)}
                       />
-                    </label>
-                    <label>
-                      {em.end}
-                      <input
-                        type="date"
-                        value={view.end}
-                        onChange={(e) =>
-                          setView({ ...view, end: e.target.value })
-                        }
-                      />
-                    </label>
-                    <label>
-                      {em.view}
-                      <select
-                        value={view.view}
-                        onChange={(e) =>
-                          setView({
-                            ...view,
-                            view: e.target.value as DraftView["view"],
-                            resource_id: "",
-                          })
-                        }
-                      >
-                        {Object.entries(em.views).map(([key, label]) => (
-                          <option key={key} value={key}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                    <label>
-                      {em.resource}
-                      <select
-                        value={view.resource_id}
-                        onChange={(e) =>
-                          setView({ ...view, resource_id: e.target.value })
-                        }
-                      >
-                        <option value="">{em.all}</option>
-                        {resources.map(([id, label]) => (
-                          <option key={id} value={id}>
-                            {demoName(label, draft.data_kind)}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </div>
-                  <button
-                    className="button button-quiet"
-                    disabled={busy || remoteStale}
-                  >
-                    {em.show}
-                  </button>
-                </form>
-                <div
-                  className="editor-table-wrap"
-                  role="region"
-                  aria-label={em.title}
-                  tabIndex={0}
-                >
-                  <table className="editor-events-table">
-                    <caption>
-                      {demoName(draft.name, draft.data_kind)} · {em.revision}{" "}
-                      {draft.revision}
-                    </caption>
-                    <thead>
-                      <tr>
-                        <th scope="col">{em.date}</th>
-                        <th scope="col">{em.time}</th>
-                        <th scope="col">{em.group}</th>
-                        <th scope="col">{em.subject}</th>
-                        <th scope="col">{em.teacher}</th>
-                        <th scope="col">{em.room}</th>
-                        <th scope="col">{em.status}</th>
-                        {canEdit && <th scope="col">{em.actions}</th>}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {draft.occurrences.map((e) => (
-                        <tr
-                          key={e.id}
-                          className={e.cancelled ? "editor-row-cancelled" : ""}
-                        >
-                          <td>{e.date}</td>
-                          <td>
-                            {e.start}–{e.end}
-                          </td>
-                          <td>{demoName(e.group, draft.data_kind)}</td>
-                          <td>
-                            {demoName(e.subject, draft.data_kind)}
-                            <small>
-                              {em.source}: {e.source_coordinate}
-                            </small>
-                          </td>
-                          <td>{demoName(e.teacher, draft.data_kind)}</td>
-                          <td>{demoName(e.room, draft.data_kind)}</td>
-                          <td>
-                            <StatusBadge
-                              tone={e.cancelled ? "neutral" : "info"}
-                            >
-                              {e.cancelled ? em.cancelled : em.active}
-                            </StatusBadge>
-                            {e.pinned && <small>{em.pinned}</small>}
-                          </td>
-                          {canEdit && (
-                            <td>
-                              <button
-                                className="editor-link"
-                                disabled={!editable}
-                                onClick={() => {
-                                  setSelection({ mode: "one", event: e });
-                                  setNotice("");
-                                }}
-                              >
-                                {em.oneEdit} · {e.date}
-                              </button>
-                              <button
-                                className="editor-link"
-                                disabled={!editable}
-                                onClick={() => {
-                                  const selected = draft.series.find(
-                                    (s) => s.id === e.series_id,
-                                  );
-                                  if (selected) {
-                                    setSelection({
-                                      mode: "series",
-                                      series: selected,
-                                    });
-                                    setNotice("");
-                                  }
-                                }}
-                              >
-                                {em.seriesEdit}
-                              </button>
-                            </td>
-                          )}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {!draft.occurrences.length && (
-                  <p className="editor-help">{em.noEvents}</p>
-                )}
-                <div className="editor-pagination">
-                  <button
-                    className="button button-quiet"
-                    disabled={busy || remoteStale || draft.offset === 0}
-                    onClick={() =>
+                    ) : undefined
+                  }
+                />
+              )}
+              {mode === "list" && (
+                <section className="editor-panel">
+                  <h2>{em.view}</h2>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
                       void act(async () => {
-                        const offset = Math.max(0, draft.offset - draft.limit);
-                        acceptView(
-                          await editorApi.get(draft.id, { ...view, offset }),
-                        );
-                      })
-                    }
+                        const loaded = await editorApi.get(draft.id, {
+                          ...view,
+                          offset: 0,
+                        });
+                        acceptView(loaded);
+                        setView((v) => ({ ...v, offset: 0 }));
+                      });
+                    }}
                   >
-                    {em.previous}
-                  </button>
-                  <span>
-                    {draft.total ? draft.offset + 1 : 0}–
-                    {Math.min(draft.offset + draft.limit, draft.total)} /{" "}
-                    {draft.total}
-                  </span>
-                  <button
-                    className="button button-quiet"
-                    disabled={
-                      busy ||
-                      remoteStale ||
-                      draft.offset + draft.limit >= draft.total
-                    }
-                    onClick={() =>
-                      void act(async () =>
-                        acceptView(
-                          await editorApi.get(draft.id, {
-                            ...view,
-                            offset: draft.offset + draft.limit,
-                          }),
-                        ),
-                      )
-                    }
+                    <div className="editor-grid">
+                      <label>
+                        {em.start}
+                        <input
+                          type="date"
+                          value={view.start}
+                          onChange={(e) =>
+                            setView({ ...view, start: e.target.value })
+                          }
+                        />
+                      </label>
+                      <label>
+                        {em.end}
+                        <input
+                          type="date"
+                          value={view.end}
+                          onChange={(e) =>
+                            setView({ ...view, end: e.target.value })
+                          }
+                        />
+                      </label>
+                      <label>
+                        {em.view}
+                        <select
+                          value={view.view}
+                          onChange={(e) =>
+                            setView({
+                              ...view,
+                              view: e.target.value as DraftView["view"],
+                              resource_id: "",
+                            })
+                          }
+                        >
+                          {Object.entries(em.views).map(([key, label]) => (
+                            <option key={key} value={key}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        {em.resource}
+                        <select
+                          value={view.resource_id}
+                          onChange={(e) =>
+                            setView({ ...view, resource_id: e.target.value })
+                          }
+                        >
+                          <option value="">{em.all}</option>
+                          {resources.map(([id, label]) => (
+                            <option key={id} value={id}>
+                              {demoName(label, draft.data_kind)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                    <button
+                      className="button button-quiet"
+                      disabled={busy || remoteStale}
+                    >
+                      {em.show}
+                    </button>
+                  </form>
+                  <div
+                    className="editor-table-wrap"
+                    role="region"
+                    aria-label={em.title}
+                    tabIndex={0}
                   >
-                    {em.next}
-                  </button>
-                </div>
-              </section>
+                    <table className="editor-events-table">
+                      <caption>
+                        {demoName(draft.name, draft.data_kind)} · {em.revision}{" "}
+                        {draft.revision}
+                      </caption>
+                      <thead>
+                        <tr>
+                          <th scope="col">{em.date}</th>
+                          <th scope="col">{em.time}</th>
+                          <th scope="col">{em.group}</th>
+                          <th scope="col">{em.subject}</th>
+                          <th scope="col">{em.teacher}</th>
+                          <th scope="col">{em.room}</th>
+                          <th scope="col">{em.status}</th>
+                          {canEdit && <th scope="col">{em.actions}</th>}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {draft.occurrences.map((e) => (
+                          <tr
+                            key={e.id}
+                            className={
+                              e.cancelled ? "editor-row-cancelled" : ""
+                            }
+                          >
+                            <td>{e.date}</td>
+                            <td>
+                              {e.start}–{e.end}
+                            </td>
+                            <td>{demoName(e.group, draft.data_kind)}</td>
+                            <td>
+                              {demoName(e.subject, draft.data_kind)}
+                              <small>
+                                {em.source}: {e.source_coordinate}
+                              </small>
+                            </td>
+                            <td>{demoName(e.teacher, draft.data_kind)}</td>
+                            <td>{demoName(e.room, draft.data_kind)}</td>
+                            <td>
+                              <StatusBadge
+                                tone={e.cancelled ? "neutral" : "info"}
+                              >
+                                {e.cancelled ? em.cancelled : em.active}
+                              </StatusBadge>
+                              {e.pinned && <small>{em.pinned}</small>}
+                            </td>
+                            {canEdit && (
+                              <td>
+                                <button
+                                  className="editor-link"
+                                  disabled={!editable}
+                                  onClick={() => {
+                                    setSelection({ mode: "one", event: e });
+                                    setNotice("");
+                                  }}
+                                >
+                                  {em.oneEdit} · {e.date}
+                                </button>
+                                <button
+                                  className="editor-link"
+                                  disabled={!editable}
+                                  onClick={() => {
+                                    const selected = draft.series.find(
+                                      (s) => s.id === e.series_id,
+                                    );
+                                    if (selected) {
+                                      setSelection({
+                                        mode: "series",
+                                        series: selected,
+                                      });
+                                      setNotice("");
+                                    }
+                                  }}
+                                >
+                                  {em.seriesEdit}
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {!draft.occurrences.length && (
+                    <p className="editor-help">{em.noEvents}</p>
+                  )}
+                  <div className="editor-pagination">
+                    <button
+                      className="button button-quiet"
+                      disabled={busy || remoteStale || draft.offset === 0}
+                      onClick={() =>
+                        void act(async () => {
+                          const offset = Math.max(
+                            0,
+                            draft.offset - draft.limit,
+                          );
+                          acceptView(
+                            await editorApi.get(draft.id, { ...view, offset }),
+                          );
+                        })
+                      }
+                    >
+                      {em.previous}
+                    </button>
+                    <span>
+                      {draft.total ? draft.offset + 1 : 0}–
+                      {Math.min(draft.offset + draft.limit, draft.total)} /{" "}
+                      {draft.total}
+                    </span>
+                    <button
+                      className="button button-quiet"
+                      disabled={
+                        busy ||
+                        remoteStale ||
+                        draft.offset + draft.limit >= draft.total
+                      }
+                      onClick={() =>
+                        void act(async () =>
+                          acceptView(
+                            await editorApi.get(draft.id, {
+                              ...view,
+                              offset: draft.offset + draft.limit,
+                            }),
+                          ),
+                        )
+                      }
+                    >
+                      {em.next}
+                    </button>
+                  </div>
+                </section>
+              )}
               {!remoteStale && (
                 <ConflictReport
                   report={draft.report}

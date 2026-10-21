@@ -4,6 +4,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import type { Role, Session, Workspace } from "./api";
 import { kk } from "./locales/kk";
+import { wb } from "./locales/workbench.kk";
+
+vi.mock("./publication-api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./publication-api")>();
+  return {
+    ...actual,
+    publicationApi: {
+      ...actual.publicationApi,
+      list: vi.fn().mockResolvedValue([]),
+    },
+    versionApi: { ...actual.versionApi, list: vi.fn().mockResolvedValue([]) },
+  };
+});
 
 const scheduler = {
   id: "user-test",
@@ -115,8 +128,8 @@ describe("AUTH-003: prepared account sign-in", () => {
     expect(await screen.findByText(scheduler.display_name)).toBeVisible();
     expect(screen.getByText(kk.roleScheduler)).toBeVisible();
     expect(screen.getByText(workspace.scope.name)).toBeVisible();
-    expect(screen.getByText(kk.demo)).toBeVisible();
-    expect(screen.getByText(kk.stageDescription)).toBeVisible();
+    expect(screen.getByText(wb.demo)).toBeVisible();
+    expect(screen.getByRole("heading", { name: wb.overview })).toBeVisible();
     expect(
       screen.queryByLabelText(kk.password, { exact: true }),
     ).not.toBeInTheDocument();
@@ -144,6 +157,7 @@ describe("REQ-006: server-provided workspace and session", () => {
       .mockResolvedValueOnce(json(teacherWorkspace));
     render(<App />);
     expect(await screen.findByText(kk.roleTeacher)).toBeVisible();
+    await userEvent.click(screen.getByText(wb.account));
     expect(screen.getByText("Өз сабақ кестесін қарау")).toBeVisible();
     expect(screen.getByText(kk.noPublishedTitle)).toBeVisible();
     expect(screen.queryByText("Кесте жобасын өңдеу")).not.toBeInTheDocument();
@@ -186,6 +200,7 @@ describe("REQ-006: server-provided workspace and session", () => {
         );
       render(<App />);
       expect(await screen.findByText(label)).toBeVisible();
+      await userEvent.click(screen.getByText(wb.account));
       expect(screen.getByText(next)).toBeVisible();
       expect(screen.queryByText(kk.roleScheduler)).not.toBeInTheDocument();
       expect(

@@ -12,6 +12,8 @@ import { VersionsPage } from "./VersionsPage";
 import { PublicationsPage } from "./PublicationsPage";
 import { vm } from "./locales/publication.kk";
 import { pm } from "./locales/planning.kk";
+import { wb } from "./locales/workbench.kk";
+import { WorkbenchHome } from "./WorkbenchHome";
 
 type Screen = "loading" | "login" | "workspace" | "error";
 const roleNames: Record<Role, string> = {
@@ -52,7 +54,13 @@ function errorMessage(error: unknown): string {
   return t.serverError;
 }
 
-function Brand({ inverse = false }: { inverse?: boolean }) {
+function Brand({
+  inverse = false,
+  compact = false,
+}: {
+  inverse?: boolean;
+  compact?: boolean;
+}) {
   return (
     <div className={`brand ${inverse ? "brand--inverse" : ""}`}>
       <span className="brand-mark">
@@ -60,7 +68,9 @@ function Brand({ inverse = false }: { inverse?: boolean }) {
       </span>
       <span>
         <strong>{t.appName}</strong>
-        <span className="brand-caption">{t.appDescription}</span>
+        <span className="brand-caption">
+          {compact ? "Оқу кестесі" : t.appDescription}
+        </span>
       </span>
     </div>
   );
@@ -295,6 +305,9 @@ function WorkspaceScreen({
     | "versions"
     | "publications"
   >("overview");
+  const [publicationFocus, setPublicationFocus] = useState<string>();
+  const [publicationGroup, setPublicationGroup] = useState("");
+  const [publicationDate, setPublicationDate] = useState<string>();
   const [planningDirty, setPlanningDirty] = useState(false);
   function setView(next: typeof view) {
     if (
@@ -332,16 +345,10 @@ function WorkspaceScreen({
   const availableUpcoming = upcomingItems.filter((item) =>
     workspace.permissions.includes(item.permission),
   );
-  const initials = user.display_name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p.charAt(0))
-    .join("")
-    .toLocaleUpperCase("kk-KZ");
   return (
-    <div className="workspace-layout">
+    <div className="workspace-layout workbench-layout">
       <aside className="sidebar">
-        <Brand />
+        <Brand inverse compact />
         <div className="sidebar-divider" />
         <nav aria-label={t.navTitle}>
           <p className="nav-heading">{t.navTitle}</p>
@@ -358,55 +365,68 @@ function WorkspaceScreen({
           {workspace.permissions.includes("import.source.read") && (
             <button
               className="import-nav"
+              aria-label={t.import}
               aria-current={view === "import" ? "page" : undefined}
               onClick={() => setView("import")}
             >
               <Icon name="file" size={20} />
-              {t.import}
+              {wb.nav.import}
             </button>
           )}
           {canReadCalendar && (
             <button
               className="import-nav"
+              aria-label={t.calendar}
               aria-current={view === "calendar" ? "page" : undefined}
               onClick={() => setView("calendar")}
             >
               <Icon name="clock" size={20} />
-              {t.calendar}
+              {wb.nav.calendar}
             </button>
           )}
           {canReadEditor && (
             <button
               className="import-nav"
+              aria-label={
+                workspace.permissions.includes("draft.read")
+                  ? t.editor
+                  : t.rooms
+              }
               aria-current={view === "editor" ? "page" : undefined}
               onClick={() => setView("editor")}
             >
               <Icon name="calendar" size={20} />
               {workspace.permissions.includes("draft.read")
-                ? t.editor
+                ? wb.nav.editor
                 : t.rooms}
             </button>
           )}
           {canReadEditor && (
             <button
               className="import-nav"
+              aria-label={
+                workspace.permissions.includes("catalog.manage")
+                  ? pm.conditions
+                  : pm.title
+              }
               aria-current={view === "planning" ? "page" : undefined}
               onClick={() => setView("planning")}
             >
               <Icon name="spark" size={20} />
               {workspace.permissions.includes("catalog.manage")
                 ? pm.conditions
-                : pm.title}
+                : wb.nav.planning}
             </button>
           )}
           {workspace.permissions.includes("draft.read") && (
             <button
               className="import-nav"
+              aria-label={t.publication}
               aria-current={view === "versions" ? "page" : undefined}
               onClick={() => setView("versions")}
             >
               <Icon name="layers" size={20} />
-              {t.publication}
+              {wb.nav.versions}
             </button>
           )}
           {workspace.permissions.some((p) =>
@@ -414,11 +434,12 @@ function WorkspaceScreen({
           ) && (
             <button
               className="import-nav"
+              aria-label={vm.publication}
               aria-current={view === "publications" ? "page" : undefined}
               onClick={() => setView("publications")}
             >
               <Icon name="calendar" size={20} />
-              {vm.publication}
+              {wb.nav.publications}
             </button>
           )}
           {availableUpcoming.length > 0 && (
@@ -443,18 +464,22 @@ function WorkspaceScreen({
             </>
           )}
         </nav>
-        <div className="sidebar-bottom">
-          <span className="local-dot" />
+        <div className="sidebar-bottom sidebar-profile">
+          <Icon name="user" size={26} />
           <div>
-            <strong>{t.local}</strong>
-            <span>{t.localHint}</span>
+            <strong>{user.display_name}</strong>
+            <span>
+              {activeRoles
+                .map((role) => roleNames[role] ?? t.unknownRole)
+                .join(", ")}
+            </span>
           </div>
         </div>
       </aside>
       <div className="workspace-body">
         <header className="workspace-header">
           <div>
-            <span className="breadcrumb-brand">{t.appName}</span>
+            <span className="breadcrumb-brand">{workspace.scope.name}</span>
             <span className="breadcrumb-separator">/</span>
             <span>
               {view === "import"
@@ -479,7 +504,7 @@ function WorkspaceScreen({
               Ққ <span>{t.language}</span>
             </span>
             <button
-              className="button button-quiet"
+              className="button button-quiet workbench-logout"
               onClick={() => {
                 if (
                   (view === "planning" || view === "versions") &&
@@ -508,7 +533,7 @@ function WorkspaceScreen({
               aria-current={view === "import" ? "page" : undefined}
               onClick={() => setView("import")}
             >
-              {t.import}
+              {wb.nav.import}
             </button>
           )}
           {canReadCalendar && (
@@ -516,7 +541,7 @@ function WorkspaceScreen({
               aria-current={view === "calendar" ? "page" : undefined}
               onClick={() => setView("calendar")}
             >
-              {t.calendar}
+              {wb.nav.calendar}
             </button>
           )}
           {canReadEditor && (
@@ -544,7 +569,7 @@ function WorkspaceScreen({
               aria-current={view === "versions" ? "page" : undefined}
               onClick={() => setView("versions")}
             >
-              {t.publication}
+              {wb.nav.versions}
             </button>
           )}
           {workspace.permissions.some((p) =>
@@ -554,7 +579,7 @@ function WorkspaceScreen({
               aria-current={view === "publications" ? "page" : undefined}
               onClick={() => setView("publications")}
             >
-              {vm.publication}
+              {wb.nav.publications}
             </button>
           )}
         </nav>
@@ -585,6 +610,10 @@ function WorkspaceScreen({
             />
           ) : view === "publications" ? (
             <PublicationsPage
+              initialMode="week"
+              initialPublicationId={publicationFocus}
+              initialDate={publicationDate}
+              initialResourceId={publicationGroup}
               scope={workspace.scope.id}
               onExpired={onExpired}
             />
@@ -604,6 +633,7 @@ function WorkspaceScreen({
             />
           ) : view === "editor" ? (
             <EditorPage
+              initialMode="week"
               onOpenVersion={(id) => {
                 setVersionFocus(id);
                 setView("versions");
@@ -632,151 +662,102 @@ function WorkspaceScreen({
             />
           ) : (
             <>
-              <div className="page-heading">
-                <div>
-                  <p className="eyebrow">{t.appDescription}</p>
-                  <h1>{t.overview}</h1>
-                </div>
-                {workspace.scope.is_demo && (
-                  <span className="demo-tag">
-                    <span />
-                    {t.demo}
-                  </span>
-                )}
-              </div>
-              <section className="welcome-card" aria-labelledby="welcome-title">
-                <div className="welcome-copy">
-                  <span className="stage-pill">{t.stageLabel}</span>
-                  <h2 id="welcome-title">{t.stageTitle}</h2>
-                  <p>{t.stageDescription}</p>
-                </div>
-                <div className="welcome-icon" aria-hidden="true">
-                  <Icon name="calendar" size={72} />
-                  <span className="welcome-tick">
-                    <Icon name="check" size={24} />
-                  </span>
-                </div>
-              </section>
-              {workspace.scope.is_demo && (
-                <p className="demo-note">
-                  <Icon name="alert" size={18} />
-                  {t.demoDescription}
+              <WorkbenchHome
+                workspace={workspace}
+                onNavigate={setView}
+                onExpired={onExpired}
+                onOpenDraft={(id) => {
+                  setEditorDraftId(id);
+                  setView("editor");
+                }}
+                onOpenPublication={(id, date, group) => {
+                  setPublicationGroup(group);
+                  setPublicationFocus(id);
+                  setPublicationDate(date);
+                  setView("publications");
+                }}
+              />
+              <details className="account-disclosure">
+                <summary>{wb.account}</summary>
+                <p>
+                  {user.email} · {t.secureSession}
                 </p>
-              )}
-              <section className="identity-grid" aria-label={t.accountLabel}>
-                <article className="identity-card">
-                  <span className="card-kicker">{t.accountLabel}</span>
-                  <div className="person-line">
-                    <span className="avatar" aria-hidden="true">
-                      {initials}
-                    </span>
-                    <div>
-                      <strong>{user.display_name}</strong>
-                      <span>{user.email}</span>
+                <div className="workspace-columns">
+                  <section
+                    className="panel permissions-panel"
+                    aria-labelledby="permissions-title"
+                  >
+                    <div className="panel-heading">
+                      <span className="panel-icon">
+                        <Icon name="lock" size={21} />
+                      </span>
+                      <div>
+                        <h2 id="permissions-title">{t.accessTitle}</h2>
+                        <p>{t.accessDescription}</p>
+                      </div>
                     </div>
-                  </div>
-                </article>
-                <article className="identity-card">
-                  <span className="card-kicker">
-                    {activeRoles.length === 1 ? t.roleLabel : t.rolePlural}
-                  </span>
-                  <div className="role-line">
-                    <span className="card-icon">
-                      <Icon name="lock" size={21} />
-                    </span>
-                    <strong>
-                      {activeRoles
-                        .map((role) => roleNames[role] ?? t.unknownRole)
-                        .join(", ")}
-                    </strong>
-                  </div>
-                </article>
-                <article className="identity-card">
-                  <span className="card-kicker">{t.scopeLabel}</span>
-                  <div className="role-line">
-                    <span className="card-icon">
-                      <Icon name="layers" size={21} />
-                    </span>
-                    <strong>{workspace.scope.name}</strong>
-                  </div>
-                </article>
-              </section>
-              <div className="workspace-columns">
-                <section
-                  className="panel permissions-panel"
-                  aria-labelledby="permissions-title"
-                >
-                  <div className="panel-heading">
-                    <span className="panel-icon">
-                      <Icon name="lock" size={21} />
-                    </span>
-                    <div>
-                      <h2 id="permissions-title">{t.accessTitle}</h2>
-                      <p>{t.accessDescription}</p>
-                    </div>
-                  </div>
-                  {workspace.permissions.length > 0 ? (
-                    <ul className="permission-list">
-                      {workspace.permissions.map((permission) => (
-                        <li key={permission}>
-                          <span className="permission-check">
-                            <Icon name="check" size={15} />
-                          </span>
-                          <span>
-                            {permissionNames[permission] ?? t.unknownPermission}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="empty-message">{t.noPermissions}</p>
-                  )}
-                  <div className="panel-footnote">
-                    <Icon name="lock" size={14} />
-                    {t.secureSession}
-                  </div>
-                </section>
-                <div className="right-column">
-                  <section className="panel stage-panel">
-                    <span className="mini-kicker">{t.stageLabel}</span>
-                    <h2>{t.currentStageTitle}</h2>
-                    <ul className="stage-list">
-                      {t.currentStageItems.map((item) => (
-                        <li key={item}>
-                          <Icon name="check" size={17} />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                  <section className="next-step">
-                    <span className="next-step-icon">
-                      <Icon name={isReader ? "calendar" : "file"} size={22} />
-                    </span>
-                    <div>
-                      <h2>{isReader ? t.noPublishedTitle : t.nextStepTitle}</h2>
-                      <p>{nextDescription}</p>
-                      {isReader ? (
-                        <button
-                          className="button button-quiet"
-                          onClick={() => setView("publications")}
-                        >
-                          {vm.publication}
-                        </button>
-                      ) : (
-                        <span className="upcoming-label">
-                          <Icon name="clock" size={14} />
-                          {t.export} · {t.upcoming}
-                        </span>
-                      )}
+                    {workspace.permissions.length > 0 ? (
+                      <ul className="permission-list">
+                        {workspace.permissions.map((permission) => (
+                          <li key={permission}>
+                            <span className="permission-check">
+                              <Icon name="check" size={15} />
+                            </span>
+                            <span>
+                              {permissionNames[permission] ??
+                                t.unknownPermission}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="empty-message">{t.noPermissions}</p>
+                    )}
+                    <div className="panel-footnote">
+                      <Icon name="lock" size={14} />
+                      {t.secureSession}
                     </div>
                   </section>
+                  <div className="right-column">
+                    <section className="panel stage-panel">
+                      <span className="mini-kicker">{t.stageLabel}</span>
+                      <h2>{t.currentStageTitle}</h2>
+                      <ul className="stage-list">
+                        {t.currentStageItems.map((item) => (
+                          <li key={item}>
+                            <Icon name="check" size={17} />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                    <section className="next-step">
+                      <span className="next-step-icon">
+                        <Icon name={isReader ? "calendar" : "file"} size={22} />
+                      </span>
+                      <div>
+                        <h2>
+                          {isReader ? t.noPublishedTitle : t.nextStepTitle}
+                        </h2>
+                        <p>{nextDescription}</p>
+                        {isReader ? (
+                          <button
+                            className="button button-quiet"
+                            onClick={() => setView("publications")}
+                          >
+                            {vm.publication}
+                          </button>
+                        ) : (
+                          <span className="upcoming-label">
+                            <Icon name="clock" size={14} />
+                            {t.export} · {t.upcoming}
+                          </span>
+                        )}
+                      </div>
+                    </section>
+                  </div>
                 </div>
-              </div>
-              <footer className="workspace-footer">
-                <span>{t.footer}</span>
-                <span>{t.stageFooter}</span>
-              </footer>
+              </details>
             </>
           )}
         </main>

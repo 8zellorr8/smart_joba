@@ -8,6 +8,7 @@ import type { EditorData, ScheduleDraft } from "./editor-api";
 import { emptyCalendar } from "./CalendarPage";
 import { em } from "./locales/editor.kk";
 import { vm, versionStatuses } from "./locales/publication.kk";
+import { wb } from "./locales/workbench.kk";
 
 vi.mock("./editor-api", () => ({
   editorApi: {
@@ -189,6 +190,41 @@ beforeEach(() => {
   vi.mocked(editorApi.get).mockResolvedValue(draft());
 });
 describe("manual schedule editor", () => {
+  it("retains an edited lesson in the weekly inspector after a stale save", async () => {
+    render(
+      <EditorPage
+        scope="scope"
+        csrfToken="csrf"
+        canEdit
+        canRead
+        canManageRooms={false}
+        onExpired={vi.fn()}
+        initialMode="week"
+      />,
+    );
+    await screen.findByLabelText(wb.date);
+    // The selected draft starts at the current week; choose a date with a fixture lesson.
+    const { fireEvent } = await import("@testing-library/react");
+    fireEvent.change(screen.getByLabelText(wb.date), {
+      target: { value: "2026-09-01" },
+    });
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: /1 қыркүйек.*SYNTHETIC Subject/,
+      }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: wb.edit }));
+    await userEvent.click(screen.getByLabelText(em.pinned));
+    expect(screen.getByRole("button", { name: wb.nextWeek })).toBeDisabled();
+    expect(screen.getByRole("button", { name: wb.list })).toBeDisabled();
+    vi.mocked(editorApi.one).mockRejectedValue(
+      new ApiError(409, "EDITOR_STALE"),
+    );
+    await userEvent.click(screen.getByRole("button", { name: em.saveOne }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(em.stale);
+    expect(screen.getByLabelText(em.pinned)).toBeChecked();
+    expect(screen.getByRole("button", { name: em.saveOne })).toBeDisabled();
+  });
   it("explains a published version while keeping editing disabled and the exact version link available", async () => {
     const published = { ...draft(), status: "published", version_number: 5 };
     vi.mocked(editorApi.get).mockResolvedValue(published);

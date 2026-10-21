@@ -6,6 +6,7 @@ import { PublicationsPage } from "./PublicationsPage";
 import { publicationApi } from "./publication-api";
 import type { PublishedView } from "./publication-api";
 import { vm } from "./locales/publication.kk";
+import { wb } from "./locales/workbench.kk";
 
 vi.mock("./publication-api", () => ({
   publicationApi: { list: vi.fn(), get: vi.fn() },
@@ -147,4 +148,61 @@ it("preserves entered date filters when a refresh fails", async () => {
   await screen.findByRole("alert");
   expect(screen.getByLabelText(vm.start)).toHaveValue("2026-09-01");
   expect(screen.getByLabelText(vm.end)).toHaveValue("2026-09-08");
+});
+
+it("carries the selected week and resource into the existing list view", async () => {
+  render(
+    <PublicationsPage
+      scope="scope"
+      onExpired={vi.fn()}
+      initialMode="week"
+      initialDate="2026-09-01"
+    />,
+  );
+  await screen.findByRole("button", { name: /1 қыркүйек.*Ағылшын тілі/ });
+  await userEvent.selectOptions(
+    screen.getByLabelText("Аптаның ресурсы"),
+    "own-group",
+  );
+  await userEvent.click(screen.getByRole("button", { name: wb.list }));
+  await screen.findByRole("table");
+  expect(screen.getByLabelText(vm.start)).toHaveValue("2026-08-31");
+  expect(screen.getByLabelText(vm.end)).toHaveValue("2026-09-06");
+  expect(screen.getByLabelText(vm.resource)).toHaveValue("own-group");
+});
+
+it("drops the previous publication's resource when selecting a different snapshot", async () => {
+  const second = {
+    ...view(),
+    publication_id: "other",
+    version_number: 5,
+    resources: {
+      ...view().resources,
+      group: [{ id: "other-group", name: "Топ Б" }],
+    },
+  };
+  vi.mocked(publicationApi.list).mockResolvedValue([view(), second]);
+  vi.mocked(publicationApi.get).mockImplementation(async (id) =>
+    id === "other" ? second : view(),
+  );
+  render(
+    <PublicationsPage
+      scope="scope"
+      onExpired={vi.fn()}
+      initialMode="week"
+      initialDate="2026-09-01"
+      initialPublicationId="publication"
+      initialResourceId="own-group"
+    />,
+  );
+  await screen.findByRole("button", { name: /1 қыркүйек.*Ағылшын тілі/ });
+  expect(screen.getByLabelText("Аптаның ресурсы")).toHaveValue("own-group");
+  await userEvent.selectOptions(screen.getByLabelText(vm.publication), "other");
+  await waitFor(() =>
+    expect(publicationApi.get).toHaveBeenLastCalledWith(
+      "other",
+      expect.objectContaining({ view: "group", resource_id: "" }),
+    ),
+  );
+  expect(screen.getByLabelText("Аптаның ресурсы")).toHaveValue("");
 });
