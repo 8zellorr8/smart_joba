@@ -99,7 +99,7 @@ class PlanningInputs:
             audit(db, "planning.rules", "saved", request_id, user.id)
             return {"revision": rules.revision, "document": rules.document}
 
-    def build(self, db, context, selection):
+    def build(self, db, context, selection, allow_frozen=False):
         group_ids = set(selection["group_ids"])
         room_ids = set(selection["room_ids"])
         if len(group_ids) != len(selection["group_ids"]) or len(room_ids) != len(selection["room_ids"]):
@@ -137,7 +137,7 @@ class PlanningInputs:
         if base_id:
             base = db.get(ScheduleDraft, uuid.UUID(base_id))
             if not base or base.context_id != context.id: raise ApiError("ACCESS_DENIED", 403)
-            if base.status != "draft": raise ApiError("DRAFT_IMMUTABLE", 409)
+            if base.status != "draft" and not allow_frozen: raise ApiError("DRAFT_IMMUTABLE", 409)
             base_revision = base.revision
             for row in self.editor.rows(db, base):
                 pins.extend(dict(e) for e in row.occurrences if e["pinned"] and e["group_id"] in group_ids and e["semester"] == selection["semester"])

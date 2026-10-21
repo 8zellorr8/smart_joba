@@ -16,6 +16,8 @@ import { OneDateForm } from "./editor/OneDateForm";
 import type { OneDateValues } from "./editor/OneDateForm";
 import { RoomPanel } from "./editor/RoomPanel";
 import { ConflictReport } from "./editor/ConflictReport";
+import { demoName } from "./demo-labels";
+import { vm } from "./locales/publication.kk";
 import "./editor.css";
 
 const emptyData: EditorData = {
@@ -45,6 +47,7 @@ export function EditorPage({
   canRead,
   canManageRooms,
   initialDraftId,
+  onOpenVersion,
   onExpired,
 }: {
   scope: string;
@@ -53,6 +56,7 @@ export function EditorPage({
   canRead: boolean;
   canManageRooms: boolean;
   initialDraftId?: string;
+  onOpenVersion?: (id: string) => void;
   onExpired: () => void;
 }) {
   const [data, setData] = useState<EditorData>(emptyData);
@@ -299,7 +303,12 @@ export function EditorPage({
                 <option value="">{em.noDraft}</option>
                 {data.drafts.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.name} · {em.revision} {d.revision}
+                    {demoName(
+                      d.name,
+                      data.contexts.find((c) => c.id === d.context_id)
+                        ?.data_kind,
+                    )}{" "}
+                    · {em.revision} {d.revision}
                   </option>
                 ))}
               </select>
@@ -387,15 +396,33 @@ export function EditorPage({
             <>
               <div className="editor-draft-heading">
                 <div>
-                  <h2>{draft.name}</h2>
+                  <h2>{demoName(draft.name, draft.data_kind)}</h2>
                   <p>
                     {draft.academic_year} ·{" "}
                     {draft.data_kind === "synthetic"
                       ? em.synthetic
                       : em.college}{" "}
-                    · {em.revision} {draft.revision}
+                    ·{" "}
+                    {draft.version_number && (
+                      <>
+                        {vm.number} {draft.version_number} ·{" "}
+                      </>
+                    )}
+                    {em.revision} {draft.revision}
                   </p>
                 </div>
+                {onOpenVersion && (
+                  <button
+                    className="button button-quiet"
+                    disabled={busy}
+                    onClick={() => {
+                      if (!selection || window.confirm(vm.leaveDirty))
+                        onOpenVersion(draft.id);
+                    }}
+                  >
+                    {vm.title}
+                  </button>
+                )}
                 {canEdit && (
                   <button
                     className="button button-primary"
@@ -510,7 +537,7 @@ export function EditorPage({
                         <option value="">{em.all}</option>
                         {resources.map(([id, label]) => (
                           <option key={id} value={id}>
-                            {label}
+                            {demoName(label, draft.data_kind)}
                           </option>
                         ))}
                       </select>
@@ -526,7 +553,8 @@ export function EditorPage({
                 <div className="editor-table-wrap">
                   <table>
                     <caption>
-                      {draft.name} · {em.revision} {draft.revision}
+                      {demoName(draft.name, draft.data_kind)} · {em.revision}{" "}
+                      {draft.revision}
                     </caption>
                     <thead>
                       <tr>
@@ -550,15 +578,15 @@ export function EditorPage({
                           <td>
                             {e.start}–{e.end}
                           </td>
-                          <td>{e.group}</td>
+                          <td>{demoName(e.group, draft.data_kind)}</td>
                           <td>
-                            {e.subject}
+                            {demoName(e.subject, draft.data_kind)}
                             <small>
                               {em.source}: {e.source_coordinate}
                             </small>
                           </td>
-                          <td>{e.teacher}</td>
-                          <td>{e.room}</td>
+                          <td>{demoName(e.teacher, draft.data_kind)}</td>
+                          <td>{demoName(e.room, draft.data_kind)}</td>
                           <td>
                             {e.cancelled ? em.cancelled : em.active}
                             {e.pinned && <small>{em.pinned}</small>}
@@ -645,7 +673,12 @@ export function EditorPage({
                   </button>
                 </div>
               </section>
-              {!remoteStale && <ConflictReport report={draft.report} />}
+              {!remoteStale && (
+                <ConflictReport
+                  report={draft.report}
+                  dataKind={draft.data_kind}
+                />
+              )}
             </>
           )}
         </>

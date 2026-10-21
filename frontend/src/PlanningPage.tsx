@@ -15,6 +15,7 @@ import {
   planningMessages,
 } from "./locales/planning.kk";
 import { Diagnostics, ValidationView } from "./planning/ValidationView";
+import { demoName } from "./demo-labels";
 import { RulesForm } from "./planning/RulesForm";
 import "./editor.css";
 import "./planning.css";
@@ -220,9 +221,7 @@ export function PlanningPage({
       aria-busy={busy}
     >
       <div className="page-heading">
-        <p className="eyebrow">
-          {canManage ? pm.conditions : "CP-SAT · ENG-007"}
-        </p>
+        <p className="eyebrow">{canManage ? pm.conditions : pm.subtitle}</p>
         <h1 id="planning-title">{canManage ? pm.conditions : pm.title}</h1>
         <p>{pm.intro}</p>
       </div>
@@ -352,7 +351,7 @@ export function PlanningPage({
                               choose("group_ids", g.id, e.target.checked)
                             }
                           />
-                          {g.code}
+                          {demoName(g.code, g.data_kind)}
                         </label>
                       ))}
                   </div>
@@ -369,7 +368,7 @@ export function PlanningPage({
                               choose("room_ids", r.id, e.target.checked)
                             }
                           />
-                          {r.code}
+                          {demoName(r.code, r.data_kind)}
                         </label>
                       ))}
                   </div>
@@ -401,7 +400,8 @@ export function PlanningPage({
                             <option value="">{pm.noBase}</option>
                             {choices.map((d) => (
                               <option key={d.id} value={d.id}>
-                                {d.name} · {d.revision}
+                                {demoName(d.name, context?.data_kind)} ·{" "}
+                                {d.revision}
                               </option>
                             ))}
                           </select>
@@ -479,7 +479,10 @@ export function PlanningPage({
                             {pm.externalUnknown}
                           </p>
                         )}
-                        <Diagnostics items={preview.questions} />
+                        <Diagnostics
+                          items={preview.questions}
+                          dataKind={context?.data_kind}
+                        />
                       </div>
                     )}
                   </>
@@ -496,8 +499,8 @@ export function PlanningPage({
                       onChange={(e) => setJobId(e.target.value)}
                     >
                       {jobs.map((j) => (
-                        <option key={j.id} value={j.id}>
-                          {j.id.slice(0, 8)} ·{" "}
+                        <option key={j.id} value={j.id} title={j.id}>
+                          {new Date(j.created_at).toLocaleString("kk-KZ")} ·{" "}
                           {jobStatuses[j.status] ?? pm.error}
                         </option>
                       ))}
@@ -524,8 +527,14 @@ export function PlanningPage({
                         ? pm.synthetic
                         : pm.college}{" "}
                       · {pm.semester}: {job.semester} · {pm.groups}:{" "}
-                      {job.group_ids.length} · {job.algorithm_version}
+                      {job.group_ids.length}
                     </p>
+                    <details>
+                      <summary>{pm.technicalDetails}</summary>
+                      <p>
+                        {job.algorithm_version} · {job.id}
+                      </p>
+                    </details>
                     {job.execution_status === "queued" && (
                       <p>{pm.queuedHint}</p>
                     )}
@@ -562,12 +571,16 @@ export function PlanningPage({
                     {!!job.result?.diagnostics?.length && (
                       <details>
                         <summary>{pm.questions}</summary>
-                        <Diagnostics items={job.result.diagnostics} />
+                        <Diagnostics
+                          items={job.result.diagnostics}
+                          dataKind={job.data_kind}
+                        />
                       </details>
                     )}
                     {job.result?.validation && (
                       <ValidationView
                         report={job.result.validation}
+                        dataKind={job.data_kind}
                         stale={job.stale || job.validation_stale}
                       />
                     )}
@@ -587,7 +600,8 @@ export function PlanningPage({
                     <option value="">—</option>
                     {choices.map((d) => (
                       <option key={d.id} value={d.id}>
-                        {d.name} · {pm.revision} {d.revision}
+                        {demoName(d.name, context?.data_kind)} · {pm.revision}{" "}
+                        {d.revision}
                       </option>
                     ))}
                   </select>
@@ -620,6 +634,7 @@ export function PlanningPage({
                   <ValidationView
                     key={r.id}
                     report={r.report}
+                    dataKind={context?.data_kind}
                     stale={r.stale}
                   />
                 ))}

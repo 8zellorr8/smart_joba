@@ -159,12 +159,15 @@ def test_unknown_room_structure_remains_blocking_question(client, app, env):
     env["rooms"][0] = changed; login(client, app)
     draft = add_series(client, env).json()
     assert any(q["code"] == "ROOM_EXCLUSIVITY_UNKNOWN" for q in draft["report"]["questions"])
-    assert client.post(f"/api/drafts/{draft['id']}/submit", headers=csrf(client), json={"expected_revision": draft["revision"], "expected_dependencies": draft["dependencies"]}).status_code == 422
+    response = client.post(f"/api/drafts/{draft['id']}/submit", headers=csrf(client), json={"expected_revision": draft["revision"], "expected_workflow_revision": 1,
+        "group_ids": list(env["calendars"]), "room_ids": [r["id"] for r in env["rooms"]], "semester": 1})
+    assert response.status_code == 422 and response.json()["error"]["code"] == "DRAFT_HAS_ERRORS"
 
 
 def test_conflicting_draft_is_saved_but_cannot_be_submitted(client, env):
     first = add_series(client, env).json(); draft = add_series(client, env, first).json()
-    response = client.post(f"/api/drafts/{draft['id']}/submit", headers=csrf(client), json={"expected_revision": draft["revision"], "expected_dependencies": draft["dependencies"]})
+    response = client.post(f"/api/drafts/{draft['id']}/submit", headers=csrf(client), json={"expected_revision": draft["revision"], "expected_workflow_revision": 1,
+        "group_ids": list(env["calendars"]), "room_ids": [r["id"] for r in env["rooms"]], "semester": 1})
     assert response.status_code == 422 and response.json()["error"]["code"] == "DRAFT_HAS_ERRORS"
     assert client.get(f"/api/drafts/{draft['id']}").json()["status"] == "draft"
 

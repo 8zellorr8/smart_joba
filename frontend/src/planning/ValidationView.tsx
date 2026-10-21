@@ -1,7 +1,14 @@
 import type { Diagnostic, IndependentReport } from "../planning-api";
 import { pm, planningMessages } from "../locales/planning.kk";
+import { demoName } from "../demo-labels";
 
-export function Diagnostics({ items }: { items: Diagnostic[] }) {
+export function Diagnostics({
+  items,
+  dataKind,
+}: {
+  items: Diagnostic[];
+  dataKind?: string;
+}) {
   return (
     <ul className="planning-diagnostics">
       {items.map((item, i) => (
@@ -15,6 +22,7 @@ export function Diagnostics({ items }: { items: Diagnostic[] }) {
               ·{" "}
               {[item.subject, item.group, item.resource_name]
                 .filter(Boolean)
+                .map((value) => demoName(value!, dataKind))
                 .join(" · ")}
             </>
           )}
@@ -36,9 +44,11 @@ export function Diagnostics({ items }: { items: Diagnostic[] }) {
 export function ValidationView({
   report,
   stale = false,
+  dataKind,
 }: {
   report: IndependentReport;
   stale?: boolean;
+  dataKind?: string;
 }) {
   return (
     <section className="editor-panel validation-view" aria-label={pm.validate}>
@@ -69,7 +79,7 @@ export function ValidationView({
           <summary>
             {pm.errors} ({report.errors.length})
           </summary>
-          <Diagnostics items={report.errors} />
+          <Diagnostics items={report.errors} dataKind={dataKind} />
         </details>
       )}
       {!!report.questions.length && (
@@ -77,7 +87,7 @@ export function ValidationView({
           <summary>
             {pm.questions} ({report.questions.length})
           </summary>
-          <Diagnostics items={report.questions} />
+          <Diagnostics items={report.questions} dataKind={dataKind} />
         </details>
       )}
       {!!report.conflicts.length && (
@@ -93,9 +103,12 @@ export function ValidationView({
                   : c.resource_type === "group"
                     ? pm.group
                     : pm.room}
-                : {c.resource_name ?? c.resource_id} ·{" "}
+                : {demoName(c.resource_name ?? c.resource_id, dataKind)} ·{" "}
                 {c.events
-                  ?.map((e) => `${e.subject} (${e.group}, ${e.start}–${e.end})`)
+                  ?.map(
+                    (e) =>
+                      `${demoName(e.subject, dataKind)} (${demoName(e.group, dataKind)}, ${e.start}–${e.end})`,
+                  )
                   .join(" ↔ ") ?? c.event_ids.join(" ↔ ")}{" "}
                 · {c.dates.join(", ")}
               </li>
@@ -122,8 +135,8 @@ export function ValidationView({
           <tbody>
             {report.hours.map((h) => (
               <tr key={h.demand_id}>
-                <td>{h.subject}</td>
-                <td>{h.group}</td>
+                <td>{demoName(h.subject, dataKind)}</td>
+                <td>{demoName(h.group, dataKind)}</td>
                 <td>{h.required ?? "?"}</td>
                 <td>{h.planned}</td>
                 <td>{h.remaining ?? "?"}</td>

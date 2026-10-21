@@ -115,6 +115,7 @@ class ImportContext(Base):
     scope_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scopes.id", ondelete="RESTRICT"))
     academic_year: Mapped[str] = mapped_column(String(9))
     data_kind: Mapped[str] = mapped_column(String(16))
+    version_counter: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     revision: Mapped[int] = mapped_column(Integer, default=0)
 
 
@@ -255,11 +256,16 @@ class Room(Base):
 class ScheduleDraft(Base):
     __tablename__ = "schedule_drafts"
     __table_args__ = (CheckConstraint("revision > 0", name="draft_revision_positive"),
-                     CheckConstraint("status IN ('draft','submitted','approved','published')", name="draft_status"))
+                     CheckConstraint("status IN ('draft','submitted','rejected','approved','published','archived')", name="draft_status"),
+                     UniqueConstraint("context_id", "version_number", name="uq_schedule_version_number"),
+                     CheckConstraint("version_number > 0 AND workflow_revision > 0", name="version_numbers_positive"))
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     context_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_contexts.id", ondelete="RESTRICT"), index=True)
     name: Mapped[str] = mapped_column(String(160))
     revision: Mapped[int] = mapped_column(Integer)
+    version_number: Mapped[int] = mapped_column(Integer)
+    workflow_revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("schedule_drafts.id", ondelete="RESTRICT"), nullable=True)
     status: Mapped[str] = mapped_column(String(16), default="draft")
     dependencies: Mapped[dict] = mapped_column(JSONB)
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
@@ -334,3 +340,71 @@ class ValidationReport(Base):
     report: Mapped[dict] = mapped_column(JSONB)
     actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class VersionSubmission(Base):
+    __tablename__ = "version_submissions"
+    __table_args__ = (UniqueConstraint("version_id", "workflow_revision"),)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_drafts.id", ondelete="RESTRICT"), index=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    workflow_revision: Mapped[int] = mapped_column(Integer)
+    selection: Mapped[dict] = mapped_column(JSONB)
+    inputs: Mapped[dict] = mapped_column(JSONB)
+    events: Mapped[list] = mapped_column(JSONB)
+    report: Mapped[dict] = mapped_column(JSONB)
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class VersionDecision(Base):
+    __tablename__ = "version_decisions"
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    submission_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("version_submissions.id", ondelete="RESTRICT"), unique=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    action: Mapped[str] = mapped_column(String(16))
+    comment: Mapped[str] = mapped_column(String(2000))
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (CheckConstraint("action IN ('approve','reject')", name="version_decision_action"),)
+
+
+class VersionTransition(Base):
+    __tablename__ = "version_transitions"
+    __table_args__ = (UniqueConstraint("version_id", "workflow_revision"),)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_drafts.id", ondelete="RESTRICT"), index=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    workflow_revision: Mapped[int] = mapped_column(Integer)
+    action: Mapped[str] = mapped_column(String(24))
+    from_status: Mapped[str] = mapped_column(String(16))
+    to_status: Mapped[str] = mapped_column(String(16))
+    comment: Mapped[str] = mapped_column(String(2000))
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Publication(Base):
+    __tablename__ = "publications"
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    context_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_contexts.id", ondelete="RESTRICT"), index=True)
+    version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_drafts.id", ondelete="RESTRICT"), unique=True)
+    approval_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("version_decisions.id", ondelete="RESTRICT"))
+    profile_key: Mapped[str] = mapped_column(String(64), index=True)
+    snapshot: Mapped[dict] = mapped_column(JSONB)
+    published_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PublicationHead(Base):
+    __tablename__ = "publication_heads"
+    profile_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    publication_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("publications.id", ondelete="RESTRICT"), unique=True)
+
+
+class PublicationOperation(Base):
+    __tablename__ = "publication_operations"
+    key: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    request_hash: Mapped[str] = mapped_column(String(64))
+    publication_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("publications.id", ondelete="RESTRICT"))

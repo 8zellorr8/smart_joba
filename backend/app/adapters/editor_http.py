@@ -97,8 +97,4 @@ def editor_router(service):
     def occurrence_update(draft_id: uuid.UUID, occurrence_id: uuid.UUID, body: OneDateBody, request: Request):
         return service.save_one(token(request), draft_id, str(occurrence_id), body.model_dump(mode="json"), request.state.request_id)
 
-    @router.post("/api/drafts/{draft_id}/submit")
-    def submit_guard(draft_id: uuid.UUID, body: ExpectedDraft, request: Request):
-        return service.submit_guard(token(request), draft_id, body.model_dump(mode="json"))
-
     return router

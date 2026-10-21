@@ -10,7 +10,7 @@ from sqlalchemy import delete, select, update
 from backend.app.adapters.http import CSRF_COOKIE, SESSION_COOKIE
 from backend.app.config import Settings
 from backend.app.domain.permissions import permissions_for
-from backend.app.infrastructure.models import AuditEvent, AuthSession, RoleGrant, Scope, User
+from backend.app.infrastructure.models import AuditEvent, AuthSession, ImportContext, RoleGrant, ScheduleDraft, Scope, User
 from backend.app.infrastructure.security import token_hash
 from backend.app.infrastructure.security import valid_csrf
 from backend.app.seed import prepare_accounts
@@ -61,12 +61,12 @@ def test_expired_session_and_blocked_account_cannot_access_closed_api(client, ap
 def test_ac010a_direct_approval_is_rejected_for_scheduler_and_admin(client, app):
     for role in ("scheduler", "admin"):
         session = login(client, app, role)
-        response = client.post(f"/api/schedule-versions/{uuid.uuid4()}/approve?scope_id={session['user']['home_scope_id']}", headers=csrf(client))
+        response = client.post(f"/api/schedule-versions/{uuid.uuid4()}/approve?scope_id={session['user']['home_scope_id']}", headers=csrf(client), json={"expected_revision": 1, "expected_workflow_revision": 1, "submission_id": str(uuid.uuid4())})
         assert response.status_code == 403
         assert response.json()["error"]["code"] == "ACCESS_DENIED"
     session = login(client, app, "approver")
-    response = client.post(f"/api/schedule-versions/{uuid.uuid4()}/approve?scope_id={session['user']['home_scope_id']}", headers=csrf(client))
-    assert response.status_code == 501  # Approval itself is outside stage 1.
+    response = client.post(f"/api/schedule-versions/{uuid.uuid4()}/approve?scope_id={session['user']['home_scope_id']}", headers=csrf(client), json={"expected_revision": 1, "expected_workflow_revision": 1, "submission_id": str(uuid.uuid4())})
+    assert response.status_code == 404  # A real loaded version, never a query scope, determines access.
 
 
 def test_scope_idor_and_cross_scope_role_escalation(client, app):
@@ -80,7 +80,13 @@ def test_scope_idor_and_cross_scope_role_escalation(client, app):
     assert "draft.approve" not in client.get(f"/api/scopes/{home}/workspace").json()["permissions"]
     assert "draft.approve" in client.get(f"/api/scopes/{foreign_id}/workspace").json()["permissions"]
     assert client.get(f"/api/scopes/{uuid.uuid4()}/workspace").status_code == 403
-    response = client.post(f"/api/schedule-versions/{uuid.uuid4()}/approve?scope_id={home}", headers=csrf(client))
+    with app.state.session_factory.begin() as db:
+        context = ImportContext(scope_id=uuid.UUID(home), academic_year="2026-2027", data_kind="synthetic", revision=0, version_counter=1)
+        db.add(context); db.flush()
+        version = ScheduleDraft(context_id=context.id, name="SYNTHETIC scope check", revision=1, version_number=1,
+            status="draft", dependencies={}, created_by=uuid.UUID(session["user"]["id"]))
+        db.add(version); db.flush(); version_id = str(version.id)
+    response = client.post(f"/api/schedule-versions/{version_id}/approve?scope_id={foreign_id}", headers=csrf(client), json={"expected_revision": 1, "expected_workflow_revision": 1, "submission_id": str(uuid.uuid4())})
     assert response.status_code == 403
 
 
@@ -202,7 +208,7 @@ def test_ac026d_audit_and_validation_do_not_expose_secrets(client, app, caplog):
 
 
 def test_health_and_unauthenticated_closed_reads(client):
-    assert client.get("/api/health").json() == {"status": "ok", "database": "ok", "stage": 5}
+    assert client.get("/api/health").json() == {"status": "ok", "database": "ok", "stage": 6}
     assert client.get("/api/me").status_code == 401
     assert client.get(f"/api/scopes/{uuid.uuid4()}/workspace").status_code == 401
 

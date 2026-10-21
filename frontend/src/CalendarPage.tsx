@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { demoName } from "./demo-labels";
 import type { FormEvent, ReactNode } from "react";
 import { api, ApiError } from "./api";
 import { calendarApi } from "./calendar-api";
@@ -328,7 +329,7 @@ export function CalendarPage({
             <option value="">{cm.noProfile}</option>
             {data.profiles.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.group_code} · {p.academic_year} ·{" "}
+                {demoName(p.group_code, p.data_kind)} · {p.academic_year} ·{" "}
                 {p.data_kind === "synthetic" ? cm.synthetic : cm.college}
               </option>
             ))}
@@ -408,7 +409,7 @@ export function CalendarPage({
                     .filter((g) => g.data_kind === kind)
                     .map((g) => (
                       <option value={g.id} key={g.id}>
-                        {g.code}
+                        {demoName(g.code, g.data_kind)}
                       </option>
                     ))}
                 </select>
@@ -1032,7 +1033,7 @@ export function CalendarPage({
                       >
                         {doc.slots.map((s) => (
                           <option key={s.id} value={s.id}>
-                            {s.label} · {s.start}–{s.end}
+                            {demoName(s.label, kind)} · {s.start}–{s.end}
                           </option>
                         ))}
                       </select>
@@ -1083,7 +1084,7 @@ export function CalendarPage({
                         <option value="">{cm.noDemand}</option>
                         {demandOptions.map((d) => (
                           <option key={d.id} value={d.id}>
-                            {d.subject} · {d.semester ?? "?"} ·{" "}
+                            {demoName(d.subject, kind)} · {d.semester ?? "?"} ·{" "}
                             {d.semester_amount ?? "?"}{" "}
                             {unitNames[d.unit] ?? cm.unknown}
                             {d.confirmed ? "" : " · ?"}
@@ -1233,7 +1234,8 @@ export function CalendarPage({
                     <p>{historical.document.source || cm.unknown}</p>
                     {historical.document.periods.map((p, i) => (
                       <p key={i}>
-                        {p.start} — {p.end}: {dayKinds[p.kind]} · {p.label}
+                        {p.start} — {p.end}: {dayKinds[p.kind]} ·{" "}
+                        {demoName(p.label, kind)}
                       </p>
                     ))}
                   </div>
