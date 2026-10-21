@@ -177,6 +177,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if (dist / "assets").is_dir():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
+    @app.get("/favicon.svg", include_in_schema=False)
+    def favicon():
+        icon = dist / "favicon.svg"
+        if icon.is_file():
+            return FileResponse(icon, media_type="image/svg+xml", headers={"Cache-Control": "no-cache"})
+        raise HTTPException(status_code=404)
+
     @app.get("/", include_in_schema=False)
     def index():
         if (dist / "index.html").is_file():

@@ -49,7 +49,7 @@ function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
     <div className={`brand ${inverse ? "brand--inverse" : ""}`}>
       <span className="brand-mark">
-        <Icon name="calendar" size={27} />
+        <img src="/favicon.svg?v=2" alt="" width="47" height="47" />
       </span>
       <span>
         <strong>{t.appName}</strong>
@@ -157,7 +157,10 @@ function Login({
       </aside>
       <main id="main" className="login-main">
         <div className="login-top">
-          <span className="mobile-brand">{t.appName}</span>
+          <span className="mobile-brand">
+            <img src="/favicon.svg?v=2" alt="" width="32" height="32" />
+            {t.appName}
+          </span>
           <span className="language-label">
             Ққ <span>{t.language}</span>
           </span>
