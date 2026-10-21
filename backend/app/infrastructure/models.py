@@ -213,3 +213,74 @@ class TeachingAssignment(Base):
     teacher_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("teachers.id", ondelete="RESTRICT"))
     source_revision_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("demand_revisions.id", ondelete="RESTRICT"))
     confirmed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+
+
+class CalendarProfile(Base):
+    __tablename__ = "calendar_profiles"
+    __table_args__ = (UniqueConstraint("context_id", "group_id"),
+                     CheckConstraint("revision > 0", name="calendar_revision_positive"))
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    context_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_contexts.id", ondelete="RESTRICT"), index=True)
+    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("groups.id", ondelete="RESTRICT"))
+    revision: Mapped[int] = mapped_column(Integer)
+    document: Mapped[dict] = mapped_column(JSONB)
+
+
+class CalendarRevision(Base):
+    __tablename__ = "calendar_revisions"
+    __table_args__ = (UniqueConstraint("profile_id", "revision"),)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("calendar_profiles.id", ondelete="RESTRICT"), index=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    document: Mapped[dict] = mapped_column(JSONB)
+    confirmed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Room(Base):
+    __tablename__ = "rooms"
+    __table_args__ = (UniqueConstraint("scope_id", "data_kind", "code"),
+                     CheckConstraint("data_kind IN ('college','synthetic')", name="room_kind"),
+                     CheckConstraint("revision > 0", name="room_revision_positive"))
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    scope_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scopes.id", ondelete="RESTRICT"))
+    data_kind: Mapped[str] = mapped_column(String(16))
+    code: Mapped[str] = mapped_column(String(80))
+    exclusive: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    confirmed: Mapped[bool] = mapped_column(Boolean, default=False)
+    source: Mapped[str] = mapped_column(String(300))
+    revision: Mapped[int] = mapped_column(Integer)
+
+
+class ScheduleDraft(Base):
+    __tablename__ = "schedule_drafts"
+    __table_args__ = (CheckConstraint("revision > 0", name="draft_revision_positive"),
+                     CheckConstraint("status IN ('draft','submitted','approved','published')", name="draft_status"))
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    context_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_contexts.id", ondelete="RESTRICT"), index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    revision: Mapped[int] = mapped_column(Integer)
+    status: Mapped[str] = mapped_column(String(16), default="draft")
+    dependencies: Mapped[dict] = mapped_column(JSONB)
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ScheduleSeries(Base):
+    __tablename__ = "schedule_series"
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    draft_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_drafts.id", ondelete="RESTRICT"), index=True)
+    template: Mapped[dict] = mapped_column(JSONB)
+    occurrences: Mapped[list] = mapped_column(JSONB)
+
+
+class DraftRevision(Base):
+    __tablename__ = "draft_revisions"
+    __table_args__ = (UniqueConstraint("draft_id", "revision"),)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    draft_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_drafts.id", ondelete="RESTRICT"), index=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    snapshot: Mapped[dict] = mapped_column(JSONB)
+    report: Mapped[dict] = mapped_column(JSONB)
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

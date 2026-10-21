@@ -92,6 +92,11 @@ button {
   border-radius: 13px;
   flex: none;
 }
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
 .brand strong {
   font-size: 22px;
   letter-spacing: -0.6px;
@@ -110,8 +115,7 @@ button {
   color: #fff;
 }
 .brand--inverse .brand-mark {
-  background: rgba(255, 255, 255, 0.11);
-  border: 1px solid #60847b;
+  outline: 1px solid #60847b;
 }
 .brand--inverse .brand-caption {
   color: #bed0c8;
@@ -1285,7 +1289,9 @@ button {
     padding: 24px;
   }
   .mobile-brand {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 9px;
     color: #1b4c3e;
     font-size: 20px;
     font-weight: 700;

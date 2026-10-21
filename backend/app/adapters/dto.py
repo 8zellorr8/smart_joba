@@ -38,10 +38,10 @@ class WorkspaceDTO(BaseModel):
     scope: ScopeDTO
     role_codes: list[Role]
     permissions: list[str]
-    stage: Literal[2]
+    stage: Literal[4]
 
 
 class HealthDTO(BaseModel):
     status: Literal["ok"]
     database: Literal["ok"]
-    stage: Literal[2]
+    stage: Literal[4]

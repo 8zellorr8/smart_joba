@@ -1,0 +1,223 @@
+{
+  "spec_version": "0.9",
+  "module": "З3 Редактор и конфликты",
+  "stage": 4,
+  "date": "2026-10-21",
+  "base_commit": "d98ece2413ba9f27efd6de5077e397e9623ee4f3",
+  "code_fingerprint_sha256": "e8f30101189c6abdd47dacb1f6c1e15d8ce1052d5a1152b5eb9219db89771eef",
+  "fingerprint_definition": "Sorted relative paths + null + LF-normalized source bytes + null for .py/.ts/.tsx/.css under backend/app,migrations,tests and frontend/src",
+  "automated": {
+    "backend": {
+      "passed": 155,
+      "failed": 0,
+      "seconds": 153.68
+    },
+    "editor_subset": {
+      "passed": 39,
+      "failed": 0
+    },
+    "frontend": {
+      "passed": 39,
+      "failed": 0
+    },
+    "build": "passed",
+    "prettier": "passed",
+    "alembic_upgrade_and_check": "passed",
+    "pip_check": "passed",
+    "compileall": "passed",
+    "git_diff_check": "passed"
+  },
+  "acceptance": [
+    {
+      "id": "AC-004b",
+      "level": "Must-A",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac004b_and_ac004d_teacher_conflict_reports_exact_events_and_dates",
+        "B4-04"
+      ]
+    },
+    {
+      "id": "AC-021a",
+      "level": "Must-A",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac021a_edit_single_date_preserves_all_other_occurrences_and_history",
+        "B4-05"
+      ]
+    },
+    {
+      "id": "AC-004a",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac004a_disjoint_dates_and_ac004c_touching_intervals"
+      ]
+    },
+    {
+      "id": "AC-004c",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac004a_disjoint_dates_and_ac004c_touching_intervals",
+        "B4-06"
+      ]
+    },
+    {
+      "id": "AC-004d",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac004b_and_ac004d_teacher_conflict_reports_exact_events_and_dates",
+        "B4-04"
+      ]
+    },
+    {
+      "id": "AC-005a",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac005a_group_conflict"
+      ]
+    },
+    {
+      "id": "AC-005b",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac005b_room_conflict"
+      ]
+    },
+    {
+      "id": "AC-021b",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac021b_stale_revision_does_not_overwrite_saved_occurrences",
+        "keeps a filled single-date form after revision conflict"
+      ]
+    }
+  ],
+  "supporting_acceptance": [
+    {
+      "id": "AC-007a",
+      "editor_integration": "passed",
+      "evidence": [
+        "test_calendar_forbidden_and_unknown_semester_placements_are_not_saved",
+        "B4-08"
+      ]
+    },
+    {
+      "id": "AC-008c",
+      "editor_integration": "passed",
+      "evidence": [
+        "test_cancelled_occurrence_removes_its_conflicts_and_updates_saved_plan_hours"
+      ]
+    },
+    {
+      "id": "AC-010d",
+      "editor_revision_guard": "passed",
+      "full_version_workflow": "not_run"
+    },
+    {
+      "id": "AC-005c",
+      "editor_rejection": "passed",
+      "generator_integration": "not_run"
+    },
+    {
+      "id": "AC-006a",
+      "external_occupancy": "not_run",
+      "status_is_explicit": "passed"
+    },
+    {
+      "id": "AC-009b",
+      "draft_dependency_stale": "passed",
+      "solver_job_stale": "not_run"
+    }
+  ],
+  "manual_browser": {
+    "surface": "IAB, local production server",
+    "checks": [
+      {
+        "id": "B4-01",
+        "status": "passed"
+      },
+      {
+        "id": "B4-02",
+        "status": "passed"
+      },
+      {
+        "id": "B4-03",
+        "status": "passed"
+      },
+      {
+        "id": "B4-04",
+        "status": "passed"
+      },
+      {
+        "id": "B4-05",
+        "status": "passed"
+      },
+      {
+        "id": "B4-06",
+        "status": "passed"
+      },
+      {
+        "id": "B4-07",
+        "status": "passed"
+      },
+      {
+        "id": "B4-08",
+        "status": "passed"
+      },
+      {
+        "id": "B4-09",
+        "status": "passed"
+      },
+      {
+        "id": "B4-10",
+        "status": "passed"
+      },
+      {
+        "id": "B4-11",
+        "status": "passed"
+      },
+      {
+        "id": "B4-12",
+        "status": "passed"
+      },
+      {
+        "id": "B4-13",
+        "status": "passed"
+      },
+      {
+        "id": "B4-14",
+        "status": "passed"
+      },
+      {
+        "id": "B4-15",
+        "status": "passed"
+      }
+    ],
+    "private_screenshot": ".local/qa/stage4-editor.png",
+    "small_viewport_320_360": "not_run"
+  },
+  "test_data": "Only synthetic fixtures; original college books not applied or published",
+  "privacy": {
+    "raw_college_sources_in_commit": false,
+    "local_database_in_commit": false,
+    "local_accounts_in_commit": false
+  },
+  "limits": {
+    "series_per_draft": 200,
+    "occurrences_per_draft": 10000,
+    "diagnostics_per_kind": 200,
+    "body_bytes": 131072
+  },
+  "pending": [
+    "Generator and full independent validator",
+    "Full availability/room-property/external-occupancy checks",
+    "Approval/publication/export",
+    "Mobile browser acceptance"
+  ]
+}

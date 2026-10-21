@@ -5,6 +5,8 @@ import type { Role, Session, User, Workspace } from "./api";
 import { Icon } from "./icons";
 import { messages as t } from "./locales/kk";
 import { ImportPage } from "./ImportPage";
+import { CalendarPage } from "./CalendarPage";
+import { EditorPage } from "./EditorPage";
 
 type Screen = "loading" | "login" | "workspace" | "error";
 const roleNames: Record<Role, string> = {
@@ -49,7 +51,7 @@ function Brand({ inverse = false }: { inverse?: boolean }) {
   return (
     <div className={`brand ${inverse ? "brand--inverse" : ""}`}>
       <span className="brand-mark">
-        <Icon name="calendar" size={27} />
+        <img src="/favicon.svg?v=2" alt="" width="47" height="47" />
       </span>
       <span>
         <strong>{t.appName}</strong>
@@ -157,7 +159,10 @@ function Login({
       </aside>
       <main id="main" className="login-main">
         <div className="login-top">
-          <span className="mobile-brand">{t.appName}</span>
+          <span className="mobile-brand">
+            <img src="/favicon.svg?v=2" alt="" width="32" height="32" />
+            {t.appName}
+          </span>
           <span className="language-label">
             Ққ <span>{t.language}</span>
           </span>
@@ -276,7 +281,9 @@ function WorkspaceScreen({
   csrfToken: string;
   onExpired: () => void;
 }) {
-  const [view, setView] = useState<"overview" | "import">("overview");
+  const [view, setView] = useState<
+    "overview" | "import" | "calendar" | "editor"
+  >("overview");
   const activeRoles = workspace.role_codes;
   const isReader =
     activeRoles.length > 0 &&
@@ -288,9 +295,13 @@ function WorkspaceScreen({
       : activeRoles.includes("admin")
         ? t.nextAdminDescription
         : t.nextApproverDescription;
+  const canReadCalendar =
+    workspace.permissions.includes("calendar.manage") ||
+    workspace.permissions.includes("draft.read");
+  const canReadEditor =
+    workspace.permissions.includes("draft.read") ||
+    workspace.permissions.includes("catalog.manage");
   const upcomingItems = [
-    { title: t.calendar, icon: "clock", permission: "calendar.manage" },
-    { title: t.editor, icon: "calendar", permission: "draft.edit" },
     { title: t.generator, icon: "spark", permission: "generator.run" },
     { title: t.publication, icon: "layers", permission: "draft.approve" },
     { title: t.export, icon: "download", permission: "publication.export" },
@@ -331,6 +342,28 @@ function WorkspaceScreen({
               {t.import}
             </button>
           )}
+          {canReadCalendar && (
+            <button
+              className="import-nav"
+              aria-current={view === "calendar" ? "page" : undefined}
+              onClick={() => setView("calendar")}
+            >
+              <Icon name="clock" size={20} />
+              {t.calendar}
+            </button>
+          )}
+          {canReadEditor && (
+            <button
+              className="import-nav"
+              aria-current={view === "editor" ? "page" : undefined}
+              onClick={() => setView("editor")}
+            >
+              <Icon name="calendar" size={20} />
+              {workspace.permissions.includes("draft.read")
+                ? t.editor
+                : t.rooms}
+            </button>
+          )}
           {availableUpcoming.length > 0 && (
             <>
               <p className="nav-heading next-nav-heading">{t.nextTitle}</p>
@@ -366,7 +399,17 @@ function WorkspaceScreen({
           <div>
             <span className="breadcrumb-brand">{t.appName}</span>
             <span className="breadcrumb-separator">/</span>
-            <span>{view === "import" ? t.import : t.overview}</span>
+            <span>
+              {view === "import"
+                ? t.import
+                : view === "calendar"
+                  ? t.calendar
+                  : view === "editor"
+                    ? workspace.permissions.includes("draft.read")
+                      ? t.editor
+                      : t.rooms
+                    : t.overview}
+            </span>
           </div>
           <div className="header-actions">
             <span className="language-label">
@@ -397,6 +440,24 @@ function WorkspaceScreen({
               {t.import}
             </button>
           )}
+          {canReadCalendar && (
+            <button
+              aria-current={view === "calendar" ? "page" : undefined}
+              onClick={() => setView("calendar")}
+            >
+              {t.calendar}
+            </button>
+          )}
+          {canReadEditor && (
+            <button
+              aria-current={view === "editor" ? "page" : undefined}
+              onClick={() => setView("editor")}
+            >
+              {workspace.permissions.includes("draft.read")
+                ? t.editor
+                : t.rooms}
+            </button>
+          )}
         </nav>
         <main id="main" className="workspace-main" tabIndex={-1}>
           {error && (
@@ -404,7 +465,23 @@ function WorkspaceScreen({
               {error}
             </p>
           )}
-          {view === "import" ? (
+          {view === "editor" ? (
+            <EditorPage
+              scope={workspace.scope.id}
+              csrfToken={csrfToken}
+              canRead={workspace.permissions.includes("draft.read")}
+              canEdit={workspace.permissions.includes("draft.edit")}
+              canManageRooms={workspace.permissions.includes("catalog.manage")}
+              onExpired={onExpired}
+            />
+          ) : view === "calendar" ? (
+            <CalendarPage
+              scope={workspace.scope.id}
+              csrfToken={csrfToken}
+              canWrite={workspace.permissions.includes("calendar.manage")}
+              onExpired={onExpired}
+            />
+          ) : view === "import" ? (
             <ImportPage
               scope={workspace.scope.id}
               csrfToken={csrfToken}

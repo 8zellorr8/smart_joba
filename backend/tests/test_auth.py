@@ -202,7 +202,7 @@ def test_ac026d_audit_and_validation_do_not_expose_secrets(client, app, caplog):
 
 
 def test_health_and_unauthenticated_closed_reads(client):
-    assert client.get("/api/health").json() == {"status": "ok", "database": "ok", "stage": 2}
+    assert client.get("/api/health").json() == {"status": "ok", "database": "ok", "stage": 4}
     assert client.get("/api/me").status_code == 401
     assert client.get(f"/api/scopes/{uuid.uuid4()}/workspace").status_code == 401
 
