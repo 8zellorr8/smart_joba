@@ -5,6 +5,7 @@ import type { Role, Session, User, Workspace } from "./api";
 import { Icon } from "./icons";
 import { messages as t } from "./locales/kk";
 import { ImportPage } from "./ImportPage";
+import { CalendarPage } from "./CalendarPage";
 
 type Screen = "loading" | "login" | "workspace" | "error";
 const roleNames: Record<Role, string> = {
@@ -279,7 +280,9 @@ function WorkspaceScreen({
   csrfToken: string;
   onExpired: () => void;
 }) {
-  const [view, setView] = useState<"overview" | "import">("overview");
+  const [view, setView] = useState<"overview" | "import" | "calendar">(
+    "overview",
+  );
   const activeRoles = workspace.role_codes;
   const isReader =
     activeRoles.length > 0 &&
@@ -291,8 +294,10 @@ function WorkspaceScreen({
       : activeRoles.includes("admin")
         ? t.nextAdminDescription
         : t.nextApproverDescription;
+  const canReadCalendar =
+    workspace.permissions.includes("calendar.manage") ||
+    workspace.permissions.includes("draft.read");
   const upcomingItems = [
-    { title: t.calendar, icon: "clock", permission: "calendar.manage" },
     { title: t.editor, icon: "calendar", permission: "draft.edit" },
     { title: t.generator, icon: "spark", permission: "generator.run" },
     { title: t.publication, icon: "layers", permission: "draft.approve" },
@@ -334,6 +339,16 @@ function WorkspaceScreen({
               {t.import}
             </button>
           )}
+          {canReadCalendar && (
+            <button
+              className="import-nav"
+              aria-current={view === "calendar" ? "page" : undefined}
+              onClick={() => setView("calendar")}
+            >
+              <Icon name="clock" size={20} />
+              {t.calendar}
+            </button>
+          )}
           {availableUpcoming.length > 0 && (
             <>
               <p className="nav-heading next-nav-heading">{t.nextTitle}</p>
@@ -369,7 +384,13 @@ function WorkspaceScreen({
           <div>
             <span className="breadcrumb-brand">{t.appName}</span>
             <span className="breadcrumb-separator">/</span>
-            <span>{view === "import" ? t.import : t.overview}</span>
+            <span>
+              {view === "import"
+                ? t.import
+                : view === "calendar"
+                  ? t.calendar
+                  : t.overview}
+            </span>
           </div>
           <div className="header-actions">
             <span className="language-label">
@@ -400,6 +421,14 @@ function WorkspaceScreen({
               {t.import}
             </button>
           )}
+          {canReadCalendar && (
+            <button
+              aria-current={view === "calendar" ? "page" : undefined}
+              onClick={() => setView("calendar")}
+            >
+              {t.calendar}
+            </button>
+          )}
         </nav>
         <main id="main" className="workspace-main" tabIndex={-1}>
           {error && (
@@ -407,7 +436,14 @@ function WorkspaceScreen({
               {error}
             </p>
           )}
-          {view === "import" ? (
+          {view === "calendar" ? (
+            <CalendarPage
+              scope={workspace.scope.id}
+              csrfToken={csrfToken}
+              canWrite={workspace.permissions.includes("calendar.manage")}
+              onExpired={onExpired}
+            />
+          ) : view === "import" ? (
             <ImportPage
               scope={workspace.scope.id}
               csrfToken={csrfToken}

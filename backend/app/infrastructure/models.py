@@ -213,3 +213,25 @@ class TeachingAssignment(Base):
     teacher_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("teachers.id", ondelete="RESTRICT"))
     source_revision_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("demand_revisions.id", ondelete="RESTRICT"))
     confirmed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+
+
+class CalendarProfile(Base):
+    __tablename__ = "calendar_profiles"
+    __table_args__ = (UniqueConstraint("context_id", "group_id"),
+                     CheckConstraint("revision > 0", name="calendar_revision_positive"))
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    context_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_contexts.id", ondelete="RESTRICT"), index=True)
+    group_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("groups.id", ondelete="RESTRICT"))
+    revision: Mapped[int] = mapped_column(Integer)
+    document: Mapped[dict] = mapped_column(JSONB)
+
+
+class CalendarRevision(Base):
+    __tablename__ = "calendar_revisions"
+    __table_args__ = (UniqueConstraint("profile_id", "revision"),)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("calendar_profiles.id", ondelete="RESTRICT"), index=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    document: Mapped[dict] = mapped_column(JSONB)
+    confirmed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

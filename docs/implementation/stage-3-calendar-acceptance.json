@@ -1,0 +1,156 @@
+{
+  "spec_version": "0.9",
+  "module": "З2 Календарь и часы",
+  "stage": 3,
+  "date": "2026-10-21",
+  "base_commit": "8c86cd12f87df9286c12263317e59b0f8a711535",
+  "code_fingerprint_sha256": "86335a186bc9124e1bb6fc41c84fedb009c7a51d0f45c9f7683148717618c6dd",
+  "fingerprint_definition": "Sorted UTF-8 relative paths + null + LF-normalized bytes + null of .py/.ts/.tsx/.css under backend/app,migrations,tests and frontend/src",
+  "automated": {
+    "backend": {
+      "passed": 116,
+      "failed": 0,
+      "seconds": 52.28
+    },
+    "calendar_subset": {
+      "passed": 57,
+      "failed": 0
+    },
+    "frontend": {
+      "passed": 30,
+      "failed": 0
+    },
+    "production_build": "passed",
+    "prettier": "passed",
+    "alembic_upgrade_and_check": "passed",
+    "pip_check": "passed",
+    "compileall": "passed",
+    "git_diff_check": "passed"
+  },
+  "acceptance": [
+    {
+      "id": "AC-007a",
+      "level": "Must-A",
+      "module_status": "passed",
+      "full_integration": "not_run",
+      "evidence": [
+        "test_ac007a_forbidden_ordinary_placement_is_invalid_and_not_active",
+        "test_ac007a_api_rejects_forbidden_placement_and_ac008a_b_c",
+        "B3-07"
+      ],
+      "pending": "Saved editor and independent full validator"
+    },
+    {
+      "id": "AC-007b",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac007b_tuesday_monday_interval_is_preserved_exactly",
+        "test_calendar_roundtrip_and_ac007b_exact_boundaries",
+        "B3-04"
+      ]
+    },
+    {
+      "id": "AC-008a",
+      "level": "Must-A",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac008a_ten_90_minute_occurrences_equal_20_academic_hours",
+        "B3-05"
+      ]
+    },
+    {
+      "id": "AC-008b",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac008b_one_cancellation_changes_plan_to_18_hours",
+        "B3-06"
+      ]
+    },
+    {
+      "id": "AC-008c",
+      "level": "Must-B",
+      "module_status": "passed",
+      "full_integration": "not_run",
+      "evidence": [
+        "test_ac008c_plan_projection_never_registers_actual_and_does_not_mutate_inputs",
+        "test_ac007a_api_rejects_forbidden_placement_and_ac008a_b_c"
+      ],
+      "pending": "Saved timetable editing without actual registration"
+    },
+    {
+      "id": "AC-008d",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_ac008d_real_import_contract_compares_only_confirmed_semester_need",
+        "test_missing_semester_mapping_keeps_remaining_unknown",
+        "test_other_semester_cannot_be_used_to_cover_selected_semester_need"
+      ]
+    }
+  ],
+  "manual_browser": {
+    "surface": "IAB, local production server",
+    "data": "synthetic only",
+    "checks": [
+      {
+        "id": "B3-01",
+        "status": "passed"
+      },
+      {
+        "id": "B3-02",
+        "status": "passed"
+      },
+      {
+        "id": "B3-03",
+        "status": "passed"
+      },
+      {
+        "id": "B3-04",
+        "status": "passed"
+      },
+      {
+        "id": "B3-05",
+        "status": "passed"
+      },
+      {
+        "id": "B3-06",
+        "status": "passed"
+      },
+      {
+        "id": "B3-07",
+        "status": "passed"
+      },
+      {
+        "id": "B3-08",
+        "status": "passed"
+      },
+      {
+        "id": "B3-09",
+        "status": "passed"
+      },
+      {
+        "id": "B3-10",
+        "status": "passed"
+      },
+      {
+        "id": "B3-11",
+        "status": "passed"
+      }
+    ],
+    "private_screenshot": ".local/qa/stage3-calendar-hours.png",
+    "small_viewport_320_360": "not_run"
+  },
+  "limitations": [
+    "No saved timetable editor or full independent validator yet",
+    "No SolverJob stale integration until generator",
+    "No S3 automatic import or actual lesson recording",
+    "College calendar norms and timezone still require confirmation"
+  ],
+  "privacy": {
+    "raw_college_sources_in_commit": false,
+    "local_database_in_commit": false,
+    "passwords_in_commit": false
+  }
+}

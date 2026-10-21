@@ -12,8 +12,11 @@ from starlette.staticfiles import StaticFiles
 
 from .dto import HealthDTO, SessionDTO, UserDTO, WorkspaceDTO
 from .import_http import import_router
+from .calendar_http import calendar_router
 from ..application.auth import ApiError, AuthService, audit
 from ..application.imports import ImportService
+from ..application.calendars import CalendarService
+from ..domain.calendar import CalendarError
 from ..infrastructure.s1_excel import MAX_FILE_BYTES
 from ..config import ROOT, Settings
 from ..domain.permissions import permissions_for
@@ -59,8 +62,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if not valid_csrf(request.headers.get("x-csrf-token", ""), request.cookies.get(CSRF_COOKIE, ""), settings.app_secret, request.cookies.get(SESSION_COOKIE, "")):
                 return error_response(request, "CSRF_INVALID", 403)
             upload = re.fullmatch(r"/api/scopes/[^/]+/imports/s1", request.url.path)
-            if request.url.path.startswith("/api/auth/") or upload or request.url.path.startswith("/api/imports/"):
-                limit = MAX_FILE_BYTES + 131072 if upload else (65536 if request.url.path.startswith("/api/imports/") else 8192)
+            calendar_write = request.url.path.startswith("/api/calendars/") or bool(re.fullmatch(r"/api/scopes/[^/]+/calendars", request.url.path))
+            if request.url.path.startswith("/api/auth/") or upload or request.url.path.startswith("/api/imports/") or calendar_write:
+                limit = MAX_FILE_BYTES + 131072 if upload else (131072 if calendar_write else (65536 if request.url.path.startswith("/api/imports/") else 8192))
                 body = bytearray()
                 async for chunk in request.stream():
                     body.extend(chunk)
@@ -77,6 +81,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.exception_handler(ApiError)
     async def api_error(request: Request, exc: ApiError):
         return error_response(request, exc.code, exc.status, exc.params)
+
+    @app.exception_handler(CalendarError)
+    async def calendar_error(request: Request, exc: CalendarError):
+        return error_response(request, exc.code, 422)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request, exc: RequestValidationError):
@@ -117,7 +125,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def health():
         with engine.connect() as db:
             db.execute(text("SELECT 1"))
-        return {"status": "ok", "database": "ok", "stage": 2}
+        return {"status": "ok", "database": "ok", "stage": 3}
 
     @app.get("/api/auth/session", response_model=SessionDTO)
     def session(request: Request):
@@ -157,7 +165,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             scope = db.get(Scope, scope_id)
             return {"scope": {"id": str(scope.id), "name": scope.name, "is_demo": scope.is_demo},
                     "role_codes": sorted({grant["role"] for grant in grants}),
-                    "permissions": permissions_for(grants, str(scope_id)), "stage": 2}
+                    "permissions": permissions_for(grants, str(scope_id)), "stage": 3}
 
     @app.post("/api/schedule-versions/{version_id}/approve")
     def approve_guard(version_id: uuid.UUID, request: Request, scope_id: uuid.UUID | None = None):
@@ -172,6 +180,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         raise ApiError("STAGE_NOT_IMPLEMENTED" if allowed else "ACCESS_DENIED", 501 if allowed else 403)
 
     app.include_router(import_router(ImportService(session_factory, auth)))
+    app.include_router(calendar_router(CalendarService(session_factory, auth)))
 
     dist = ROOT / "frontend" / "dist"
     if (dist / "assets").is_dir():
@@ -188,6 +197,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def index():
         if (dist / "index.html").is_file():
             return FileResponse(dist / "index.html", headers={"Cache-Control": "no-cache"})
-        return JSONResponse({"status": "frontend_not_built", "stage": 2}, status_code=503)
+        return JSONResponse({"status": "frontend_not_built", "stage": 3}, status_code=503)
 
     return app
