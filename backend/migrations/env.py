@@ -12,8 +12,14 @@ if context.is_offline_mode():
     with context.begin_transaction():
         context.run_migrations()
 else:
-    engine = create_engine(settings.database_url, hide_parameters=True)
-    with engine.connect() as connection:
+    def migrate(connection):
         context.configure(connection=connection, target_metadata=Base.metadata)
         with context.begin_transaction():
             context.run_migrations()
+    supplied_connection = config.attributes.get("connection")
+    if supplied_connection is not None:
+        migrate(supplied_connection)
+    else:
+        engine = create_engine(settings.database_url, hide_parameters=True)
+        with engine.connect() as connection:
+            migrate(connection)

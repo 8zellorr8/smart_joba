@@ -1,0 +1,92 @@
+{
+  "spec_version": "0.9",
+  "stage": 2,
+  "date": "2026-10-21",
+  "criteria": [
+    {
+      "id": "AC-001a",
+      "queue": 1,
+      "level": "Must-A",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-001b",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-001c",
+      "queue": 1,
+      "level": "Must-A",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-001d",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-001e",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-002a",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-002b",
+      "queue": 1,
+      "level": "Must-A",
+      "status": "not_run",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-002c",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-003a",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-011a",
+      "queue": 1,
+      "level": "Must-A",
+      "status": "partial",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-012b",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    },
+    {
+      "id": "AC-035b",
+      "queue": 1,
+      "level": "Must-B",
+      "status": "passed",
+      "evidence": "stage-2-s1-test-report.md"
+    }
+  ],
+  "scope": "S1 import; other module acceptance unchanged"
+}
