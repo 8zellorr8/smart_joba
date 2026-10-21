@@ -284,3 +284,53 @@ class DraftRevision(Base):
     report: Mapped[dict] = mapped_column(JSONB)
     actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class PlanningRules(Base):
+    __tablename__ = "planning_rules"
+    __table_args__ = (CheckConstraint("revision > 0", name="planning_revision_positive"),)
+    context_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_contexts.id", ondelete="RESTRICT"), primary_key=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    document: Mapped[dict] = mapped_column(JSONB)
+    confirmed_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+
+
+class PlanningRulesRevision(Base):
+    __tablename__ = "planning_rules_revisions"
+    __table_args__ = (UniqueConstraint("context_id", "revision"),)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    context_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("planning_rules.context_id", ondelete="RESTRICT"))
+    revision: Mapped[int] = mapped_column(Integer)
+    document: Mapped[dict] = mapped_column(JSONB)
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class SolverJob(Base):
+    __tablename__ = "solver_jobs"
+    __table_args__ = (CheckConstraint("status IN ('queued','running','feasible','optimal','infeasible','time_limit_without_solution','cancelled','failed')", name="solver_status"),)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    context_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("import_contexts.id", ondelete="RESTRICT"), index=True)
+    snapshot: Mapped[dict] = mapped_column(JSONB)
+    parameters: Mapped[dict] = mapped_column(JSONB)
+    algorithm_version: Mapped[str] = mapped_column(String(80))
+    status: Mapped[str] = mapped_column(String(40))
+    stage: Mapped[str] = mapped_column(String(40))
+    result: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    result_draft_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("schedule_drafts.id", ondelete="RESTRICT"), nullable=True)
+    cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ValidationReport(Base):
+    __tablename__ = "validation_reports"
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    draft_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("schedule_drafts.id", ondelete="RESTRICT"), index=True)
+    draft_revision: Mapped[int] = mapped_column(Integer)
+    snapshot: Mapped[dict] = mapped_column(JSONB)
+    report: Mapped[dict] = mapped_column(JSONB)
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

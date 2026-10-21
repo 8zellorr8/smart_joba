@@ -1,0 +1,134 @@
+.planning-page {
+  max-width: 1500px;
+}
+.planning-page .page-heading {
+  margin-bottom: 24px;
+}
+.planning-page h1 {
+  line-height: 1.2;
+}
+.planning-page .editor-panel {
+  margin: 20px 0;
+}
+.planning-page fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+.planning-page label {
+  display: grid;
+  gap: 7px;
+  font-weight: 600;
+}
+.planning-page input:not([type="checkbox"]),
+.planning-page select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  border: 1px solid #bacac3;
+  border-radius: 7px;
+  background: #fff;
+  color: #183d43;
+  min-width: 0;
+}
+.planning-page input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #245b50;
+}
+.planning-page .planning-checkbox,
+.planning-checks label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.planning-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  margin: 14px 0 22px;
+}
+.planning-input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 18px;
+  margin: 16px 0;
+}
+.planning-page .planning-interval {
+  border: 1px solid #ced9d3;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 18px 0;
+}
+.planning-rules details {
+  margin: 20px 0;
+  border-bottom: 1px solid #dce4df;
+  padding-bottom: 18px;
+}
+.planning-page summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 8px 0;
+}
+.planning-warning {
+  background: #fff5da;
+  color: #674a12;
+  border-left: 4px solid #be8a28;
+  border-radius: 5px;
+  padding: 14px 18px;
+}
+.planning-success {
+  background: #e4f2e9;
+  color: #1e5846;
+  border-left: 4px solid #3c8568;
+  padding: 14px 18px;
+}
+.planning-job-status {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+.planning-table {
+  overflow-x: auto;
+  margin: 16px 0;
+}
+.planning-table table {
+  width: 100%;
+  min-width: 580px;
+  border-collapse: collapse;
+}
+.planning-table th,
+.planning-table td {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid #dce4df;
+}
+.planning-table th {
+  background: #eef3ee;
+}
+.planning-page p,
+.planning-diagnostics li,
+.validation-view li {
+  overflow-wrap: anywhere;
+}
+.planning-diagnostics li {
+  margin: 9px 0;
+}
+.planning-page button {
+  margin-top: 12px;
+}
+.planning-page :focus-visible {
+  outline: 3px solid #bd842c;
+  outline-offset: 3px;
+}
+@media (max-width: 620px) {
+  .planning-page .editor-panel {
+    padding: 16px;
+  }
+  .planning-page h1 {
+    font-size: 1.8rem;
+  }
+  .planning-checks {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,301 @@
+{
+  "spec_version": "0.9",
+  "stage": 5,
+  "modules": [
+    "З4 Генератор",
+    "З5 Независимый валидатор"
+  ],
+  "date": "2026-10-21",
+  "base_commit": "72714ab2b02d9da36307c934e204a71f38a87a07",
+  "code_fingerprint_sha256": "1029f2cd98f59a71954865e344b00cf5a92003df19a18878d3b48645eef82b5b",
+  "fingerprint_definition": "Sorted relative paths + null + LF-normalized bytes + null for .py/.ts/.tsx/.css under backend/app,migrations,tests,frontend/src,scripts, plus backend/requirements.lock.txt and frontend/package{,-lock}.json",
+  "automated": {
+    "backend": {
+      "passed": 219,
+      "failed": 0,
+      "seconds": 185.6,
+      "warnings": 1
+    },
+    "domain_recheck_after_native_control_test_update": {
+      "passed": 33,
+      "failed": 0,
+      "seconds": 2.0
+    },
+    "frontend": {
+      "passed": 54,
+      "failed": 0,
+      "seconds": 6.23
+    },
+    "build": "passed",
+    "prettier": "passed",
+    "alembic_upgrade_and_check": "passed",
+    "pip_check": "passed",
+    "compileall": "passed",
+    "git_diff_check": "passed"
+  },
+  "acceptance": [
+    {
+      "id": "AC-002b",
+      "level": "Must-A",
+      "module_status": "passed",
+      "evidence": [
+        "test_unresolved_accepted_source_row_blocks_selected_scope",
+        "B5-10"
+      ]
+    },
+    {
+      "id": "AC-009b",
+      "level": "Must-A",
+      "module_status": "passed",
+      "evidence": [
+        "test_changed_dependency_marks_running_and_finished_result_stale",
+        "B5-09"
+      ]
+    },
+    {
+      "id": "AC-009d",
+      "level": "Must-A",
+      "module_status": "passed",
+      "evidence": [
+        "test_real_worker_creates_exactly_one_new_draft_and_independent_report",
+        "B5-04",
+        "B5-13"
+      ]
+    },
+    {
+      "id": "AC-016b",
+      "level": "Must-A",
+      "module_status": "passed",
+      "evidence": [
+        "test_corrupt_feasible_result_is_independently_rejected_before_draft_creation",
+        "test_independent_validator_rejects_corrupted_result"
+      ]
+    },
+    {
+      "id": "AC-005c",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_readiness_blocks_unsupported_or_unknown_inputs:subgroup"
+      ]
+    },
+    {
+      "id": "AC-006a",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_readiness_blocks_unsupported_or_unknown_inputs:joint"
+      ]
+    },
+    {
+      "id": "AC-009a",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_actual_solver_time_limit_is_not_infeasible"
+      ]
+    },
+    {
+      "id": "AC-009c",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_generator_preserves_pinned_assignment_from_selected_base"
+      ]
+    },
+    {
+      "id": "AC-009e",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_impossible_model_is_proven_infeasible_not_timeout"
+      ]
+    },
+    {
+      "id": "AC-009f",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_native_invalid_and_time_limited_feasible_statuses_remain_distinct"
+      ]
+    },
+    {
+      "id": "AC-009g",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_solver_adapter_exposes_invalid_model_without_infeasible_claim"
+      ]
+    },
+    {
+      "id": "AC-013c",
+      "level": "Must-B",
+      "module_status": "partial",
+      "evidence": [
+        "test_worker_enforces_process_limits_and_cancellation",
+        "test_failure_before_commit_rolls_back_new_draft_and_revision"
+      ],
+      "note": "Existing draft remains unchanged; publication regression awaits the publication module, which does not yet exist."
+    },
+    {
+      "id": "AC-021c",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "B5-03",
+        "B5-05",
+        "B5-12",
+        "restores a saved running job by ID and shows stage and time without percent"
+      ]
+    },
+    {
+      "id": "AC-015a",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_validator_runs_in_fresh_interpreter_with_http_db_and_solver_imports_blocked"
+      ]
+    },
+    {
+      "id": "AC-016a",
+      "level": "Must-B",
+      "module_status": "passed",
+      "evidence": [
+        "test_sweep_matches_independent_pairwise_oracle_random_and_boundaries"
+      ]
+    },
+    {
+      "id": "AC-016c",
+      "level": "Must-B",
+      "module_status": "passed_on_synthetic_control",
+      "evidence": [
+        "stage-5-planning-benchmark.json",
+        "scripts/benchmark_planning.py"
+      ],
+      "note": "Engineering control is an assumption; college-scale control dataset remains to be confirmed."
+    }
+  ],
+  "supporting_acceptance": [
+    {
+      "id": "AC-035a",
+      "revision_binding_and_stale": "passed",
+      "publication_integration": "not_run"
+    },
+    {
+      "id": "AC-007a",
+      "independent_validator": "passed"
+    },
+    {
+      "id": "AC-008b",
+      "cancellation_recount": "passed"
+    },
+    {
+      "id": "AC-008c",
+      "actual_attendance_created": false
+    },
+    {
+      "id": "AC-013a",
+      "generator_and_validator_measurements": "recorded",
+      "all_NFR004_goals": "not_claimed"
+    }
+  ],
+  "manual_browser": {
+    "surface": "IAB; production local API/PostgreSQL/worker; synthetic data only",
+    "checks": [
+      {
+        "id": "B5-01",
+        "status": "passed"
+      },
+      {
+        "id": "B5-02",
+        "status": "passed"
+      },
+      {
+        "id": "B5-03",
+        "status": "passed"
+      },
+      {
+        "id": "B5-04",
+        "status": "passed"
+      },
+      {
+        "id": "B5-05",
+        "status": "passed"
+      },
+      {
+        "id": "B5-06",
+        "status": "passed"
+      },
+      {
+        "id": "B5-07",
+        "status": "passed"
+      },
+      {
+        "id": "B5-08",
+        "status": "passed"
+      },
+      {
+        "id": "B5-09",
+        "status": "passed"
+      },
+      {
+        "id": "B5-10",
+        "status": "passed"
+      },
+      {
+        "id": "B5-11",
+        "status": "passed"
+      },
+      {
+        "id": "B5-12",
+        "status": "passed"
+      },
+      {
+        "id": "B5-13",
+        "status": "passed"
+      },
+      {
+        "id": "B5-14",
+        "status": "passed"
+      },
+      {
+        "id": "B5-15",
+        "status": "passed"
+      },
+      {
+        "id": "B5-16",
+        "status": "passed"
+      }
+    ],
+    "private_screenshot": ".local/qa/stage5-generator.png",
+    "small_viewport_320_360": "not_run",
+    "full_screen_reader_audit": "not_run"
+  },
+  "limits": {
+    "queued_and_running_global": 8,
+    "active_per_context": 1,
+    "groups": 20,
+    "rooms": 30,
+    "demands": 200,
+    "candidates": 20000,
+    "occurrences": 10000,
+    "series": 200,
+    "seconds": 30,
+    "memory_mib_observed_limit": 768,
+    "memory_poll_seconds": 0.1,
+    "workers": 1,
+    "body_bytes": 131072
+  },
+  "privacy": {
+    "raw_college_sources_in_commit": false,
+    "local_database_in_commit": false,
+    "local_accounts_in_commit": false,
+    "real_S1_applied": false
+  },
+  "pending": [
+    "Actual publication portion of AC-013c and AC-035a",
+    "Versions, approval, atomic shared-resource publication and XLSX in separate tasks",
+    "Real college confirmations, college-scale control dataset and remaining integration acceptance",
+    "Registration/reset, preferences, substitutions, repair, comparison, RU/EN remain in their original queues"
+  ]
+}

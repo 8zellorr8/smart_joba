@@ -33,8 +33,9 @@ def find_conflicts(events, limit=200):
                 key = (kind, resource, left, right)
                 if key not in found:
                     if len(found) >= limit:
-                        truncated = True
-                        continue
+                        # The first omitted conflict proves incompleteness. Do
+                        # not enumerate a quadratic remainder just to discard it.
+                        return {"conflicts": list(found.values()), "conflicts_truncated": True, "has_conflicts": True}
                     found[key] = {"rule": "RULE-001",
                                   "resource_type": kind, "resource_id": resource,
                                   "event_ids": [left, right], "dates": [], "intersections": []}

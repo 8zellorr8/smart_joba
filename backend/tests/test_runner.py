@@ -16,6 +16,7 @@ def runner(tmp_path, monkeypatch):
     monkeypatch.setattr(module, "LOCAL", tmp_path / ".local")
     monkeypatch.setattr(module, "STATE", module.LOCAL / "runtime.json")
     monkeypatch.setattr(module, "API_STATE", module.LOCAL / "api-process.json")
+    monkeypatch.setattr(module, "WORKER_STATE", module.LOCAL / "worker-process.json")
     monkeypatch.setattr(module, "DATA", module.LOCAL / "postgres" / "data")
     module.LOCAL.mkdir()
     # Any unexpected OS action fails the test instead of affecting the machine.

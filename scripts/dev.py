@@ -20,6 +20,7 @@ LOCAL = ROOT / ".local"
 DATA = LOCAL / "postgres" / "data"
 STATE = LOCAL / "runtime.json"
 API_STATE = LOCAL / "api-process.json"
+WORKER_STATE = LOCAL / "worker-process.json"
 PYTHON = ROOT / ".venv" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 PORT = 55432
 NO_WINDOW = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
@@ -227,14 +228,30 @@ def windows_creation_time(pid):
         kernel.CloseHandle(handle)
 
 
-def api_owned():
-    if not API_STATE.exists():
+def owned_process(state_path):
+    if not state_path.exists():
         return None
-    state = json.loads(API_STATE.read_text(encoding="utf-8"))
+    state = json.loads(state_path.read_text(encoding="utf-8"))
     if not isinstance(state.get("pid"), int) or state["pid"] <= 0 or not isinstance(state.get("created"), int):
         return None
     actual = windows_creation_time(state["pid"])
     return state if actual is not None and actual == state["created"] else None
+
+
+def api_owned():
+    return owned_process(API_STATE)
+
+
+def worker_start():
+    if owned_process(WORKER_STATE):
+        return
+    with (LOCAL / "worker.log").open("ab") as logfile:
+        process = subprocess.Popen([str(PYTHON), "-m", "backend.app.worker"], cwd=ROOT,
+            stdout=logfile, stderr=logfile, env=app_environment(), stdin=subprocess.DEVNULL, creationflags=NO_WINDOW)
+    save(WORKER_STATE, {"pid": process.pid, "created": windows_creation_time(process.pid)})
+    time.sleep(0.5)
+    if process.poll() is not None:
+        raise RuntimeError("Worker exited. Inspect private .local/worker.log.")
 
 
 def start():
@@ -242,6 +259,7 @@ def start():
     if not (ROOT / "frontend/dist/index.html").exists():
         raise RuntimeError("Run setup to build the frontend first.")
     pg_start(postgres_bin())
+    worker_start()
     if api_owned():
         print("Already running: http://127.0.0.1:8000")
         return
@@ -266,24 +284,30 @@ def start():
     raise RuntimeError("API readiness timed out. Inspect .local/api.log.")
 
 
-def stop():
-    state = api_owned()
+def stop_process(state_path):
+    state = owned_process(state_path)
     if state:
         # Windows venv Python may have a launcher child. Stop only the verified
         # owned process tree so that a child cannot keep serving after "stop".
         if windows_creation_time(state["pid"]) == state["created"]:
             run([Path(os.environ.get("WINDIR", "C:/Windows")) / "System32/taskkill.exe",
                  "/PID", str(state["pid"]), "/T", "/F"], capture=True)
-        API_STATE.unlink(missing_ok=True)
+        state_path.unlink(missing_ok=True)
+
+
+def stop():
+    stop_process(WORKER_STATE)
+    stop_process(API_STATE)
     pg = postgres_bin()
     if DATA.exists() and pg_running(pg):
         run([pg / "pg_ctl.exe", "-D", DATA, "-w", "-t", "30", "-m", "fast", "stop"], env=pg_environment(), capture=True)
-    print("Only this checkout's API and PostgreSQL cluster were stopped.")
+    print("Only this checkout's worker, API and PostgreSQL cluster were stopped.")
 
 
 def status():
     print("Project PostgreSQL:", "running" if DATA.exists() and pg_running(postgres_bin()) else "stopped")
     print("Project API:", "running at http://127.0.0.1:8000" if api_owned() else "stopped")
+    print("Project worker:", "running" if owned_process(WORKER_STATE) else "stopped")
 
 
 def test():
