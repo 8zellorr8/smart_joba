@@ -140,7 +140,7 @@ function setup(
 async function selectInputs() {
   const user = userEvent.setup();
   await user.click(await screen.findByLabelText("TEST-GROUP"));
-  await user.click(screen.getByLabelText("TEST-101"));
+  await user.click(screen.getByLabelText("Демо кабинет 101"));
   return user;
 }
 beforeEach(() => {
@@ -252,7 +252,9 @@ it("preserves admin inputs on a revision conflict and leaves them dirty", async 
   );
   setup(false, false, true);
   const user = userEvent.setup();
-  const capacity = await screen.findByLabelText(`${pm.capacity}: TEST-101`);
+  const capacity = await screen.findByLabelText(
+    `${pm.capacity}: Демо кабинет 101`,
+  );
   await user.type(capacity, "25");
   await user.click(screen.getByRole("button", { name: pm.save }));
   expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -268,9 +270,9 @@ it("preserves admin inputs on a revision conflict and leaves them dirty", async 
 
 it("does not invent capacity or confirm unknown conditions in a new profile", async () => {
   setup(false, false, true);
-  expect(await screen.findByLabelText(`${pm.capacity}: TEST-101`)).toHaveValue(
-    null,
-  );
+  expect(
+    await screen.findByLabelText(`${pm.capacity}: Демо кабинет 101`),
+  ).toHaveValue(null);
   expect(screen.getByLabelText(pm.confirm)).not.toBeChecked();
   expect(screen.getByLabelText(pm.external)).not.toBeChecked();
 });
@@ -284,7 +286,7 @@ it("retains selected inputs after a network error", async () => {
   await user.click(screen.getByRole("button", { name: pm.preview }));
   expect(await screen.findByRole("alert")).toHaveTextContent(pm.connection);
   expect(screen.getByLabelText("TEST-GROUP")).toBeChecked();
-  expect(screen.getByLabelText("TEST-101")).toBeChecked();
+  expect(screen.getByLabelText("Демо кабинет 101")).toBeChecked();
 });
 
 it("redirects an expired session instead of showing a false result", async () => {
@@ -366,7 +368,7 @@ it("allows comma-separated equipment input and normalizes it at save", async () 
   setup(false, false, true);
   const user = userEvent.setup();
   await user.type(
-    await screen.findByLabelText(`${pm.features}: TEST-101`),
+    await screen.findByLabelText(`${pm.features}: Демо кабинет 101`),
     "projector, pc",
   );
   await user.click(screen.getByRole("button", { name: pm.save }));
@@ -401,7 +403,7 @@ it("preserves selected scope when the parent refreshes its session callback", as
   await waitFor(() =>
     expect(screen.getByLabelText("TEST-GROUP")).toBeChecked(),
   );
-  expect(screen.getByLabelText("TEST-101")).toBeChecked();
+  expect(screen.getByLabelText("Демо кабинет 101")).toBeChecked();
   expect(screen.getByRole("button", { name: pm.start })).toBeEnabled();
   expect(planningApi.data).toHaveBeenCalledTimes(1);
 });

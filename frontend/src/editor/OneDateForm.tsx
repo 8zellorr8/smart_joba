@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { DraftOccurrence, EditorData } from "../editor-api";
 import { em } from "../locales/editor.kk";
+import { demoName } from "../demo-labels";
 
 export interface OneDateValues {
   date: string;
@@ -67,7 +68,8 @@ export function OneDateForm({
       </div>
       <p className="editor-help">{em.oneHint}</p>
       <p>
-        {event.group} · {event.subject} · {event.teacher}
+        {demoName(event.group, kind)} · {demoName(event.subject, kind)} ·{" "}
+        {demoName(event.teacher, kind)}
       </p>
       <div className="editor-grid">
         <label>
@@ -95,7 +97,7 @@ export function OneDateForm({
             )}
             {slots.map((s) => (
               <option key={s.id} value={`${s.start}|${s.end}`}>
-                {s.label} · {s.start}–{s.end}
+                {demoName(s.label, kind)} · {s.start}–{s.end}
               </option>
             ))}
           </select>
@@ -112,7 +114,7 @@ export function OneDateForm({
               .filter((r) => r.data_kind === kind)
               .map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.code}
+                  {demoName(r.code, r.data_kind)}
                 </option>
               ))}
           </select>

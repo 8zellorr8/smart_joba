@@ -16,6 +16,7 @@ import {
   issueMessages,
 } from "./locales/imports.kk";
 import "./imports.css";
+import { demoFileName, demoName } from "./demo-labels";
 
 interface Props {
   scope: string;
@@ -318,8 +319,9 @@ export function ImportPage({ scope, csrfToken, canWrite, onExpired }: Props) {
               {im.chooseBatch}
             </option>
             {items.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.filename} · {item.academic_year} · {label(item.status)}
+              <option key={item.id} value={item.id} title={item.filename}>
+                {demoFileName(item.filename, item.data_kind)} ·{" "}
+                {item.academic_year} · {label(item.status)}
               </option>
             ))}
           </select>
@@ -344,7 +346,15 @@ export function ImportPage({ scope, csrfToken, canWrite, onExpired }: Props) {
             <div className="import-preview-heading">
               <div>
                 <h2 id="preview-title">2. {im.preview}</h2>
-                <p className="import-filename">{batch.filename}</p>
+                <p className="import-filename">
+                  {demoFileName(batch.filename, batch.data_kind)}
+                </p>
+                {demoFileName(batch.filename, batch.data_kind) !==
+                  batch.filename && (
+                  <p className="import-muted">
+                    {im.originalFile}: {batch.filename}
+                  </p>
+                )}
                 <p className="import-muted">
                   {batch.sheet}!{batch.range} · {batch.academic_year} ·{" "}
                   {batch.data_kind === "college" ? im.college : im.synthetic}
@@ -419,14 +429,31 @@ export function ImportPage({ scope, csrfToken, canWrite, onExpired }: Props) {
                           <small>{canWrite ? im.review : im.view}</small>
                         </button>
                       </td>
-                      <td>{row.normalized.group ?? "—"}</td>
-                      <td>
-                        {row.normalized.subject ?? "—"}
-                        <small>{row.normalized.index}</small>
+                      <td title={String(row.normalized.group ?? "")}>
+                        {demoName(row.normalized.group ?? "—", batch.data_kind)}
                       </td>
-                      <td>{row.normalized.teacher ?? "—"}</td>
+                      <td>
+                        {demoName(
+                          row.normalized.subject ?? "—",
+                          batch.data_kind,
+                        )}
+                        <small>
+                          {demoName(
+                            row.normalized.index ?? "",
+                            batch.data_kind,
+                          )}
+                        </small>
+                      </td>
+                      <td title={String(row.normalized.teacher ?? "")}>
+                        {demoName(
+                          row.normalized.teacher ?? "—",
+                          batch.data_kind,
+                        )}
+                      </td>
                       <td>{row.normalized.weekly_hours ?? "—"}</td>
-                      <td>{row.normalized.room ?? "—"}</td>
+                      <td>
+                        {demoName(row.normalized.room ?? "—", batch.data_kind)}
+                      </td>
                       <td>
                         <span
                           className={
@@ -486,7 +513,8 @@ export function ImportPage({ scope, csrfToken, canWrite, onExpired }: Props) {
                 <ul>
                   {batch.missing.map((item) => (
                     <li key={item.id}>
-                      {item.group} · {item.subject}
+                      {demoName(item.group, batch.data_kind)} ·{" "}
+                      {demoName(item.subject, batch.data_kind)}
                     </li>
                   ))}
                 </ul>

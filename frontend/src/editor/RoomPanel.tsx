@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { EditorRoom } from "../editor-api";
 import { em } from "../locales/editor.kk";
+import { demoName } from "../demo-labels";
 
 export function RoomPanel({
   rooms,
@@ -48,7 +49,7 @@ export function RoomPanel({
           <option value="">{em.newRoom}</option>
           {rooms.map((r) => (
             <option key={r.id} value={r.id}>
-              {r.code} ·{" "}
+              {demoName(r.code, r.data_kind)} ·{" "}
               {r.data_kind === "synthetic" ? em.synthetic : em.college}
             </option>
           ))}

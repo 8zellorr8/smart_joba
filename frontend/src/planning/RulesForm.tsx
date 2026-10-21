@@ -6,6 +6,7 @@ import type {
   BusyInterval,
 } from "../planning-api";
 import { pm } from "../locales/planning.kk";
+import { demoName } from "../demo-labels";
 
 function blank(
   data: PlanningData,
@@ -120,11 +121,11 @@ export function RulesForm({
     kind === "teacher"
       ? data.teachers
           .filter((t) => t.data_kind === context.data_kind)
-          .map((t) => ({ id: t.id, label: t.name }))
+          .map((t) => ({ id: t.id, label: demoName(t.name, t.data_kind) }))
       : kind === "room"
         ? data.rooms
             .filter((r) => r.data_kind === context.data_kind)
-            .map((r) => ({ id: r.id, label: r.code }))
+            .map((r) => ({ id: r.id, label: demoName(r.code, r.data_kind) }))
         : data.groups
             .filter(
               (g) =>
@@ -133,7 +134,7 @@ export function RulesForm({
                   (d) => d.context_id === context.id && d.group_id === g.id,
                 ),
             )
-            .map((g) => ({ id: g.id, label: g.code }));
+            .map((g) => ({ id: g.id, label: demoName(g.code, g.data_kind) }));
   function changeAvailability(index: number, changes: Partial<Availability>) {
     update({
       availability: doc.availability.map((v, i) =>
@@ -181,9 +182,12 @@ export function RulesForm({
           <div className="planning-input-grid">
             {doc.groups.map((g, i) => (
               <label key={g.group_id}>
-                {data.groups.find((v) => v.id === g.group_id)?.code}
+                {demoName(
+                  data.groups.find((v) => v.id === g.group_id)?.code ?? "",
+                  context.data_kind,
+                )}
                 <input
-                  aria-label={`${pm.sizes}: ${data.groups.find((v) => v.id === g.group_id)?.code}`}
+                  aria-label={`${pm.sizes}: ${demoName(data.groups.find((v) => v.id === g.group_id)?.code ?? "", context.data_kind)}`}
                   type="number"
                   min="1"
                   max="10000"
@@ -207,7 +211,10 @@ export function RulesForm({
               <div key={r.room_id}>
                 <label>
                   {pm.capacity}:{" "}
-                  {data.rooms.find((v) => v.id === r.room_id)?.code}
+                  {demoName(
+                    data.rooms.find((v) => v.id === r.room_id)?.code ?? "",
+                    context.data_kind,
+                  )}
                   <input
                     type="number"
                     min="1"
@@ -226,7 +233,10 @@ export function RulesForm({
                 </label>
                 <label>
                   {pm.features}:{" "}
-                  {data.rooms.find((v) => v.id === r.room_id)?.code}
+                  {demoName(
+                    data.rooms.find((v) => v.id === r.room_id)?.code ?? "",
+                    context.data_kind,
+                  )}
                   <input
                     value={r.features.join(",")}
                     onChange={(e) =>
@@ -250,7 +260,10 @@ export function RulesForm({
           <div className="planning-input-grid">
             {doc.needs.map((n, i) => (
               <label key={n.demand_id}>
-                {data.demands.find((v) => v.id === n.demand_id)?.subject}
+                {demoName(
+                  data.demands.find((v) => v.id === n.demand_id)?.subject ?? "",
+                  context.data_kind,
+                )}
                 <input
                   value={n.features.join(",")}
                   onChange={(e) =>

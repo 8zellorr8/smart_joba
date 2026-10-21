@@ -8,6 +8,7 @@ import type {
 } from "../editor-api";
 import { em } from "../locales/editor.kk";
 import { weekdays } from "../locales/calendar.kk";
+import { demoName } from "../demo-labels";
 
 const splitDates = (value: string) => value.split(/[,\s]+/).filter(Boolean);
 export function SeriesForm({
@@ -123,7 +124,9 @@ export function SeriesForm({
             <option value="">—</option>
             {assignments.map((a) => (
               <option key={a.id} value={a.id}>
-                {a.group} · {a.subject} · {a.teacher} · {em.semester}{" "}
+                {demoName(a.group, draft.data_kind)} ·{" "}
+                {demoName(a.subject, draft.data_kind)} ·{" "}
+                {demoName(a.teacher, draft.data_kind)} · {em.semester}{" "}
                 {a.semester}
               </option>
             ))}
@@ -140,7 +143,7 @@ export function SeriesForm({
             <option value="">—</option>
             {rooms.map((r) => (
               <option key={r.id} value={r.id}>
-                {r.code}
+                {demoName(r.code, r.data_kind)}
                 {!r.confirmed || r.exclusive === null ? ` · ${em.unknown}` : ""}
               </option>
             ))}
@@ -157,7 +160,7 @@ export function SeriesForm({
             <option value="">—</option>
             {calendar?.document.slots.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.label} · {s.start}–{s.end}
+                {demoName(s.label, draft.data_kind)} · {s.start}–{s.end}
               </option>
             ))}
           </select>

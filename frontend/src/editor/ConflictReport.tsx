@@ -1,7 +1,14 @@
 import type { DraftReport } from "../editor-api";
 import { em, editorMessages } from "../locales/editor.kk";
+import { demoName } from "../demo-labels";
 
-export function ConflictReport({ report }: { report: DraftReport }) {
+export function ConflictReport({
+  report,
+  dataKind,
+}: {
+  report: DraftReport;
+  dataKind?: string;
+}) {
   return (
     <section className="editor-panel" aria-labelledby="draft-report-title">
       <div className="editor-panel-heading">
@@ -16,12 +23,15 @@ export function ConflictReport({ report }: { report: DraftReport }) {
           {report.conflicts.map((c, index) => (
             <article key={index}>
               <strong>
-                {em.conflicts}: {em.views[c.resource_type]} · {c.resource_name}
+                {em.conflicts}: {em.views[c.resource_type]} ·{" "}
+                {demoName(c.resource_name, dataKind)}
               </strong>
               {c.events.map((e) => (
                 <p key={e.id}>
-                  {e.subject} · {e.group} · {e.teacher} · {e.room} · {e.date}{" "}
-                  {e.start}–{e.end}
+                  {demoName(e.subject, dataKind)} ·{" "}
+                  {demoName(e.group, dataKind)} ·{" "}
+                  {demoName(e.teacher, dataKind)} · {demoName(e.room, dataKind)}{" "}
+                  · {e.date} {e.start}–{e.end}
                 </p>
               ))}
               <p>
@@ -83,8 +93,8 @@ export function ConflictReport({ report }: { report: DraftReport }) {
             <tbody>
               {report.hours.map((h) => (
                 <tr key={h.demand_id}>
-                  <td>{h.group}</td>
-                  <td>{h.subject}</td>
+                  <td>{demoName(h.group, dataKind)}</td>
+                  <td>{demoName(h.subject, dataKind)}</td>
                   <td>{h.semester}</td>
                   <td>{h.required ?? "—"}</td>
                   <td>{h.planned}</td>
