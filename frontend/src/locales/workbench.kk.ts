@@ -1,5 +1,5 @@
 export const wb = {
-  overview: "Жұмыс кеңістігі",
+  overview: "Басты бет",
   academicYear: "Оқу жылы",
   weekly: "Апталық кесте",
   todayLessons: "Бүгінгі сабақтар",

@@ -1,10 +1,17 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 import type { Role, Session, Workspace } from "./api";
 import { kk } from "./locales/kk";
 import { wb } from "./locales/workbench.kk";
+import { portal } from "./locales/portal.kk";
 
 vi.mock("./publication-api", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./publication-api")>();
@@ -141,6 +148,52 @@ describe("AUTH-003: prepared account sign-in", () => {
 });
 
 describe("REQ-006: server-provided workspace and session", () => {
+  it("resets reader pages after the server changes the teacher binding for the same account and scope", async () => {
+    const teacher = {
+      ...scheduler,
+      grants: [
+        {
+          ...scheduler.grants[0],
+          role: "teacher" as const,
+          teacher_id: "teacher-a",
+        },
+      ],
+    };
+    const readerWorkspace = {
+      ...workspace,
+      role_codes: ["teacher"],
+      permissions: ["publication.read.own"],
+    };
+    fetchMock
+      .mockResolvedValueOnce(json({ ...signedIn, user: teacher }))
+      .mockResolvedValueOnce(json(readerWorkspace));
+    render(<App />);
+    await screen.findByRole("heading", { name: wb.overview });
+    await userEvent.click(
+      screen.getByRole("button", { name: portal.mySubjects }),
+    );
+    await screen.findByRole("heading", {
+      name: portal.mySubjects,
+    });
+    fetchMock
+      .mockResolvedValueOnce(
+        json({
+          ...signedIn,
+          user: {
+            ...teacher,
+            grants: [{ ...teacher.grants[0], teacher_id: "teacher-b" }],
+          },
+        }),
+      )
+      .mockResolvedValueOnce(json(readerWorkspace));
+    fireEvent(document, new Event("visibilitychange"));
+    expect(
+      await screen.findByRole("heading", { name: wb.overview }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: portal.mySubjects }),
+    ).not.toBeInTheDocument();
+  });
   it("restores a teacher session and shows only the server permissions", async () => {
     const teacher = {
       ...scheduler,

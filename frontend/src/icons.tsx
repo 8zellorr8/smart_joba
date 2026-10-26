@@ -19,6 +19,8 @@ import { XIcon } from "@phosphor-icons/react/dist/csr/X";
 import { UserCircleIcon } from "@phosphor-icons/react/dist/csr/UserCircle";
 import { ListIcon } from "@phosphor-icons/react/dist/csr/List";
 import { PencilSimpleIcon } from "@phosphor-icons/react/dist/csr/PencilSimple";
+import { BookOpenIcon } from "@phosphor-icons/react/dist/csr/BookOpen";
+import { MagnifyingGlassIcon } from "@phosphor-icons/react/dist/csr/MagnifyingGlass";
 
 const icons = {
   calendar: CalendarBlankIcon,
@@ -41,6 +43,8 @@ const icons = {
   user: UserCircleIcon,
   list: ListIcon,
   edit: PencilSimpleIcon,
+  book: BookOpenIcon,
+  search: MagnifyingGlassIcon,
 };
 export function Icon({
   name,

@@ -14,6 +14,8 @@ import { vm } from "./locales/publication.kk";
 import { pm } from "./locales/planning.kk";
 import { wb } from "./locales/workbench.kk";
 import { WorkbenchHome } from "./WorkbenchHome";
+import { SubjectsPage, subjectsLabel } from "./SubjectOverview";
+import { portal } from "./locales/portal.kk";
 
 type Screen = "loading" | "login" | "workspace" | "error";
 const roleNames: Record<Role, string> = {
@@ -69,7 +71,7 @@ function Brand({
       <span>
         <strong>{t.appName}</strong>
         <span className="brand-caption">
-          {compact ? "Оқу кестесі" : t.appDescription}
+          {compact ? portal.title : t.appDescription}
         </span>
       </span>
     </div>
@@ -272,7 +274,6 @@ function Login({
         </div>
         <footer className="login-footer">
           <span>{t.footer}</span>
-          <span>{t.stageFooter}</span>
         </footer>
       </main>
     </div>
@@ -298,6 +299,7 @@ function WorkspaceScreen({
 }) {
   const [view, setViewState] = useState<
     | "overview"
+    | "subjects"
     | "import"
     | "calendar"
     | "editor"
@@ -309,6 +311,10 @@ function WorkspaceScreen({
   const [publicationGroup, setPublicationGroup] = useState("");
   const [publicationDate, setPublicationDate] = useState<string>();
   const [planningDirty, setPlanningDirty] = useState(false);
+  const navigationDialog = useRef<HTMLDialogElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [subjectFocus, setSubjectFocus] = useState("");
+  const [subjectVisit, setSubjectVisit] = useState(0);
   function setView(next: typeof view) {
     if (
       (view === "planning" || view === "versions") &&
@@ -319,6 +325,8 @@ function WorkspaceScreen({
       return;
     if (next !== view) setPlanningDirty(false);
     setViewState(next);
+    if (navigationDialog.current?.open) navigationDialog.current.close();
+    requestAnimationFrame(() => document.getElementById("main")?.focus());
   }
   const [editorDraftId, setEditorDraftId] = useState<string | undefined>();
   const [versionFocus, setVersionFocus] = useState<string | undefined>();
@@ -339,6 +347,10 @@ function WorkspaceScreen({
   const canReadEditor =
     workspace.permissions.includes("draft.read") ||
     workspace.permissions.includes("catalog.manage");
+  const canUseStaffTools =
+    workspace.permissions.includes("import.source.read") ||
+    canReadCalendar ||
+    canReadEditor;
   const upcomingItems = [
     { title: t.export, icon: "download", permission: "publication.export" },
   ] as const;
@@ -346,162 +358,217 @@ function WorkspaceScreen({
     workspace.permissions.includes(item.permission),
   );
   return (
-    <div className="workspace-layout workbench-layout">
-      <aside className="sidebar">
-        <Brand inverse compact />
-        <div className="sidebar-divider" />
-        <nav aria-label={t.navTitle}>
-          <p className="nav-heading">{t.navTitle}</p>
-          <a
-            href="#main"
-            className={view === "overview" ? "nav-current" : "import-nav"}
-            aria-current={view === "overview" ? "page" : undefined}
-            onClick={() => setView("overview")}
-          >
-            <Icon name="grid" size={20} />
-            {t.overview}
-            {view === "overview" && <span className="nav-dot" />}
-          </a>
-          {workspace.permissions.includes("import.source.read") && (
+    <div className="workspace-layout workbench-layout portal-layout">
+      <dialog
+        ref={navigationDialog}
+        id="portal-tools"
+        className="portal-drawer"
+        onKeyDown={(event) => {
+          if (event.key === "Escape") event.stopPropagation();
+        }}
+        aria-labelledby="portal-menu-title"
+        onClose={() => setMenuOpen(false)}
+      >
+        <aside className="sidebar">
+          <div className="portal-drawer-heading">
+            <h2 id="portal-menu-title">{portal.sections}</h2>
             <button
-              className="import-nav"
-              aria-label={t.import}
-              aria-current={view === "import" ? "page" : undefined}
-              onClick={() => setView("import")}
+              className="button button-quiet"
+              onClick={() => navigationDialog.current?.close()}
+              aria-label={portal.closeMenu}
             >
-              <Icon name="file" size={20} />
-              {wb.nav.import}
+              <Icon name="close" size={22} />
             </button>
-          )}
-          {canReadCalendar && (
-            <button
-              className="import-nav"
-              aria-label={t.calendar}
-              aria-current={view === "calendar" ? "page" : undefined}
-              onClick={() => setView("calendar")}
+          </div>
+          <div className="sidebar-divider" />
+          <nav aria-label={t.navTitle}>
+            <p className="nav-heading">{t.navTitle}</p>
+            <a
+              href="#main"
+              className={view === "overview" ? "nav-current" : "import-nav"}
+              aria-current={view === "overview" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setView("overview");
+              }}
             >
-              <Icon name="clock" size={20} />
-              {wb.nav.calendar}
-            </button>
-          )}
-          {canReadEditor && (
-            <button
-              className="import-nav"
-              aria-label={
-                workspace.permissions.includes("draft.read")
-                  ? t.editor
-                  : t.rooms
-              }
-              aria-current={view === "editor" ? "page" : undefined}
-              onClick={() => setView("editor")}
-            >
-              <Icon name="calendar" size={20} />
-              {workspace.permissions.includes("draft.read")
-                ? wb.nav.editor
-                : t.rooms}
-            </button>
-          )}
-          {canReadEditor && (
-            <button
-              className="import-nav"
-              aria-label={
-                workspace.permissions.includes("catalog.manage")
+              <Icon name="grid" size={20} />
+              {t.overview}
+              {view === "overview" && <span className="nav-dot" />}
+            </a>
+            {workspace.permissions.includes("import.source.read") && (
+              <button
+                className="import-nav"
+                aria-label={t.import}
+                aria-current={view === "import" ? "page" : undefined}
+                onClick={() => setView("import")}
+              >
+                <Icon name="file" size={20} />
+                {wb.nav.import}
+              </button>
+            )}
+            {canReadCalendar && (
+              <button
+                className="import-nav"
+                aria-label={t.calendar}
+                aria-current={view === "calendar" ? "page" : undefined}
+                onClick={() => setView("calendar")}
+              >
+                <Icon name="clock" size={20} />
+                {wb.nav.calendar}
+              </button>
+            )}
+            {canReadEditor && (
+              <button
+                className="import-nav"
+                aria-label={
+                  workspace.permissions.includes("draft.read")
+                    ? t.editor
+                    : t.rooms
+                }
+                aria-current={view === "editor" ? "page" : undefined}
+                onClick={() => setView("editor")}
+              >
+                <Icon name="calendar" size={20} />
+                {workspace.permissions.includes("draft.read")
+                  ? wb.nav.editor
+                  : t.rooms}
+              </button>
+            )}
+            {canReadEditor && (
+              <button
+                className="import-nav"
+                aria-label={
+                  workspace.permissions.includes("catalog.manage")
+                    ? pm.conditions
+                    : pm.title
+                }
+                aria-current={view === "planning" ? "page" : undefined}
+                onClick={() => setView("planning")}
+              >
+                <Icon name="spark" size={20} />
+                {workspace.permissions.includes("catalog.manage")
                   ? pm.conditions
-                  : pm.title
-              }
-              aria-current={view === "planning" ? "page" : undefined}
-              onClick={() => setView("planning")}
-            >
-              <Icon name="spark" size={20} />
-              {workspace.permissions.includes("catalog.manage")
-                ? pm.conditions
-                : wb.nav.planning}
-            </button>
-          )}
-          {workspace.permissions.includes("draft.read") && (
-            <button
-              className="import-nav"
-              aria-label={t.publication}
-              aria-current={view === "versions" ? "page" : undefined}
-              onClick={() => setView("versions")}
-            >
-              <Icon name="layers" size={20} />
-              {wb.nav.versions}
-            </button>
-          )}
-          {workspace.permissions.some((p) =>
-            p.startsWith("publication.read"),
-          ) && (
-            <button
-              className="import-nav"
-              aria-label={vm.publication}
-              aria-current={view === "publications" ? "page" : undefined}
-              onClick={() => setView("publications")}
-            >
-              <Icon name="calendar" size={20} />
-              {wb.nav.publications}
-            </button>
-          )}
-          {availableUpcoming.length > 0 && (
-            <>
-              <p className="nav-heading next-nav-heading">{t.nextTitle}</p>
-              <div className="upcoming-nav">
-                {availableUpcoming.map((item) => (
-                  <button
-                    key={item.title}
-                    type="button"
-                    disabled
-                    title={t.upcoming}
-                  >
-                    <Icon name={item.icon} size={19} />
-                    <span>
-                      {item.title}
-                      <small>{t.upcoming}</small>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </nav>
-        <div className="sidebar-bottom sidebar-profile">
-          <Icon name="user" size={26} />
-          <div>
-            <strong>{user.display_name}</strong>
-            <span>
-              {activeRoles
-                .map((role) => roleNames[role] ?? t.unknownRole)
-                .join(", ")}
-            </span>
-          </div>
-        </div>
-      </aside>
+                  : wb.nav.planning}
+              </button>
+            )}
+            {workspace.permissions.includes("draft.read") && (
+              <button
+                className="import-nav"
+                aria-label={t.publication}
+                aria-current={view === "versions" ? "page" : undefined}
+                onClick={() => setView("versions")}
+              >
+                <Icon name="layers" size={20} />
+                {wb.nav.versions}
+              </button>
+            )}
+            {workspace.permissions.some((p) =>
+              p.startsWith("publication.read"),
+            ) && (
+              <button
+                className="import-nav"
+                aria-label={vm.publication}
+                aria-current={view === "publications" ? "page" : undefined}
+                onClick={() => setView("publications")}
+              >
+                <Icon name="calendar" size={20} />
+                {wb.nav.publications}
+              </button>
+            )}
+            {availableUpcoming.length > 0 && (
+              <>
+                <p className="nav-heading next-nav-heading">{t.nextTitle}</p>
+                <div className="upcoming-nav">
+                  {availableUpcoming.map((item) => (
+                    <button
+                      key={item.title}
+                      type="button"
+                      disabled
+                      title={t.upcoming}
+                    >
+                      <Icon name={item.icon} size={19} />
+                      <span>
+                        {item.title}
+                        <small>{t.upcoming}</small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </nav>
+        </aside>
+      </dialog>
       <div className="workspace-body">
-        <header className="workspace-header">
-          <div>
-            <span className="breadcrumb-brand">{workspace.scope.name}</span>
-            <span className="breadcrumb-separator">/</span>
-            <span>
-              {view === "import"
-                ? t.import
-                : view === "calendar"
-                  ? t.calendar
-                  : view === "editor"
-                    ? workspace.permissions.includes("draft.read")
-                      ? t.editor
-                      : t.rooms
-                    : view === "planning"
-                      ? pm.title
-                      : view === "versions"
-                        ? t.publication
-                        : view === "publications"
-                          ? vm.publication
-                          : t.overview}
+        <header className="workspace-header portal-header">
+          <Brand compact />
+          <nav className="portal-primary-nav" aria-label={portal.navigation}>
+            <a
+              href="#main"
+              aria-current={view === "overview" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setView("overview");
+              }}
+            >
+              {portal.home}
+            </a>
+            {workspace.permissions.some((permission) =>
+              permission.startsWith("publication.read"),
+            ) && (
+              <>
+                <button
+                  aria-current={view === "subjects" ? "page" : undefined}
+                  onClick={() => {
+                    setSubjectFocus("");
+                    setSubjectVisit((value) => value + 1);
+                    setView("subjects");
+                  }}
+                >
+                  {subjectsLabel(workspace)}
+                </button>
+                <button
+                  aria-current={view === "publications" ? "page" : undefined}
+                  onClick={() => setView("publications")}
+                >
+                  {portal.schedule}
+                </button>
+              </>
+            )}
+          </nav>
+          <div
+            className={`portal-account ${canUseStaffTools ? "portal-account--staff" : ""}`}
+          >
+            {canUseStaffTools && (
+              <button
+                className="portal-menu-toggle"
+                aria-label={portal.sections}
+                aria-haspopup="dialog"
+                aria-expanded={menuOpen}
+                aria-controls="portal-tools"
+                onClick={() => {
+                  navigationDialog.current?.showModal();
+                  setMenuOpen(true);
+                }}
+              >
+                <Icon name="list" size={19} />
+                <span>{portal.sections}</span>
+              </button>
+            )}
+            <span className="portal-avatar" aria-hidden="true">
+              {user.display_name.trim().slice(0, 1)}
             </span>
-          </div>
-          <div className="header-actions">
-            <span className="language-label">
-              Ққ <span>{t.language}</span>
+            <div className="portal-account-name">
+              <strong>{user.display_name}</strong>
+              <span>
+                {activeRoles
+                  .map((role) => roleNames[role] ?? t.unknownRole)
+                  .join(", ")}
+              </span>
+            </div>
+            <span className="language-label" aria-label={t.language}>
+              ҚҚ
             </span>
             <button
               className="button button-quiet workbench-logout"
@@ -521,75 +588,30 @@ function WorkspaceScreen({
             </button>
           </div>
         </header>
-        <nav className="mobile-workspace-nav" aria-label={t.navTitle}>
-          <button
-            aria-current={view === "overview" ? "page" : undefined}
-            onClick={() => setView("overview")}
-          >
-            {t.overview}
-          </button>
-          {workspace.permissions.includes("import.source.read") && (
-            <button
-              aria-current={view === "import" ? "page" : undefined}
-              onClick={() => setView("import")}
-            >
-              {wb.nav.import}
-            </button>
-          )}
-          {canReadCalendar && (
-            <button
-              aria-current={view === "calendar" ? "page" : undefined}
-              onClick={() => setView("calendar")}
-            >
-              {wb.nav.calendar}
-            </button>
-          )}
-          {canReadEditor && (
-            <button
-              aria-current={view === "editor" ? "page" : undefined}
-              onClick={() => setView("editor")}
-            >
-              {workspace.permissions.includes("draft.read")
-                ? t.editor
-                : t.rooms}
-            </button>
-          )}
-          {canReadEditor && (
-            <button
-              aria-current={view === "planning" ? "page" : undefined}
-              onClick={() => setView("planning")}
-            >
-              {workspace.permissions.includes("catalog.manage")
-                ? pm.conditions
-                : pm.title}
-            </button>
-          )}
-          {workspace.permissions.includes("draft.read") && (
-            <button
-              aria-current={view === "versions" ? "page" : undefined}
-              onClick={() => setView("versions")}
-            >
-              {wb.nav.versions}
-            </button>
-          )}
-          {workspace.permissions.some((p) =>
-            p.startsWith("publication.read"),
-          ) && (
-            <button
-              aria-current={view === "publications" ? "page" : undefined}
-              onClick={() => setView("publications")}
-            >
-              {wb.nav.publications}
-            </button>
-          )}
-        </nav>
+        <div className="portal-context">
+          <Icon name="grid" size={15} />
+          <span>{workspace.scope.name}</span>
+        </div>
         <main id="main" className="workspace-main" tabIndex={-1}>
           {error && (
             <p role="alert" className="error-message workspace-error">
               {error}
             </p>
           )}
-          {view === "versions" ? (
+          {view === "subjects" ? (
+            <SubjectsPage
+              key={subjectVisit}
+              workspace={workspace}
+              onExpired={onExpired}
+              initialSubjectKey={subjectFocus}
+              onOpenPublication={(id, date, group) => {
+                setPublicationGroup(group);
+                setPublicationFocus(id);
+                setPublicationDate(date);
+                setView("publications");
+              }}
+            />
+          ) : view === "versions" ? (
             <VersionsPage
               initialVersionId={versionFocus}
               onSelectedVersion={setVersionFocus}
@@ -664,6 +686,11 @@ function WorkspaceScreen({
             <>
               <WorkbenchHome
                 workspace={workspace}
+                onOpenSubject={(key) => {
+                  setSubjectFocus(key);
+                  setSubjectVisit((value) => value + 1);
+                  setView("subjects");
+                }}
                 onNavigate={setView}
                 onExpired={onExpired}
                 onOpenDraft={(id) => {
@@ -899,6 +926,16 @@ export function App() {
       )}
       {screen === "workspace" && session.user && workspace && (
         <WorkspaceScreen
+          key={JSON.stringify([
+            session.user.id,
+            workspace.scope.id,
+            session.user.grants
+              .filter((grant) => grant.scope_id === workspace.scope.id)
+              .map((grant) =>
+                JSON.stringify([grant.role, grant.group_id, grant.teacher_id]),
+              )
+              .sort(),
+          ])}
           user={session.user}
           workspace={workspace}
           onLogout={logout}
