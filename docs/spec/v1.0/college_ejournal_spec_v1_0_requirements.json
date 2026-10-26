@@ -1,0 +1,1445 @@
+{
+  "version": "1.0",
+  "date": "2026-10-27",
+  "status": "specified_not_implemented",
+  "language": "ru",
+  "baseline_commit": "e03737746527ed0e457f7946087fca6250b2ab8d",
+  "confirmed": {
+    "grading_range": [
+      0,
+      100
+    ],
+    "development_duration": "one week",
+    "roles": [
+      "admin",
+      "scheduler",
+      "approver",
+      "teacher",
+      "student"
+    ],
+    "modules": [
+      "grades",
+      "attendance",
+      "lesson_topics",
+      "student_cabinet"
+    ],
+    "preserve_schedule": true,
+    "development_authorized_by_this_request": false
+  },
+  "schedule_assumption": {
+    "D1": "2026-10-28",
+    "D7": "2026-11-03",
+    "timezone": "Asia/Qyzylorda",
+    "status": "assumption"
+  },
+  "assumptions": {
+    "QJ-001": "integer grades, no totals formula",
+    "QJ-002": "one active group per context/date",
+    "QJ-003": "facts recorded after lesson end in confirmed educational timezone",
+    "QJ-004": "approver read-only journal within scope",
+    "QJ-005": [
+      "present",
+      "absent",
+      "late",
+      "excused",
+      null
+    ],
+    "QJ-006": "one current grade per student and lesson",
+    "QJ-007": "real rosters and confirmed bindings required",
+    "QJ-008": "exact dates and daily hours unconfirmed",
+    "QJ-009": "local profile retained; production privacy/retention/legal status unconfirmed"
+  },
+  "legacy": {
+    "source": "../v0.9/college_timetable_spec_v0_9_ru.docx",
+    "sha256": "c4c3195f804ebc2f3f47f1559118174fef7f2f86e87dc09dc9f52da021f4a87e",
+    "policy": "All original requirements, AC, Q and source observations remain normative for their subsystems except the explicit amendments; ranges are inherited from the original, not replaced by this list.",
+    "explicit_id_mentions": {
+      "AC-001": "retained",
+      "AC-001a": "retained",
+      "AC-001b": "retained",
+      "AC-001c": "retained",
+      "AC-001d": "retained",
+      "AC-001e": "retained",
+      "AC-002": "retained",
+      "AC-002a": "retained",
+      "AC-002b": "retained",
+      "AC-002c": "retained",
+      "AC-003": "retained",
+      "AC-003a": "retained",
+      "AC-003b": "retained",
+      "AC-003c": "retained",
+      "AC-004": "retained",
+      "AC-004a": "retained",
+      "AC-004b": "retained",
+      "AC-004c": "retained",
+      "AC-004d": "retained",
+      "AC-005": "retained",
+      "AC-005a": "retained",
+      "AC-005b": "retained",
+      "AC-005c": "retained",
+      "AC-005d": "retained",
+      "AC-006": "retained",
+      "AC-006a": "retained",
+      "AC-006b": "retained",
+      "AC-006c": "retained",
+      "AC-007": "retained",
+      "AC-007a": "retained",
+      "AC-007b": "retained",
+      "AC-008": "retained",
+      "AC-008a": "retained",
+      "AC-008b": "retained",
+      "AC-008c": "retained",
+      "AC-008d": "retained",
+      "AC-009": "retained",
+      "AC-009a": "retained",
+      "AC-009b": "retained",
+      "AC-009c": "retained",
+      "AC-009d": "retained",
+      "AC-009e": "retained",
+      "AC-009f": "retained",
+      "AC-009g": "retained",
+      "AC-010": "retained",
+      "AC-010a": "retained",
+      "AC-010b": "retained",
+      "AC-010c": "retained",
+      "AC-010d": "retained",
+      "AC-010e": "retained",
+      "AC-010f": "retained",
+      "AC-011": "retained",
+      "AC-011a": "retained",
+      "AC-011b": "retained",
+      "AC-011c": "retained",
+      "AC-011d": "retained",
+      "AC-011e": "retained",
+      "AC-012": "retained",
+      "AC-012a": "retained",
+      "AC-012b": "retained",
+      "AC-012c": "retained",
+      "AC-012d": "retained",
+      "AC-012e": "retained",
+      "AC-013": "retained",
+      "AC-013a": "retained",
+      "AC-013b": "retained",
+      "AC-013c": "retained",
+      "AC-014": "retained",
+      "AC-014a": "retained",
+      "AC-014b": "retained",
+      "AC-014c": "retained",
+      "AC-015": "retained",
+      "AC-015a": "retained",
+      "AC-015b": "retained",
+      "AC-016": "retained",
+      "AC-016a": "retained",
+      "AC-016b": "retained",
+      "AC-016c": "retained",
+      "AC-017": "retained",
+      "AC-017a": "retained",
+      "AC-017b": "retained",
+      "AC-017c": "retained",
+      "AC-017d": "retained",
+      "AC-018": "retained",
+      "AC-018a": "retained",
+      "AC-018b": "retained",
+      "AC-018c": "retained",
+      "AC-019": "retained",
+      "AC-019a": "retained",
+      "AC-019b": "retained",
+      "AC-019c": "retained",
+      "AC-020": "retained",
+      "AC-020a": "retained",
+      "AC-020b": "retained",
+      "AC-021": "retained",
+      "AC-021a": "retained",
+      "AC-021b": "retained",
+      "AC-021c": "retained",
+      "AC-022": "retained",
+      "AC-022a": "retained",
+      "AC-022b": "retained",
+      "AC-023": "retained",
+      "AC-023a": "retained",
+      "AC-023b": "retained",
+      "AC-023c": "retained",
+      "AC-024": "retained",
+      "AC-024a": "retained",
+      "AC-024b": "retained",
+      "AC-024c": "retained",
+      "AC-024d": "retained",
+      "AC-024e": "retained",
+      "AC-025": "retained",
+      "AC-025a": "retained",
+      "AC-025b": "retained",
+      "AC-025c": "retained",
+      "AC-026": "retained",
+      "AC-026a": "retained",
+      "AC-026b": "retained",
+      "AC-026c": "retained",
+      "AC-026d": "retained",
+      "AC-027": "retained",
+      "AC-027a": "retained",
+      "AC-027b": "retained",
+      "AC-028": "retained",
+      "AC-028a": "retained",
+      "AC-028b": "retained",
+      "AC-029": "retained",
+      "AC-029a": "retained",
+      "AC-029b": "retained",
+      "AC-030": "retained",
+      "AC-030a": "retained",
+      "AC-030b": "retained",
+      "AC-030c": "retained",
+      "AC-031": "retained",
+      "AC-031a": "retained",
+      "AC-031b": "retained",
+      "AC-031c": "retained",
+      "AC-032": "retained",
+      "AC-032a": "retained",
+      "AC-032b": "retained",
+      "AC-033": "retained",
+      "AC-033a": "retained",
+      "AC-033b": "retained",
+      "AC-033c": "retained",
+      "AC-034": "retained",
+      "AC-034a": "retained",
+      "AC-034b": "retained",
+      "AC-035": "retained",
+      "AC-035a": "retained",
+      "AC-035b": "retained",
+      "AC-035c": "retained",
+      "AC-036": "retained",
+      "AC-036a": "retained",
+      "AC-036b": "retained",
+      "AC-037": "retained",
+      "AC-037a": "retained",
+      "AC-037b": "retained",
+      "AC-038": "retained",
+      "AC-038a": "retained",
+      "AC-038b": "retained",
+      "AC-039": "retained",
+      "AC-039a": "retained",
+      "AC-039b": "retained",
+      "AC-039c": "retained",
+      "AUTH-001": "retained",
+      "AUTH-003": "retained",
+      "AUTH-004": "retained",
+      "AUTH-005": "retained",
+      "AUTH-007": "retained",
+      "AUTH-008": "retained",
+      "CAL-001": "retained",
+      "CAL-002": "retained",
+      "CAL-003": "retained",
+      "DEL-001": "retained delivery composition; new journal dates specified separately",
+      "DEL-002": "retained delivery composition; new journal dates specified separately",
+      "DEL-003": "retained delivery composition; new journal dates specified separately",
+      "ENG-001": "retained",
+      "ENG-002": "retained",
+      "ENG-003": "retained",
+      "ENG-007": "retained",
+      "ENG-008": "retained",
+      "ENG-009": "retained",
+      "ENG-010": "retained",
+      "ENG-011": "retained",
+      "ENG-012": "retained",
+      "ENG-013": "retained",
+      "ENG-014": "retained",
+      "ENG-015": "retained",
+      "EXP-001": "retained",
+      "EXP-002": "retained",
+      "GEN-001": "retained",
+      "GEN-002": "retained",
+      "GEN-003": "retained",
+      "GEN-004": "retained",
+      "GEN-005": "retained",
+      "GEN-006": "retained",
+      "HRS-001": "retained",
+      "HRS-002": "retained",
+      "HRS-003": "retained",
+      "IMP-001": "retained",
+      "IMP-002": "retained",
+      "IMP-003": "retained",
+      "IMP-004": "retained",
+      "IMP-005": "retained",
+      "IMP-007": "retained",
+      "IMP-008": "retained",
+      "LOC-001": "retained",
+      "LOC-002": "retained",
+      "LOC-003": "retained",
+      "NFR-001": "retained",
+      "NFR-002": "retained",
+      "NFR-003": "retained",
+      "NFR-004": "retained",
+      "NFR-005": "retained",
+      "NFR-006": "retained",
+      "PIL-001": "retained",
+      "PIL-005": "retained",
+      "PLN-001": "retained",
+      "PLN-003": "retained",
+      "PLN-004": "retained",
+      "PLN-006": "retained",
+      "PLN-007": "retained",
+      "PLN-008": "retained",
+      "Q-001": "retained",
+      "Q-002": "retained",
+      "Q-003": "retained",
+      "Q-004": "retained",
+      "Q-005": "retained",
+      "Q-006": "retained",
+      "Q-007": "retained",
+      "Q-008": "retained",
+      "Q-009": "retained",
+      "Q-010": "retained",
+      "Q-011": "retained",
+      "Q-012": "retained",
+      "Q-013": "retained",
+      "Q-014": "retained",
+      "Q-015": "retained",
+      "Q-016": "retained",
+      "Q-017": "retained",
+      "REQ-001": "retained",
+      "REQ-002": "extended: old three queues retained; J1 is a separate product increment",
+      "REQ-003": "revised: journal grades and attendance removed from exclusions within J1 only",
+      "REQ-004": "retained",
+      "REQ-005": "retained",
+      "REQ-006": "retained",
+      "REQ-007": "extended: journal and personal student screens",
+      "REQ-008": "extended: journal and personal student screens",
+      "RULE-001": "retained",
+      "RULE-002": "retained",
+      "RULE-003": "retained",
+      "RULE-004": "retained",
+      "RULE-005": "retained",
+      "UI-001": "retained",
+      "UI-002": "retained",
+      "UI-003": "retained",
+      "UX-001": "retained",
+      "UX-002": "retained",
+      "UX-004": "retained",
+      "UX-005": "retained",
+      "UX-006": "retained",
+      "UX-008": "retained",
+      "UX-009": "retained",
+      "UX-010": "retained",
+      "UX-011": "retained",
+      "UX-012": "retained",
+      "UX-014": "retained",
+      "UX-015": "retained",
+      "UX-016": "retained",
+      "VER-001": "retained",
+      "VER-002": "retained",
+      "VER-003": "retained"
+    }
+  },
+  "requirements": [
+    {
+      "id": "JRN-BAS-001",
+      "text": "Поставка J1 добавляет к действующему приложению журнал оценок, посещаемость, темы занятий и личный просмотр студента.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-001"
+      ]
+    },
+    {
+      "id": "JRN-BAS-002",
+      "text": "Существующие функции расписания и пять кодов ролей сохраняются с правами из раздела 3.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-002",
+        "AC-JRN-003",
+        "AC-JRN-004",
+        "AC-JRN-059"
+      ]
+    },
+    {
+      "id": "JRN-BAS-003",
+      "text": "Новые экраны поставляются на KK с сохранением очередности RU и EN по REQ-001, а ТЗ ведётся на русском.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-005"
+      ]
+    },
+    {
+      "id": "JRN-BAS-004",
+      "text": "Новая поставка использует подготовленные аккаунты по REQ-005 без свободного выбора привилегированной роли.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-006"
+      ]
+    },
+    {
+      "id": "JRN-DAT-001",
+      "text": "Администратор создаёт и исправляет карточку студента с постоянным ID, отображаемым именем, областью и признаком демоданных.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-007"
+      ]
+    },
+    {
+      "id": "JRN-DAT-002",
+      "text": "Принадлежность студента группе хранится как подтверждённый интервал [дата начала, дата окончания) внутри учебного контекста.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-008"
+      ]
+    },
+    {
+      "id": "JRN-DAT-003",
+      "text": "Доступ студента к журналу требует явной подтверждённой связи аккаунта с одним student_id в выбранной области.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-009"
+      ]
+    },
+    {
+      "id": "JRN-DAT-004",
+      "text": "Журнал группы по предмету и семестру использует подтверждённое назначение преподавателя с интервалом действия.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-010"
+      ]
+    },
+    {
+      "id": "JRN-DAT-005",
+      "text": "При первой записи занятия сервер фиксирует состав группы на дату занятия отдельным снимком состава журнала.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-011"
+      ]
+    },
+    {
+      "id": "JRN-DAT-006",
+      "text": "Исправление уже зафиксированного состава администратором требует причины и сохраняет записи выбывшего студента в истории.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-012"
+      ]
+    },
+    {
+      "id": "JRN-LSN-001",
+      "text": "Первая запись занятия журнала создаётся только из действующего разрешённого опубликованного события с подтверждёнными связями группы, предмета, семестра и преподавателя.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-013"
+      ]
+    },
+    {
+      "id": "JRN-LSN-002",
+      "text": "Занятие журнала получает постоянный ID и снимок исходной публикации, события, даты, времени, пояса и академических связей.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-014"
+      ]
+    },
+    {
+      "id": "JRN-LSN-003",
+      "text": "Первое сохранение фактических записей требует явного подтверждения преподавателем проведения занятия.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-015"
+      ]
+    },
+    {
+      "id": "JRN-LSN-004",
+      "text": "Фактические записи будущего или ещё не завершившегося занятия отклоняются по времени окончания в его учебном поясе согласно предположению QJ-003.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-016"
+      ]
+    },
+    {
+      "id": "JRN-LSN-005",
+      "text": "Занятие без введённой оценки или отметки посещаемости сохраняет соответствующее значение незаполненным.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-020"
+      ]
+    },
+    {
+      "id": "JRN-TOP-001",
+      "text": "При первом сохранении журнал требует непустую текстовую тему после удаления крайних пробелов длиной не более 2000 символов.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-017",
+        "AC-JRN-018"
+      ]
+    },
+    {
+      "id": "JRN-TOP-002",
+      "text": "Исправление сохранённой темы создаёт новую ревизию с причиной по общему правилу раздела 10.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-019"
+      ]
+    },
+    {
+      "id": "JRN-ATT-001",
+      "text": "Для студента на занятии сохраняется один статус из present, absent, late, excused либо незаполненное значение согласно предположению QJ-005.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-020",
+        "AC-JRN-021",
+        "AC-JRN-022"
+      ]
+    },
+    {
+      "id": "JRN-ATT-002",
+      "text": "Запись посещаемости изменяет только выбранные строки подтверждённого состава занятия.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-023"
+      ]
+    },
+    {
+      "id": "JRN-ATT-003",
+      "text": "Сервер не выводит посещаемость автоматически из оценки, входа в аккаунт или наличия занятия в расписании.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-024"
+      ]
+    },
+    {
+      "id": "JRN-ATT-004",
+      "text": "Исправление или очистка сохранённой посещаемости требует причины и создаёт запись истории.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-025"
+      ]
+    },
+    {
+      "id": "JRN-GRD-001",
+      "text": "Оценка принадлежит выбранному студенту и занятию и принимает значение от 0 до 100 включительно.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-026",
+        "AC-JRN-027",
+        "AC-JRN-028",
+        "AC-JRN-029"
+      ]
+    },
+    {
+      "id": "JRN-GRD-002",
+      "text": "В J1 принимаются целые баллы согласно предположению QJ-001, а дробные значения получают явный отказ проверки.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-030"
+      ]
+    },
+    {
+      "id": "JRN-GRD-003",
+      "text": "Пустая оценка хранится как отсутствие значения и отображается иначе, чем оценка 0.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-031"
+      ]
+    },
+    {
+      "id": "JRN-GRD-004",
+      "text": "Для пары студент и занятие существует не более одной текущей оценки согласно предположению QJ-006.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-032"
+      ]
+    },
+    {
+      "id": "JRN-GRD-005",
+      "text": "Исправление или очистка сохранённой оценки требует причины и сохраняет прежнее значение в истории.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-033",
+        "AC-JRN-034"
+      ]
+    },
+    {
+      "id": "JRN-GRD-006",
+      "text": "Система не вычисляет итоговую оценку, средний балл, порог зачёта или перевод в пятибалльную шкалу без отдельно утверждённого правила.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-035"
+      ]
+    },
+    {
+      "id": "JRN-STU-001",
+      "text": "Кабинет студента выдаёт только собственные сохранённые оценки, посещаемость, темы и даты занятий в разрешённой области.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-036"
+      ]
+    },
+    {
+      "id": "JRN-STU-002",
+      "text": "Студент может выбрать учебный период и предмет и получить постраничный список собственных записей без потери применённых фильтров.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-037"
+      ]
+    },
+    {
+      "id": "JRN-STU-003",
+      "text": "Просмотр записей прошлой группы использует собственный student_id и историческую принадлежность, не открывая чужие строки.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-038"
+      ]
+    },
+    {
+      "id": "JRN-STU-004",
+      "text": "Кабинет содержит переход к существующему опубликованному расписанию своей разрешённой группы.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-039"
+      ]
+    },
+    {
+      "id": "JRN-UX-001",
+      "text": "Интерфейс различает загрузку, отсутствие данных, незаполненную ячейку, ошибку и подтверждённое сохранение текстовыми состояниями.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-054"
+      ]
+    },
+    {
+      "id": "JRN-UX-002",
+      "text": "При ошибке сети, валидации или конфликте ревизии введённые значения остаются в форме до явного решения пользователя.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-055",
+        "AC-JRN-056"
+      ]
+    },
+    {
+      "id": "JRN-UX-003",
+      "text": "Ячейки журнала и действия доступны с клавиатуры с видимым фокусом, подписями полей и подписанной областью прокрутки таблицы.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-057"
+      ]
+    },
+    {
+      "id": "JRN-INT-001",
+      "text": "Новая публикация, изменение импорта или пересчёт расписания не изменяют и не удаляют существующие записи журнала.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-050"
+      ]
+    },
+    {
+      "id": "JRN-INT-002",
+      "text": "Пара публикация и исходное событие имеет не более одной активной привязки к постоянному занятию журнала.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-014"
+      ]
+    },
+    {
+      "id": "JRN-INT-003",
+      "text": "После смены публикации профиля с уже заполненным журналом запись по несопоставленному новому событию блокируется до явного решения администратора.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-051"
+      ]
+    },
+    {
+      "id": "JRN-INT-004",
+      "text": "Администратор с причиной отмечает новое событие как новое занятие либо связывает его с существующей записью той же области, группы, предмета и учебного периода.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-052"
+      ]
+    },
+    {
+      "id": "JRN-INT-005",
+      "text": "Сопоставление меняет только связь с планом и не переписывает исходные факты, состав, автора, время, баллы или посещаемость занятия.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-053"
+      ]
+    },
+    {
+      "id": "JRN-SEC-001",
+      "text": "Сервер при каждом чтении и изменении проверяет пользователя, действие, область, data_kind и требуемую персональную или преподавательскую связь по REQ-006.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-010",
+        "AC-JRN-042",
+        "AC-JRN-043",
+        "AC-JRN-046",
+        "AC-JRN-061",
+        "AC-JRN-062",
+        "AC-JRN-063"
+      ]
+    },
+    {
+      "id": "JRN-SEC-002",
+      "text": "Студенческий ответ не содержит чужих персональных строк, оценок, посещаемости или служебной истории даже при подмене параметров запроса.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-040",
+        "AC-JRN-041"
+      ]
+    },
+    {
+      "id": "JRN-SEC-003",
+      "text": "Каждая изменяющая команда журнала сохраняет существующие требования сессии, Origin и CSRF из NFR-001.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-044",
+        "AC-JRN-064"
+      ]
+    },
+    {
+      "id": "JRN-SEC-004",
+      "text": "Изменяющая команда передаёт ожидаемую ревизию занятия или справочника, а устаревшая команда отклоняется без перезаписи данных.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-045"
+      ]
+    },
+    {
+      "id": "JRN-SEC-005",
+      "text": "Первичная запись, исправление и очистка сохраняют неизменяемую историю автора, UTC-времени, значения до и после и причины исправления.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-019",
+        "AC-JRN-034"
+      ]
+    },
+    {
+      "id": "JRN-OPS-001",
+      "text": "План J1 содержит семь дней реализации после отдельного разрешения пользователя и контрольную передачу по разделу 11.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-060"
+      ]
+    },
+    {
+      "id": "JRN-OPS-002",
+      "text": "Сохранение темы, изменённых строк, ревизии, истории и квитанции операции выполняется одной транзакцией с полным откатом при отказе.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-047"
+      ]
+    },
+    {
+      "id": "JRN-OPS-003",
+      "text": "Повтор того же operation_id тем же автором с тем же телом после проверки текущих прав возвращает прежний результат, а другое тело получает конфликт.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-048",
+        "AC-JRN-049"
+      ]
+    },
+    {
+      "id": "JRN-OPS-004",
+      "text": "Перед переносом схемы выполняются резервная копия и проверка восстановления расписания и журнала в отдельной тестовой БД.",
+      "priority": "Must",
+      "release": "J1",
+      "acceptance": [
+        "AC-JRN-058",
+        "AC-JRN-059"
+      ]
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "AC-JRN-001",
+      "requirements": [
+        "JRN-BAS-001"
+      ],
+      "check": "Из опубликованного занятия преподаватель открывает форму электронного журнала.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-002",
+      "requirements": [
+        "JRN-BAS-002"
+      ],
+      "check": "Регрессионный сценарий редактора и проверки конфликтов даёт прежний ожидаемый результат.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-003",
+      "requirements": [
+        "JRN-BAS-002"
+      ],
+      "check": "Регрессионный сценарий генератора и независимого валидатора даёт прежний ожидаемый результат.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-004",
+      "requirements": [
+        "JRN-BAS-002"
+      ],
+      "check": "Неуспешная публикация сохраняет прежний указатель расписания.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-005",
+      "requirements": [
+        "JRN-BAS-003"
+      ],
+      "check": "Основной путь преподавателя и студента имеет KK-подписи без пустых ключей перевода.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-006",
+      "requirements": [
+        "JRN-BAS-004"
+      ],
+      "check": "Подготовленный аккаунт входит с прежней ролью без выбора привилегий в форме.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-007",
+      "requirements": [
+        "JRN-DAT-001"
+      ],
+      "check": "Исправление имени карточки сохраняет её student_id.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-008",
+      "requirements": [
+        "JRN-DAT-002"
+      ],
+      "check": "Урок до даты перевода использует прежнюю группу студента.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-009",
+      "requirements": [
+        "JRN-DAT-003"
+      ],
+      "check": "Аккаунт только с group_id без подтверждённого student_id получает отказ персонального журнала.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-010",
+      "requirements": [
+        "JRN-DAT-004",
+        "JRN-SEC-001"
+      ],
+      "check": "Преподаватель вне интервала назначения получает отказ изменения журнала.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-011",
+      "requirements": [
+        "JRN-DAT-005"
+      ],
+      "check": "Позднейшая правка общего состава не переписывает снимок состава записанного занятия.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-012",
+      "requirements": [
+        "JRN-DAT-006"
+      ],
+      "check": "Вывод студента из состава сохраняет его ранее записанную оценку.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-013",
+      "requirements": [
+        "JRN-LSN-001"
+      ],
+      "check": "Попытка создать новую запись из черновика расписания получает отказ.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-014",
+      "requirements": [
+        "JRN-LSN-002",
+        "JRN-INT-002"
+      ],
+      "check": "Повтор открытия той же пары publication_id и event_id возвращает прежний journal_lesson_id.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-015",
+      "requirements": [
+        "JRN-LSN-003"
+      ],
+      "check": "Без явного подтверждения проведения первая фактическая запись не создаётся.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-016",
+      "requirements": [
+        "JRN-LSN-004"
+      ],
+      "check": "Первое фактическое сохранение до окончания занятия получает отказ по учебному поясу.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-017",
+      "requirements": [
+        "JRN-TOP-001"
+      ],
+      "check": "Тема из одних пробелов получает ошибку поля без сохранения.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-018",
+      "requirements": [
+        "JRN-TOP-001"
+      ],
+      "check": "Тема длиной 2001 символ получает ошибку поля без сохранения.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-019",
+      "requirements": [
+        "JRN-TOP-002",
+        "JRN-SEC-005"
+      ],
+      "check": "После исправления темы история содержит её предыдущее значение.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-020",
+      "requirements": [
+        "JRN-LSN-005",
+        "JRN-ATT-001"
+      ],
+      "check": "Незаполненная посещаемость отображается как «не отмечено».",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-021",
+      "requirements": [
+        "JRN-ATT-001"
+      ],
+      "check": "Отправленный код late сохраняется как «опоздал».",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-022",
+      "requirements": [
+        "JRN-ATT-001"
+      ],
+      "check": "Неизвестный код посещаемости отклоняется.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-023",
+      "requirements": [
+        "JRN-ATT-002"
+      ],
+      "check": "При сохранении одной строки значение непереданного студента остаётся прежним.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-024",
+      "requirements": [
+        "JRN-ATT-003"
+      ],
+      "check": "Сохранение absent не создаёт оценку 0.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-025",
+      "requirements": [
+        "JRN-ATT-004"
+      ],
+      "check": "Очистка ранее сохранённой посещаемости без причины получает отказ.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-026",
+      "requirements": [
+        "JRN-GRD-001"
+      ],
+      "check": "Оценка 0 сохраняется и читается как числовой ноль.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-027",
+      "requirements": [
+        "JRN-GRD-001"
+      ],
+      "check": "Оценка 100 сохраняется и читается как 100.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-028",
+      "requirements": [
+        "JRN-GRD-001"
+      ],
+      "check": "Оценка -1 отклоняется без записи.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-029",
+      "requirements": [
+        "JRN-GRD-001"
+      ],
+      "check": "Оценка 101 отклоняется без записи.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-030",
+      "requirements": [
+        "JRN-GRD-002"
+      ],
+      "check": "Оценка 75.5 отклоняется при целочисленной политике QJ-001.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-031",
+      "requirements": [
+        "JRN-GRD-003"
+      ],
+      "check": "Пустая оценка отображается как отсутствие оценки, а не 0.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-032",
+      "requirements": [
+        "JRN-GRD-004"
+      ],
+      "check": "После повторного сохранения у пары студент и занятие одна текущая оценка.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-033",
+      "requirements": [
+        "JRN-GRD-005"
+      ],
+      "check": "Изменение сохранённой оценки без причины получает отказ.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-034",
+      "requirements": [
+        "JRN-GRD-005",
+        "JRN-SEC-005"
+      ],
+      "check": "После очистки оценки с причиной её прежнее значение доступно в истории преподавателя.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-035",
+      "requirements": [
+        "JRN-GRD-006"
+      ],
+      "check": "Кабинет без подтверждённой формулы не показывает вычисленный итоговый балл.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-036",
+      "requirements": [
+        "JRN-STU-001"
+      ],
+      "check": "Студент читает свою сохранённую оценку из разрешённого занятия.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-037",
+      "requirements": [
+        "JRN-STU-002"
+      ],
+      "check": "Следующая страница личных результатов сохраняет выбранные предмет и период.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-038",
+      "requirements": [
+        "JRN-STU-003"
+      ],
+      "check": "Переведённый студент читает собственную прежнюю запись по сохранённому student_id.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-039",
+      "requirements": [
+        "JRN-STU-004"
+      ],
+      "check": "Переход из кабинета открывает прежний разрешённый просмотр расписания группы.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-040",
+      "requirements": [
+        "JRN-SEC-002"
+      ],
+      "check": "Запрос студента с чужим student_id не возвращает чужую персональную строку.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-041",
+      "requirements": [
+        "JRN-SEC-002"
+      ],
+      "check": "Ответ личного кабинета не содержит скрытые оценки одногруппников.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-042",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Аккаунт другой области получает отказ на прямой URL занятия журнала.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-043",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Запись demo-студента в журнал college отклоняется.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-044",
+      "requirements": [
+        "JRN-SEC-003"
+      ],
+      "check": "Команда сохранения без корректного CSRF получает отказ.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-045",
+      "requirements": [
+        "JRN-SEC-004"
+      ],
+      "check": "Команда со старой ревизией не изменяет сохранённые баллы.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-046",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Отзыв назначения до фиксации транзакции приводит к отказу записи.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-047",
+      "requirements": [
+        "JRN-OPS-002"
+      ],
+      "check": "При ошибке одной переданной строки не сохраняется ни одно изменение команды.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-048",
+      "requirements": [
+        "JRN-OPS-003"
+      ],
+      "check": "Повтор одинаковой команды с тем же operation_id возвращает прежнюю квитанцию.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-049",
+      "requirements": [
+        "JRN-OPS-003"
+      ],
+      "check": "Другое тело с тем же operation_id получает конфликт.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-050",
+      "requirements": [
+        "JRN-INT-001"
+      ],
+      "check": "После новой публикации значение ранее сохранённой оценки остаётся прежним.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-051",
+      "requirements": [
+        "JRN-INT-003"
+      ],
+      "check": "Первое заполнение несопоставленного события новой публикации получает контролируемый отказ.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-052",
+      "requirements": [
+        "JRN-INT-004"
+      ],
+      "check": "Подтверждённое сопоставление нового события открывает выбранный существующий journal_lesson_id.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-053",
+      "requirements": [
+        "JRN-INT-005"
+      ],
+      "check": "После сопоставления исходная фактическая дата записи остаётся прежней.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-054",
+      "requirements": [
+        "JRN-UX-001"
+      ],
+      "check": "Сбой чтения показывает ошибку загрузки, а не сообщение об отсутствии занятий.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-055",
+      "requirements": [
+        "JRN-UX-002"
+      ],
+      "check": "После ошибки сохранения введённые баллы остаются в форме.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-056",
+      "requirements": [
+        "JRN-UX-002"
+      ],
+      "check": "После конфликта ревизии сохранение старой формы заблокировано.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-057",
+      "requirements": [
+        "JRN-UX-003"
+      ],
+      "check": "Оценку в выбранной строке можно ввести и сохранить с клавиатуры с видимым фокусом.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-058",
+      "requirements": [
+        "JRN-OPS-004"
+      ],
+      "check": "Восстановленная отдельная тестовая БД содержит контрольную запись журнала с её историей.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-059",
+      "requirements": [
+        "JRN-BAS-002",
+        "JRN-OPS-004"
+      ],
+      "check": "Восстановленная отдельная тестовая БД содержит прежний контрольный снимок расписания.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-060",
+      "requirements": [
+        "JRN-OPS-001"
+      ],
+      "check": "Отчёт передачи содержит фактический результат каждого контрольного дня и всех AC-JRN.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-061",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Аккаунт только с ролью admin получает отказ прямой команды изменения оценки.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-062",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Аккаунт только с ролью approver получает отказ прямой команды изменения оценки.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-063",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Аккаунт только с ролью student получает отказ прямой команды изменения оценки.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    },
+    {
+      "id": "AC-JRN-064",
+      "requirements": [
+        "JRN-SEC-003"
+      ],
+      "check": "Команда с посторонним Origin получает отказ без записи в журнал.",
+      "priority": "Must",
+      "release": "J1",
+      "status": "specified_not_implemented"
+    }
+  ],
+  "demo_acceptance": [
+    "AC-JRN-001",
+    "AC-JRN-019",
+    "AC-JRN-021",
+    "AC-JRN-026",
+    "AC-JRN-027",
+    "AC-JRN-036",
+    "AC-JRN-041",
+    "AC-JRN-050"
+  ]
+}
