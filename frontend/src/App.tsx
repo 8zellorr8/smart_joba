@@ -49,6 +49,7 @@ const permissionNames: Record<string, string> = {
   "journal.read": "Журналдың топ құрамын қарау",
   "journal.read.own": "Тағайындалған журналдардың топ құрамын қарау",
   "journal.read.self": jm.profile,
+  "journal.write.own": "Тағайындалған сабақтың тақырыбы мен қатысуын енгізу",
   "accounts.prepare": "Аккаунттарды дайындау",
   "catalog.manage": "Анықтамалықтарды басқару",
   "calendar.manage": "Оқу күнтізбесін басқару",
@@ -345,7 +346,8 @@ function WorkspaceScreen({
     if (
       (view === "planning" ||
         view === "versions" ||
-        view === "journal-setup") &&
+        view === "journal-setup" ||
+        view === "journals") &&
       next !== view &&
       planningDirty &&
       !window.confirm(pm.leaveDirty)
@@ -632,7 +634,8 @@ function WorkspaceScreen({
                 if (
                   (view === "planning" ||
                     view === "versions" ||
-                    view === "journal-setup") &&
+                    view === "journal-setup" ||
+                    view === "journals") &&
                   planningDirty &&
                   !window.confirm(pm.leaveDirty)
                 )
@@ -672,6 +675,8 @@ function WorkspaceScreen({
                 scope={workspace.scope.id}
                 personal={view === "study-profile"}
                 onExpired={onExpired}
+                csrfToken={csrfToken}
+                onDirtyChange={setPlanningDirty}
               />
             </Suspense>
           ) : view === "subjects" ? (

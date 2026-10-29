@@ -6,20 +6,27 @@ import { jm } from "./locales/journal.kk";
 import { demoName } from "./demo-labels";
 import { PageHeading } from "./ui/PageHeading";
 import { Icon } from "./icons";
+import { JournalLessonsPanel } from "./JournalLessonsPanel";
+import { lm } from "./locales/lesson.kk";
 import "./journal.css";
 
 export function JournalReadPage({
   scope,
   personal,
   onExpired,
+  csrfToken = "",
+  onDirtyChange = () => {},
 }: {
   scope: string;
   personal: boolean;
   onExpired: () => void;
+  csrfToken?: string;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [catalog, setCatalog] = useState<Journal[] | null>(null);
   const [profile, setProfile] = useState<StudyProfile | null>(null);
   const [selected, setSelected] = useState<Journal | null>(null);
+  const [lessonMode, setLessonMode] = useState(false);
   const [date, setDate] = useState("");
   const [roster, setRoster] = useState<Roster | null>(null);
   const [error, setError] = useState("");
@@ -78,9 +85,9 @@ export function JournalReadPage({
   const heading = (
     <PageHeading
       id="journal-read-title"
-      eyebrow={jm.foundation}
+      eyebrow={personal ? jm.foundation : lm.eyebrow}
       title={personal ? jm.profile : jm.title}
-      description={personal ? jm.profileDescription : jm.next}
+      description={personal ? jm.profileDescription : lm.intro}
     />
   );
   return (
@@ -158,6 +165,19 @@ export function JournalReadPage({
                   onClick={() => {
                     ++epoch.current;
                     setSelected(j);
+                    setLessonMode(true);
+                    setError("");
+                    setRoster(null);
+                  }}
+                >
+                  {lm.open}
+                </button>
+                <button
+                  className="button button-quiet"
+                  onClick={() => {
+                    ++epoch.current;
+                    setSelected(j);
+                    setLessonMode(false);
                     setDate("");
                     setError("");
                     setRoster(null);
@@ -171,7 +191,21 @@ export function JournalReadPage({
         ) : (
           !error && <p className="panel">{jm.emptyJournals}</p>
         ))}
-      {selected && (
+      {selected && lessonMode && (
+        <JournalLessonsPanel
+          key={`${scope}-${selected.id}`}
+          scope={scope}
+          journal={selected}
+          csrfToken={csrfToken}
+          onExpired={onExpired}
+          onDirtyChange={onDirtyChange}
+          onClose={() => {
+            setSelected(null);
+            setLessonMode(false);
+          }}
+        />
+      )}
+      {selected && !lessonMode && (
         <section className="panel">
           <button
             className="button button-quiet"

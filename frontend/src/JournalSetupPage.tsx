@@ -6,6 +6,8 @@ import type { SetupCommand, SetupData } from "./journal-api";
 import { jm } from "./locales/journal.kk";
 import { PageHeading } from "./ui/PageHeading";
 import { demoName } from "./demo-labels";
+import { JournalLessonAdmin } from "./JournalLessonAdmin";
+import { lm } from "./locales/lesson.kk";
 import "./journal.css";
 
 type Field = {
@@ -387,6 +389,7 @@ export function JournalSetupPage({
           ["memberships", jm.memberships],
           ["bindings", jm.bindings],
           ["journals", jm.journals],
+          ["lessons", lm.admin],
         ].map(([key, label]) => (
           <button
             key={key}
@@ -481,6 +484,16 @@ export function JournalSetupPage({
                 : { kind: "create_student", ...v },
           )}
         </div>
+      )}
+      {tab === "lessons" && (
+        <JournalLessonAdmin
+          scope={scope}
+          journals={data.journals}
+          csrfToken={csrfToken}
+          onExpired={onExpired}
+          onDirtyChange={changeDirty}
+          onRefresh={load}
+        />
       )}
       {tab === "memberships" && (
         <>

@@ -8,7 +8,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
     "admin": frozenset({"journal.setup", "accounts.prepare", "catalog.manage", "calendar.manage", "import.source.read", "publication.read", "publication.export"}),
     "scheduler": frozenset({"import.write", "import.source.read", "draft.read", "draft.edit", "generator.run", "draft.submit", "publication.read", "publication.export"}),
     "approver": frozenset({"journal.read", "draft.read", "draft.approve", "draft.reject", "publication.read", "publication.export"}),
-    "teacher": frozenset({"journal.read.own", "publication.read.own", "publication.export.own"}),
+    "teacher": frozenset({"journal.read.own", "journal.write.own", "publication.read.own", "publication.export.own"}),
     "student": frozenset({"publication.read.group", "publication.export.group"}),
 }
 

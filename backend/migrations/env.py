@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from backend.app.config import Settings
 from backend.app.infrastructure.models import Base
 from backend.app.infrastructure import journal_models  # register the journal schema
+from backend.app.infrastructure import lesson_models  # register recorded lessons
 
 config = context.config
 settings = Settings()
