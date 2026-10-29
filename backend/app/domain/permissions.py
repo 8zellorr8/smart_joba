@@ -5,10 +5,10 @@ Reader actions remain limited to confirmed group/teacher bindings.
 """
 
 ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
-    "admin": frozenset({"accounts.prepare", "catalog.manage", "calendar.manage", "import.source.read", "publication.read", "publication.export"}),
+    "admin": frozenset({"journal.setup", "accounts.prepare", "catalog.manage", "calendar.manage", "import.source.read", "publication.read", "publication.export"}),
     "scheduler": frozenset({"import.write", "import.source.read", "draft.read", "draft.edit", "generator.run", "draft.submit", "publication.read", "publication.export"}),
-    "approver": frozenset({"draft.read", "draft.approve", "draft.reject", "publication.read", "publication.export"}),
-    "teacher": frozenset({"publication.read.own", "publication.export.own"}),
+    "approver": frozenset({"journal.read", "draft.read", "draft.approve", "draft.reject", "publication.read", "publication.export"}),
+    "teacher": frozenset({"journal.read.own", "publication.read.own", "publication.export.own"}),
     "student": frozenset({"publication.read.group", "publication.export.group"}),
 }
 
@@ -25,6 +25,8 @@ def permissions_for(grants: list[dict], scope_id: str) -> list[str]:
         if role == "student" and not grant.get("group_id"):
             continue
         permissions.update(ROLE_PERMISSIONS.get(role, ()))
+        if role == "student" and grant.get("student_id"):
+            permissions.add("journal.read.self")
         if role == "approver" and grant.get("can_publish", False):
             permissions.add("draft.publish")
     return sorted(permissions)

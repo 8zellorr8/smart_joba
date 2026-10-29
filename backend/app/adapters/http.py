@@ -16,6 +16,8 @@ from .calendar_http import calendar_router
 from .editor_http import editor_router
 from .planning_http import planning_router
 from .publication_http import publication_router
+from .journal_http import journal_router
+from ..application.journal_setup import JournalSetupService
 from ..application.auth import ApiError, AuthService, audit
 from ..application.imports import ImportService
 from ..application.calendars import CalendarService
@@ -71,8 +73,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             upload = re.fullmatch(r"/api/scopes/[^/]+/imports/s1", request.url.path)
             calendar_write = request.url.path.startswith("/api/calendars/") or bool(re.fullmatch(r"/api/scopes/[^/]+/calendars", request.url.path))
             editor_write = request.url.path.startswith(("/api/drafts/", "/api/rooms/", "/api/solver-jobs/", "/api/planning-contexts/", "/api/schedule-versions/")) or bool(re.fullmatch(r"/api/scopes/[^/]+/(solver-jobs|generation-preview)", request.url.path)) or bool(re.fullmatch(r"/api/scopes/[^/]+/(drafts|rooms)", request.url.path))
-            if request.url.path.startswith("/api/auth/") or upload or request.url.path.startswith("/api/imports/") or calendar_write or editor_write:
-                limit = MAX_FILE_BYTES + 131072 if upload else (131072 if calendar_write or editor_write else (65536 if request.url.path.startswith("/api/imports/") else 8192))
+            journal_write = bool(re.fullmatch(r"/api/scopes/[^/]+/journal/commands", request.url.path))
+            if request.url.path.startswith("/api/auth/") or upload or request.url.path.startswith("/api/imports/") or calendar_write or editor_write or journal_write:
+                limit = MAX_FILE_BYTES + 131072 if upload else (131072 if calendar_write or editor_write or journal_write else (65536 if request.url.path.startswith("/api/imports/") else 8192))
                 body = bytearray()
                 async for chunk in request.stream():
                     body.extend(chunk)
@@ -181,6 +184,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(planning_router(GenerationService(EditorService(session_factory, auth))))
     versions = VersionService(EditorService(session_factory, auth))
     app.include_router(publication_router(versions, PublicationService(versions)))
+    app.include_router(journal_router(JournalSetupService(session_factory, auth)))
 
     dist = ROOT / "frontend" / "dist"
     if (dist / "assets").is_dir():

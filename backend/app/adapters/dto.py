@@ -13,6 +13,7 @@ class GrantDTO(BaseModel):
     is_demo: bool
     group_id: UUID | None
     teacher_id: UUID | None
+    student_id: UUID | None = None
 
 
 class UserDTO(BaseModel):

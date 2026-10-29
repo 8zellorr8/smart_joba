@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { FormEvent } from "react";
 import { api, ApiError } from "./api";
 import type { Role, Session, User, Workspace } from "./api";
@@ -16,6 +23,18 @@ import { wb } from "./locales/workbench.kk";
 import { WorkbenchHome } from "./WorkbenchHome";
 import { SubjectsPage, subjectsLabel } from "./SubjectOverview";
 import { portal } from "./locales/portal.kk";
+import { jm } from "./locales/journal.kk";
+
+const JournalSetupPage = lazy(() =>
+  import("./JournalSetupPage").then((module) => ({
+    default: module.JournalSetupPage,
+  })),
+);
+const JournalReadPage = lazy(() =>
+  import("./JournalReadPage").then((module) => ({
+    default: module.JournalReadPage,
+  })),
+);
 
 type Screen = "loading" | "login" | "workspace" | "error";
 const roleNames: Record<Role, string> = {
@@ -26,6 +45,10 @@ const roleNames: Record<Role, string> = {
   student: t.roleStudent,
 };
 const permissionNames: Record<string, string> = {
+  "journal.setup": jm.setup,
+  "journal.read": "Журналдың топ құрамын қарау",
+  "journal.read.own": "Тағайындалған журналдардың топ құрамын қарау",
+  "journal.read.self": jm.profile,
   "accounts.prepare": "Аккаунттарды дайындау",
   "catalog.manage": "Анықтамалықтарды басқару",
   "calendar.manage": "Оқу күнтізбесін басқару",
@@ -300,6 +323,9 @@ function WorkspaceScreen({
   const [view, setViewState] = useState<
     | "overview"
     | "subjects"
+    | "journal-setup"
+    | "journals"
+    | "study-profile"
     | "import"
     | "calendar"
     | "editor"
@@ -317,7 +343,9 @@ function WorkspaceScreen({
   const [subjectVisit, setSubjectVisit] = useState(0);
   function setView(next: typeof view) {
     if (
-      (view === "planning" || view === "versions") &&
+      (view === "planning" ||
+        view === "versions" ||
+        view === "journal-setup") &&
       next !== view &&
       planningDirty &&
       !window.confirm(pm.leaveDirty)
@@ -405,6 +433,16 @@ function WorkspaceScreen({
               >
                 <Icon name="file" size={20} />
                 {wb.nav.import}
+              </button>
+            )}
+            {workspace.permissions.includes("journal.setup") && (
+              <button
+                className="import-nav"
+                aria-current={view === "journal-setup" ? "page" : undefined}
+                onClick={() => setView("journal-setup")}
+              >
+                <Icon name="book" size={20} />
+                {jm.setup}
               </button>
             )}
             {canReadCalendar && (
@@ -536,6 +574,24 @@ function WorkspaceScreen({
                 </button>
               </>
             )}
+            {workspace.permissions.some(
+              (p) => p === "journal.read" || p === "journal.read.own",
+            ) && (
+              <button
+                aria-current={view === "journals" ? "page" : undefined}
+                onClick={() => setView("journals")}
+              >
+                {jm.title}
+              </button>
+            )}
+            {workspace.role_codes.includes("student") && (
+              <button
+                aria-current={view === "study-profile" ? "page" : undefined}
+                onClick={() => setView("study-profile")}
+              >
+                {jm.profile}
+              </button>
+            )}
           </nav>
           <div
             className={`portal-account ${canUseStaffTools ? "portal-account--staff" : ""}`}
@@ -574,7 +630,9 @@ function WorkspaceScreen({
               className="button button-quiet workbench-logout"
               onClick={() => {
                 if (
-                  (view === "planning" || view === "versions") &&
+                  (view === "planning" ||
+                    view === "versions" ||
+                    view === "journal-setup") &&
                   planningDirty &&
                   !window.confirm(pm.leaveDirty)
                 )
@@ -598,7 +656,25 @@ function WorkspaceScreen({
               {error}
             </p>
           )}
-          {view === "subjects" ? (
+          {view === "journal-setup" ? (
+            <Suspense fallback={<p role="status">{jm.loading}</p>}>
+              <JournalSetupPage
+                key={workspace.scope.id}
+                scope={workspace.scope.id}
+                csrfToken={csrfToken}
+                onExpired={onExpired}
+                onDirtyChange={setPlanningDirty}
+              />
+            </Suspense>
+          ) : view === "journals" || view === "study-profile" ? (
+            <Suspense fallback={<p role="status">{jm.loading}</p>}>
+              <JournalReadPage
+                scope={workspace.scope.id}
+                personal={view === "study-profile"}
+                onExpired={onExpired}
+              />
+            </Suspense>
+          ) : view === "subjects" ? (
             <SubjectsPage
               key={subjectVisit}
               workspace={workspace}
@@ -932,7 +1008,12 @@ export function App() {
             session.user.grants
               .filter((grant) => grant.scope_id === workspace.scope.id)
               .map((grant) =>
-                JSON.stringify([grant.role, grant.group_id, grant.teacher_id]),
+                JSON.stringify([
+                  grant.role,
+                  grant.group_id,
+                  grant.teacher_id,
+                  grant.student_id,
+                ]),
               )
               .sort(),
           ])}
