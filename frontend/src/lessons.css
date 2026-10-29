@@ -46,6 +46,25 @@
 .lesson-card .table-scroll select {
   min-width: 190px;
 }
+.lesson-grade-cell {
+  min-width: 150px;
+  max-width: 240px;
+  font-variant-numeric: tabular-nums;
+}
+.lesson-grade-cell input {
+  min-width: 84px;
+  max-width: 130px;
+  font-variant-numeric: tabular-nums;
+}
+.lesson-grade-status {
+  min-height: 3em;
+}
+.lesson-grade-student {
+  display: none;
+}
+.lesson-scroll-help {
+  display: none;
+}
 .lesson-time {
   display: block;
   margin-top: 6px;
@@ -91,6 +110,14 @@
   padding: 0;
 }
 @media (max-width: 600px) {
+  .lesson-grade-student {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .lesson-scroll-help {
+    display: block;
+  }
   .lesson-card .button-primary {
     width: 100%;
   }

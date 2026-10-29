@@ -1,0 +1,956 @@
+{
+  "version": "1.0",
+  "implementation_stage": "J1.3",
+  "date": "2026-10-29",
+  "status": "grades_topics_attendance_implemented_personal_results_pending",
+  "spec": "../spec/v1.0/college_ejournal_spec_v1_0_requirements.json",
+  "rules": {
+    "passed": "Проверен весь наблюдаемый результат AC текущим кодом или регрессией прежнего модуля.",
+    "partial": "Проверен текущий объём журнала; личные результаты, отдельные расширенные проверки или итоговая передача J1 ещё ожидаются.",
+    "pending": "Ожидает следующего функционального модуля; наличие документа не является реализацией."
+  },
+  "requirements": [
+    {
+      "id": "JRN-BAS-001",
+      "acceptance": [
+        "AC-JRN-001"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "JRN-BAS-002",
+      "acceptance": [
+        "AC-JRN-002",
+        "AC-JRN-003",
+        "AC-JRN-004",
+        "AC-JRN-059"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-BAS-003",
+      "acceptance": [
+        "AC-JRN-005"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "JRN-BAS-004",
+      "acceptance": [
+        "AC-JRN-006"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-DAT-001",
+      "acceptance": [
+        "AC-JRN-007"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-DAT-002",
+      "acceptance": [
+        "AC-JRN-008"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-DAT-003",
+      "acceptance": [
+        "AC-JRN-009"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-DAT-004",
+      "acceptance": [
+        "AC-JRN-010"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-DAT-005",
+      "acceptance": [
+        "AC-JRN-011"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-DAT-006",
+      "acceptance": [
+        "AC-JRN-012"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-LSN-001",
+      "acceptance": [
+        "AC-JRN-013"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-LSN-002",
+      "acceptance": [
+        "AC-JRN-014"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-LSN-003",
+      "acceptance": [
+        "AC-JRN-015"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-LSN-004",
+      "acceptance": [
+        "AC-JRN-016"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-LSN-005",
+      "acceptance": [
+        "AC-JRN-020"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-TOP-001",
+      "acceptance": [
+        "AC-JRN-017",
+        "AC-JRN-018"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-TOP-002",
+      "acceptance": [
+        "AC-JRN-019"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-ATT-001",
+      "acceptance": [
+        "AC-JRN-020",
+        "AC-JRN-021",
+        "AC-JRN-022"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-ATT-002",
+      "acceptance": [
+        "AC-JRN-023"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-ATT-003",
+      "acceptance": [
+        "AC-JRN-024"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-ATT-004",
+      "acceptance": [
+        "AC-JRN-025"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-GRD-001",
+      "acceptance": [
+        "AC-JRN-026",
+        "AC-JRN-027",
+        "AC-JRN-028",
+        "AC-JRN-029"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-GRD-002",
+      "acceptance": [
+        "AC-JRN-030"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-GRD-003",
+      "acceptance": [
+        "AC-JRN-031"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-GRD-004",
+      "acceptance": [
+        "AC-JRN-032"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-GRD-005",
+      "acceptance": [
+        "AC-JRN-033",
+        "AC-JRN-034"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-GRD-006",
+      "acceptance": [
+        "AC-JRN-035"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-STU-001",
+      "acceptance": [
+        "AC-JRN-036"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "JRN-STU-002",
+      "acceptance": [
+        "AC-JRN-037"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "JRN-STU-003",
+      "acceptance": [
+        "AC-JRN-038"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "JRN-STU-004",
+      "acceptance": [
+        "AC-JRN-039"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "JRN-UX-001",
+      "acceptance": [
+        "AC-JRN-054"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-UX-002",
+      "acceptance": [
+        "AC-JRN-055",
+        "AC-JRN-056"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-UX-003",
+      "acceptance": [
+        "AC-JRN-057"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-INT-001",
+      "acceptance": [
+        "AC-JRN-050"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-INT-002",
+      "acceptance": [
+        "AC-JRN-014"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-INT-003",
+      "acceptance": [
+        "AC-JRN-051"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-INT-004",
+      "acceptance": [
+        "AC-JRN-052"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-INT-005",
+      "acceptance": [
+        "AC-JRN-053"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-SEC-001",
+      "acceptance": [
+        "AC-JRN-010",
+        "AC-JRN-042",
+        "AC-JRN-043",
+        "AC-JRN-046",
+        "AC-JRN-061",
+        "AC-JRN-062",
+        "AC-JRN-063"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "JRN-SEC-002",
+      "acceptance": [
+        "AC-JRN-040",
+        "AC-JRN-041"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "JRN-SEC-003",
+      "acceptance": [
+        "AC-JRN-044",
+        "AC-JRN-064"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "JRN-SEC-004",
+      "acceptance": [
+        "AC-JRN-045"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "JRN-SEC-005",
+      "acceptance": [
+        "AC-JRN-019",
+        "AC-JRN-034"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-OPS-001",
+      "acceptance": [
+        "AC-JRN-060"
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "JRN-OPS-002",
+      "acceptance": [
+        "AC-JRN-047"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-OPS-003",
+      "acceptance": [
+        "AC-JRN-048",
+        "AC-JRN-049"
+      ],
+      "status": "implemented_in_current_scope"
+    },
+    {
+      "id": "JRN-OPS-004",
+      "acceptance": [
+        "AC-JRN-058",
+        "AC-JRN-059"
+      ],
+      "status": "implemented_in_current_scope"
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "AC-JRN-001",
+      "requirements": [
+        "JRN-BAS-001"
+      ],
+      "check": "Из опубликованного занятия преподаватель открывает форму электронного журнала.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-002",
+      "requirements": [
+        "JRN-BAS-002"
+      ],
+      "check": "Регрессионный сценарий редактора и проверки конфликтов даёт прежний ожидаемый результат.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-003",
+      "requirements": [
+        "JRN-BAS-002"
+      ],
+      "check": "Регрессионный сценарий генератора и независимого валидатора даёт прежний ожидаемый результат.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-004",
+      "requirements": [
+        "JRN-BAS-002"
+      ],
+      "check": "Неуспешная публикация сохраняет прежний указатель расписания.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-005",
+      "requirements": [
+        "JRN-BAS-003"
+      ],
+      "check": "Основной путь преподавателя и студента имеет KK-подписи без пустых ключей перевода.",
+      "status": "partial",
+      "evidence": "Проверен текущий объём J1.1–J1.3; личные результаты студента и/или итоговая передача всего J1 ожидаются. См. journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-006",
+      "requirements": [
+        "JRN-BAS-004"
+      ],
+      "check": "Подготовленный аккаунт входит с прежней ролью без выбора привилегий в форме.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-007",
+      "requirements": [
+        "JRN-DAT-001"
+      ],
+      "check": "Исправление имени карточки сохраняет её student_id.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-008",
+      "requirements": [
+        "JRN-DAT-002"
+      ],
+      "check": "Урок до даты перевода использует прежнюю группу студента.",
+      "status": "partial",
+      "evidence": "Проверен текущий объём J1.1–J1.3; личные результаты студента и/или итоговая передача всего J1 ожидаются. См. journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-009",
+      "requirements": [
+        "JRN-DAT-003"
+      ],
+      "check": "Аккаунт только с group_id без подтверждённого student_id получает отказ персонального журнала.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-010",
+      "requirements": [
+        "JRN-DAT-004",
+        "JRN-SEC-001"
+      ],
+      "check": "Преподаватель вне интервала назначения получает отказ изменения журнала.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-011",
+      "requirements": [
+        "JRN-DAT-005"
+      ],
+      "check": "Позднейшая правка общего состава не переписывает снимок состава записанного занятия.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-012",
+      "requirements": [
+        "JRN-DAT-006"
+      ],
+      "check": "Вывод студента из состава сохраняет его ранее записанную оценку.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-013",
+      "requirements": [
+        "JRN-LSN-001"
+      ],
+      "check": "Попытка создать новую запись из черновика расписания получает отказ.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-014",
+      "requirements": [
+        "JRN-LSN-002",
+        "JRN-INT-002"
+      ],
+      "check": "Повтор открытия той же пары publication_id и event_id возвращает прежний journal_lesson_id.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-015",
+      "requirements": [
+        "JRN-LSN-003"
+      ],
+      "check": "Без явного подтверждения проведения первая фактическая запись не создаётся.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-016",
+      "requirements": [
+        "JRN-LSN-004"
+      ],
+      "check": "Первое фактическое сохранение до окончания занятия получает отказ по учебному поясу.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-017",
+      "requirements": [
+        "JRN-TOP-001"
+      ],
+      "check": "Тема из одних пробелов получает ошибку поля без сохранения.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-018",
+      "requirements": [
+        "JRN-TOP-001"
+      ],
+      "check": "Тема длиной 2001 символ получает ошибку поля без сохранения.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-019",
+      "requirements": [
+        "JRN-TOP-002",
+        "JRN-SEC-005"
+      ],
+      "check": "После исправления темы история содержит её предыдущее значение.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-020",
+      "requirements": [
+        "JRN-LSN-005",
+        "JRN-ATT-001"
+      ],
+      "check": "Незаполненная посещаемость отображается как «не отмечено».",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-021",
+      "requirements": [
+        "JRN-ATT-001"
+      ],
+      "check": "Отправленный код late сохраняется как «опоздал».",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-022",
+      "requirements": [
+        "JRN-ATT-001"
+      ],
+      "check": "Неизвестный код посещаемости отклоняется.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-023",
+      "requirements": [
+        "JRN-ATT-002"
+      ],
+      "check": "При сохранении одной строки значение непереданного студента остаётся прежним.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-024",
+      "requirements": [
+        "JRN-ATT-003"
+      ],
+      "check": "Сохранение absent не создаёт оценку 0.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-025",
+      "requirements": [
+        "JRN-ATT-004"
+      ],
+      "check": "Очистка ранее сохранённой посещаемости без причины получает отказ.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-026",
+      "requirements": [
+        "JRN-GRD-001"
+      ],
+      "check": "Оценка 0 сохраняется и читается как числовой ноль.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-027",
+      "requirements": [
+        "JRN-GRD-001"
+      ],
+      "check": "Оценка 100 сохраняется и читается как 100.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-028",
+      "requirements": [
+        "JRN-GRD-001"
+      ],
+      "check": "Оценка -1 отклоняется без записи.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-029",
+      "requirements": [
+        "JRN-GRD-001"
+      ],
+      "check": "Оценка 101 отклоняется без записи.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-030",
+      "requirements": [
+        "JRN-GRD-002"
+      ],
+      "check": "Оценка 75.5 отклоняется при целочисленной политике QJ-001.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-031",
+      "requirements": [
+        "JRN-GRD-003"
+      ],
+      "check": "Пустая оценка отображается как отсутствие оценки, а не 0.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-032",
+      "requirements": [
+        "JRN-GRD-004"
+      ],
+      "check": "После повторного сохранения у пары студент и занятие одна текущая оценка.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-033",
+      "requirements": [
+        "JRN-GRD-005"
+      ],
+      "check": "Изменение сохранённой оценки без причины получает отказ.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-034",
+      "requirements": [
+        "JRN-GRD-005",
+        "JRN-SEC-005"
+      ],
+      "check": "После очистки оценки с причиной её прежнее значение доступно в истории преподавателя.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-035",
+      "requirements": [
+        "JRN-GRD-006"
+      ],
+      "check": "Кабинет без подтверждённой формулы не показывает вычисленный итоговый балл.",
+      "status": "partial",
+      "evidence": "В журнале нет вычисляемых итогов/средних; кабинет результатов студента ещё не реализован. AC-JRN-035 остаётся частичным."
+    },
+    {
+      "id": "AC-JRN-036",
+      "requirements": [
+        "JRN-STU-001"
+      ],
+      "check": "Студент читает свою сохранённую оценку из разрешённого занятия.",
+      "status": "pending",
+      "evidence": "Ожидается отдельный этап личных результатов студента; наличие профиля J1.1 не закрывает этот AC."
+    },
+    {
+      "id": "AC-JRN-037",
+      "requirements": [
+        "JRN-STU-002"
+      ],
+      "check": "Следующая страница личных результатов сохраняет выбранные предмет и период.",
+      "status": "pending",
+      "evidence": "Ожидается отдельный этап личных результатов студента; наличие профиля J1.1 не закрывает этот AC."
+    },
+    {
+      "id": "AC-JRN-038",
+      "requirements": [
+        "JRN-STU-003"
+      ],
+      "check": "Переведённый студент читает собственную прежнюю запись по сохранённому student_id.",
+      "status": "pending",
+      "evidence": "Ожидается отдельный этап личных результатов студента; наличие профиля J1.1 не закрывает этот AC."
+    },
+    {
+      "id": "AC-JRN-039",
+      "requirements": [
+        "JRN-STU-004"
+      ],
+      "check": "Переход из кабинета открывает прежний разрешённый просмотр расписания группы.",
+      "status": "partial",
+      "evidence": "Проверен текущий объём J1.1–J1.3; личные результаты студента и/или итоговая передача всего J1 ожидаются. См. journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-040",
+      "requirements": [
+        "JRN-SEC-002"
+      ],
+      "check": "Запрос студента с чужим student_id не возвращает чужую персональную строку.",
+      "status": "partial",
+      "evidence": "Проверен текущий объём J1.1–J1.3; личные результаты студента и/или итоговая передача всего J1 ожидаются. См. journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-041",
+      "requirements": [
+        "JRN-SEC-002"
+      ],
+      "check": "Ответ личного кабинета не содержит скрытые оценки одногруппников.",
+      "status": "partial",
+      "evidence": "Проверен текущий объём J1.1–J1.3; личные результаты студента и/или итоговая передача всего J1 ожидаются. См. journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-042",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Аккаунт другой области получает отказ на прямой URL занятия журнала.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-043",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Запись demo-студента в журнал college отклоняется.",
+      "status": "partial",
+      "evidence": "Проверен текущий объём J1.1–J1.3; личные результаты студента и/или итоговая передача всего J1 ожидаются. См. journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-044",
+      "requirements": [
+        "JRN-SEC-003"
+      ],
+      "check": "Команда сохранения без корректного CSRF получает отказ.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-045",
+      "requirements": [
+        "JRN-SEC-004"
+      ],
+      "check": "Команда со старой ревизией не изменяет сохранённые баллы.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-046",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Отзыв назначения до фиксации транзакции приводит к отказу записи.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-047",
+      "requirements": [
+        "JRN-OPS-002"
+      ],
+      "check": "При ошибке одной переданной строки не сохраняется ни одно изменение команды.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-048",
+      "requirements": [
+        "JRN-OPS-003"
+      ],
+      "check": "Повтор одинаковой команды с тем же operation_id возвращает прежнюю квитанцию.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-049",
+      "requirements": [
+        "JRN-OPS-003"
+      ],
+      "check": "Другое тело с тем же operation_id получает конфликт.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-050",
+      "requirements": [
+        "JRN-INT-001"
+      ],
+      "check": "После новой публикации значение ранее сохранённой оценки остаётся прежним.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-051",
+      "requirements": [
+        "JRN-INT-003"
+      ],
+      "check": "Первое заполнение несопоставленного события новой публикации получает контролируемый отказ.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-052",
+      "requirements": [
+        "JRN-INT-004"
+      ],
+      "check": "Подтверждённое сопоставление нового события открывает выбранный существующий journal_lesson_id.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-053",
+      "requirements": [
+        "JRN-INT-005"
+      ],
+      "check": "После сопоставления исходная фактическая дата записи остаётся прежней.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-054",
+      "requirements": [
+        "JRN-UX-001"
+      ],
+      "check": "Сбой чтения показывает ошибку загрузки, а не сообщение об отсутствии занятий.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-055",
+      "requirements": [
+        "JRN-UX-002"
+      ],
+      "check": "После ошибки сохранения введённые баллы остаются в форме.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-056",
+      "requirements": [
+        "JRN-UX-002"
+      ],
+      "check": "После конфликта ревизии сохранение старой формы заблокировано.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    },
+    {
+      "id": "AC-JRN-057",
+      "requirements": [
+        "JRN-UX-003"
+      ],
+      "check": "Оценку в выбранной строке можно ввести и сохранить с клавиатуры с видимым фокусом.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-058",
+      "requirements": [
+        "JRN-OPS-004"
+      ],
+      "check": "Восстановленная отдельная тестовая БД содержит контрольную запись журнала с её историей.",
+      "status": "passed",
+      "evidence": "Восстановлены 46 таблиц до и после миграции; сохранены оценки, история и прежние публикации. Приватные свидетельства .local/qa/journal-grades/migration-*.json; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-059",
+      "requirements": [
+        "JRN-BAS-002",
+        "JRN-OPS-004"
+      ],
+      "check": "Восстановленная отдельная тестовая БД содержит прежний контрольный снимок расписания.",
+      "status": "passed",
+      "evidence": "Восстановлены 46 таблиц до и после миграции; сохранены оценки, история и прежние публикации. Приватные свидетельства .local/qa/journal-grades/migration-*.json; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-060",
+      "requirements": [
+        "JRN-OPS-001"
+      ],
+      "check": "Отчёт передачи содержит фактический результат каждого контрольного дня и всех AC-JRN.",
+      "status": "partial",
+      "evidence": "Проверен текущий объём J1.1–J1.3; личные результаты студента и/или итоговая передача всего J1 ожидаются. См. journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-061",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Аккаунт только с ролью admin получает отказ прямой команды изменения оценки.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-062",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Аккаунт только с ролью approver получает отказ прямой команды изменения оценки.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-063",
+      "requirements": [
+        "JRN-SEC-001"
+      ],
+      "check": "Аккаунт только с ролью student получает отказ прямой команды изменения оценки.",
+      "status": "passed",
+      "evidence": "backend/tests/test_journal_grades.py; усиленные test_journal_lessons.py; JournalLessonsPanel.test.tsx; e2e/journal-grades-smoke.mjs; journal-grades-test-report.md."
+    },
+    {
+      "id": "AC-JRN-064",
+      "requirements": [
+        "JRN-SEC-003"
+      ],
+      "check": "Команда с посторонним Origin получает отказ без записи в журнал.",
+      "status": "passed",
+      "evidence": "test_journal_lessons.py; JournalLessonsPanel.test.tsx; journal-lessons-smoke.mjs; journal-lessons-test-report.md"
+    }
+  ]
+}

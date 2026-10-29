@@ -49,7 +49,8 @@ const permissionNames: Record<string, string> = {
   "journal.read": "Журналдың топ құрамын қарау",
   "journal.read.own": "Тағайындалған журналдардың топ құрамын қарау",
   "journal.read.self": jm.profile,
-  "journal.write.own": "Тағайындалған сабақтың тақырыбы мен қатысуын енгізу",
+  "journal.write.own":
+    "Тағайындалған сабақтың тақырыбын, қатысуын және бағасын енгізу",
   "accounts.prepare": "Аккаунттарды дайындау",
   "catalog.manage": "Анықтамалықтарды басқару",
   "calendar.manage": "Оқу күнтізбесін басқару",

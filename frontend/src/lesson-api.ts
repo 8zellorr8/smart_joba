@@ -24,6 +24,7 @@ export interface LessonStudent {
   display_name: string;
   active: boolean;
   attendance: Attendance;
+  grade: number | null;
 }
 export interface Lesson {
   id: string | null;
@@ -79,9 +80,12 @@ export interface LessonChange {
   created_at: string;
   reason: string;
   revision: number;
-  before: { lesson?: { topic: string }; students?: LessonStudent[] };
-  after: { lesson?: { topic: string }; students?: LessonStudent[] };
+  before: { lesson?: { topic: string }; students?: HistoricalStudent[] };
+  after: { lesson?: { topic: string }; students?: HistoricalStudent[] };
 }
+type HistoricalStudent = Omit<LessonStudent, "grade"> & {
+  grade?: number | null;
+};
 const path = (scope: string) =>
   `/api/scopes/${encodeURIComponent(scope)}/journal`;
 export const lessonApi = {

@@ -66,8 +66,20 @@ const fixture: Lesson = {
     room: "101",
   },
   students: [
-    { student_id: "a", display_name: "Демо А", active: true, attendance: null },
-    { student_id: "b", display_name: "Демо Б", active: true, attendance: null },
+    {
+      student_id: "a",
+      display_name: "Демо А",
+      active: true,
+      attendance: null,
+      grade: null,
+    },
+    {
+      student_id: "b",
+      display_name: "Демо Б",
+      active: true,
+      attendance: null,
+      grade: null,
+    },
   ],
   source_changed: false,
   current_links: [],
@@ -170,9 +182,14 @@ it("unknown outcome freezes fields and retries the exact operation", async () =>
     new ApiError(0, "network_error"),
   );
   await open();
+  fireEvent.change(screen.getByLabelText(`${lm.grade}: Демо А`), {
+    target: { value: "0" },
+  });
   fill();
   await screen.findByText(jm.uncertain);
   expect(screen.getByLabelText(lm.topic)).toBeDisabled();
+  expect(screen.getByLabelText(`${lm.grade}: Демо А`)).toBeDisabled();
+  expect(screen.getByLabelText(`${lm.grade}: Демо А`)).toHaveValue("0");
   const original = vi.mocked(lessonApi.command).mock.calls[0][2];
   fireEvent.click(screen.getByRole("button", { name: jm.retrySave }));
   await screen.findByText(lm.saved);
@@ -183,9 +200,13 @@ it("stale keeps values and blocks saving until explicit reload", async () => {
     new ApiError(409, "JOURNAL_STALE"),
   );
   await open();
+  fireEvent.change(screen.getByLabelText(`${lm.grade}: Демо А`), {
+    target: { value: "100" },
+  });
   fill();
   await screen.findByText(jm.stale);
   expect(screen.getByLabelText(lm.topic)).toHaveValue("Тақырып");
+  expect(screen.getByLabelText(`${lm.grade}: Демо А`)).toHaveValue("100");
   expect(screen.getByRole("button", { name: jm.save })).toBeDisabled();
   vi.spyOn(window, "confirm").mockReturnValue(false);
   fireEvent.click(screen.getByRole("button", { name: jm.retry }));
@@ -356,4 +377,170 @@ it("requires fresh login after a 401 save response", async () => {
   const { expired } = await open();
   fill();
   await waitFor(() => expect(expired).toHaveBeenCalledOnce());
+});
+it("sends zero and 100 as numeric grades, without deriving attendance", async () => {
+  await open();
+  expect(screen.getByLabelText(`${lm.grade}: Демо А`)).toHaveValue("");
+  expect(screen.getAllByText(lm.ungraded)).toHaveLength(2);
+  fireEvent.change(screen.getByLabelText(lm.topic), {
+    target: { value: "Тақырып" },
+  });
+  fireEvent.change(screen.getByLabelText(`${lm.grade}: Демо А`), {
+    target: { value: "0" },
+  });
+  fireEvent.change(screen.getByLabelText(`${lm.grade}: Демо Б`), {
+    target: { value: "100" },
+  });
+  fireEvent.click(screen.getByLabelText(lm.conducted));
+  fireEvent.click(screen.getByRole("button", { name: jm.save }));
+  await screen.findByText(lm.saved);
+  expect(vi.mocked(lessonApi.command).mock.calls[0][2].command).toMatchObject({
+    grades: [
+      { student_id: "a", value: 0 },
+      { student_id: "b", value: 100 },
+    ],
+    attendance: [],
+  });
+});
+
+it.each(["-1", "101", "75.5", "letters", "1e2"])(
+  "retains invalid grade %s and focuses linked error without saving",
+  async (value) => {
+    await open();
+    const input = screen.getByLabelText(`${lm.grade}: Демо А`);
+    fireEvent.change(input, { target: { value } });
+    fireEvent.blur(input);
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    fill();
+    await waitFor(() => expect(screen.getByRole("alert")).toHaveFocus());
+    expect(input).toHaveValue(value);
+    expect(
+      screen.getByRole("link", { name: `Демо А: ${lm.grade}` }),
+    ).toHaveAttribute("href", "#lesson-grade-a");
+    expect(lessonApi.command).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: "75" } });
+    fireEvent.blur(input);
+    expect(input).not.toHaveAttribute("aria-invalid");
+    fireEvent.click(screen.getByRole("button", { name: jm.save }));
+    await screen.findByText(lm.saved);
+  },
+);
+
+it("clears saved zero explicitly, retains input after reason error, and sends only changed grade", async () => {
+  const recorded = {
+    ...structuredClone(fixture),
+    id: "lesson",
+    topic: "Тақырып",
+    recorded: true,
+    revision: 2,
+    students: [
+      { ...fixture.students[0], grade: 0 },
+      { ...fixture.students[1], grade: 100 },
+    ],
+  };
+  vi.mocked(lessonApi.preview).mockResolvedValue(recorded);
+  vi.mocked(lessonApi.command).mockRejectedValueOnce(
+    new ApiError(422, "JOURNAL_REQUIRED", { field: "reason" }),
+  );
+  vi.mocked(lessonApi.get).mockResolvedValue({
+    ...recorded,
+    revision: 3,
+    students: [{ ...recorded.students[0], grade: null }, recorded.students[1]],
+  });
+  await open();
+  const input = screen.getByLabelText(`${lm.grade}: Демо А`);
+  expect(input).toHaveValue("0");
+  fireEvent.change(input, { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: jm.save }));
+  await screen.findByRole("alert");
+  expect(input).toHaveValue("");
+  expect(screen.getByLabelText(lm.reason)).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+  expect(vi.mocked(lessonApi.command).mock.calls[0][2].command).toMatchObject({
+    grades: [{ student_id: "a", value: null }],
+    attendance: [],
+    topic: null,
+  });
+  fireEvent.change(screen.getByLabelText(lm.reason), {
+    target: { value: "Демо: бағаны түзету" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: jm.save }));
+  await screen.findByText(lm.saved);
+  expect(input).toHaveValue("");
+  expect(screen.getByLabelText(`${lm.grade}: Демо Б`)).toHaveValue("100");
+});
+
+it("shows grade clearing history and ignores absent grade keys in legacy history", async () => {
+  vi.mocked(lessonApi.preview).mockResolvedValue({
+    ...structuredClone(fixture),
+    id: "lesson",
+    topic: "Тақырып",
+    recorded: true,
+    can_write: false,
+    students: [
+      { ...fixture.students[0], grade: 0 },
+      { ...fixture.students[1], grade: null },
+    ],
+  });
+  const { grade: _grade, ...legacyStudent } = fixture.students[0];
+  vi.mocked(lessonApi.history).mockResolvedValue({
+    items: [
+      {
+        id: "new",
+        action: "update_lesson",
+        actor_id: "actor",
+        actor_name: "Демо оқытушы",
+        created_at: "2026-10-29T10:00:00+00:00",
+        reason: "Демо түзету",
+        revision: 3,
+        before: { students: [{ ...fixture.students[0], grade: 0 }] },
+        after: { students: [fixture.students[0]] },
+      },
+      {
+        id: "old",
+        action: "record_lesson",
+        actor_id: "actor",
+        created_at: "2026-10-28T10:00:00+00:00",
+        reason: "",
+        revision: 1,
+        before: {},
+        after: { students: [legacyStudent] },
+      },
+    ],
+    next_offset: null,
+  });
+  await open();
+  expect(
+    screen.queryByLabelText(`${lm.grade}: Демо А`),
+  ).not.toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: "0" })).toBeInTheDocument();
+  expect(screen.getByRole("cell", { name: lm.ungraded })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: lm.history }));
+  expect(
+    await screen.findByText(`Демо А · ${lm.grade}: 0 → ${lm.ungraded}`),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByText(`${lm.ungraded} → ${lm.ungraded}`, { exact: false }),
+  ).not.toBeInTheDocument();
+});
+
+it("keeps a removed student's grade visible but forbids editing that row", async () => {
+  vi.mocked(lessonApi.preview).mockResolvedValue({
+    ...structuredClone(fixture),
+    id: "lesson",
+    topic: "Тақырып",
+    recorded: true,
+    students: [
+      { ...fixture.students[0], active: false, grade: 75 },
+      fixture.students[1],
+    ],
+  });
+  await open();
+  expect(screen.getByRole("cell", { name: "75" })).toBeInTheDocument();
+  expect(
+    screen.queryByLabelText(`${lm.grade}: Демо А`),
+  ).not.toBeInTheDocument();
+  expect(screen.getByLabelText(`${lm.grade}: Демо Б`)).toBeEnabled();
 });

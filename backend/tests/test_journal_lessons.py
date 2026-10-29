@@ -128,7 +128,7 @@ def test_topic_attendance_partial_corrections_and_immutable_history(client, app,
     e = lesson_env; a, b = e["students"]
     saved = record(client, e, attendance=[{"student_id": a, "value": "absent"}, {"student_id": b, "value": "present"}])
     rows = get(client, e, saved).json()["students"]
-    assert "grade" not in str(rows)
+    assert all(r["grade"] is None for r in rows)  # Absence never manufactures zero.
     denied = send(client, e, modify(client, e, saved, attendance=[{"student_id": a, "value": None}]))
     assert denied.status_code == 422
     changed = send(client, e, modify(client, e, saved, topic="<b>Түзетілген тақырып</b>", attendance=[{"student_id": a, "value": "late"}], reason="Synthetic correction"))
@@ -202,23 +202,24 @@ def test_concurrent_same_revision_has_one_winner(client, app, lesson_env):
 
 
 def test_roster_correction_preserves_removed_personal_record(client, app, lesson_env):
-    e = lesson_env; saved = record(client, e, attendance=[{"student_id": e["students"][0], "value": "late"}])
+    e = lesson_env; saved = record(client, e, attendance=[{"student_id": e["students"][0], "value": "late"}], grades=[{"student_id": e["students"][0], "value": 75}])
     login(client, app, "admin")
     admin = client.get(e["root"] + f"/lesson-admin/lessons/{saved['lesson_id']}/roster").json()
-    assert "attendance" not in str(admin) and "topic" not in str(admin)
+    assert "attendance" not in str(admin) and "topic" not in str(admin) and "grade" not in str(admin)
     b = {"operation_id": str(uuid.uuid4()), "expected_revision": saved["revision"], "expected_registry_revision": admin["registry_revision"],
         "command": {"kind": "correct_roster", "lesson_id": saved["lesson_id"], "student_ids": [e["students"][1]], "reason": "Synthetic roster correction"}}
     assert send(client, e, b, True).status_code == 200
     login(client, app, "teacher")
     result = get(client, e, saved).json()
     removed = next(r for r in result["students"] if r["student_id"] == e["students"][0])
-    assert removed["active"] is False and removed["attendance"] == "late"
+    assert removed["active"] is False and removed["attendance"] == "late" and removed["grade"] == 75
     saved.update(revision=result["revision"], registry_revision=result["registry_revision"])
     assert send(client, e, modify(client, e, saved, attendance=[{"student_id": removed["student_id"], "value": "present"}], reason="No")).status_code == 403
+    assert send(client, e, modify(client, e, saved, grades=[{"student_id": removed["student_id"], "value": None}], reason="No")).status_code == 403
 
 
 def test_new_publication_requires_mapping_and_preserves_origin(client, app, lesson_env):
-    e = lesson_env; saved = record(client, e, attendance=[{"student_id": e["students"][0], "value": "late"}])
+    e = lesson_env; saved = record(client, e, attendance=[{"student_id": e["students"][0], "value": "late"}], grades=[{"student_id": e["students"][0], "value": 100}])
     before = get(client, e, saved).json()
     login(client, app)
     current = client.get(f"/api/schedule-versions/{e['version']['id']}").json()

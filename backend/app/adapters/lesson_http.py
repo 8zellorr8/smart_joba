@@ -12,6 +12,11 @@ class Attendance(Contract):
     value: Literal["present", "absent", "late", "excused"] | None
 
 
+class Grade(Contract):
+    student_id: uuid.UUID
+    value: Annotated[int, Field(strict=True, ge=0, le=100)] | None
+
+
 class EventRef(Contract):
     journal_id: uuid.UUID
     publication_id: uuid.UUID
@@ -23,6 +28,7 @@ class RecordLesson(EventRef):
     topic: str = Field(max_length=2000)
     conducted: StrictBool
     attendance: list[Attendance] = Field(default_factory=list, max_length=100)
+    grades: list[Grade] = Field(default_factory=list, max_length=100)
     reason: str = Field(default="", max_length=500)
 
 
@@ -31,6 +37,7 @@ class UpdateLesson(Contract):
     lesson_id: uuid.UUID
     topic: str | None = Field(default=None, max_length=2000)
     attendance: list[Attendance] = Field(default_factory=list, max_length=100)
+    grades: list[Grade] = Field(default_factory=list, max_length=100)
     reason: str = Field(default="", max_length=500)
 
 

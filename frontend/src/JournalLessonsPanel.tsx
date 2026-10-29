@@ -10,6 +10,7 @@ import type {
   LessonSummary,
 } from "./lesson-api";
 import { useLessonCommand } from "./journal/useLessonCommand";
+import { parseGrade } from "./journal/grade";
 import { demoName } from "./demo-labels";
 import { jm } from "./locales/journal.kk";
 import { lm } from "./locales/lesson.kk";
@@ -35,6 +36,13 @@ export function JournalLessonsPanel({
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [topic, setTopic] = useState("");
   const [marks, setMarks] = useState<Record<string, Attendance>>({});
+  const [grades, setGrades] = useState<Record<string, string>>({});
+  const [gradeErrors, setGradeErrors] = useState<Record<string, string>>({});
+  const [gradeAttempt, setGradeAttempt] = useState(0);
+  const gradeErrorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (gradeAttempt > 0) gradeErrorRef.current?.focus();
+  }, [gradeAttempt]);
   const [reason, setReason] = useState("");
   const [conducted, setConducted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -55,6 +63,8 @@ export function JournalLessonsPanel({
     setSelected(null);
     setHistory(null);
     setMarks({});
+    setGrades({});
+    setGradeErrors({});
     setTopic("");
     setReason("");
     setError(jm.denied);
@@ -77,6 +87,12 @@ export function JournalLessonsPanel({
         data.students.map((s) => [s.student_id, s.attendance]),
       ),
     );
+    setGrades(
+      Object.fromEntries(
+        data.students.map((s) => [s.student_id, String(s.grade ?? "")]),
+      ),
+    );
+    setGradeErrors({});
     setReason("");
     setConducted(false);
     setHistory(null);
@@ -106,7 +122,11 @@ export function JournalLessonsPanel({
     (topic !== lesson.topic ||
       reason !== "" ||
       conducted ||
-      lesson.students.some((s) => marks[s.student_id] !== s.attendance));
+      lesson.students.some(
+        (s) =>
+          marks[s.student_id] !== s.attendance ||
+          grades[s.student_id] !== String(s.grade ?? ""),
+      ));
   useEffect(() => {
     changeRef.current = dirty || !!command.pending || command.busy;
     dirtyHandler.current(changeRef.current);
@@ -199,6 +219,27 @@ export function JournalLessonsPanel({
   }
   function save() {
     if (!lesson) return;
+    const errors = Object.fromEntries(
+      lesson.students
+        .filter(
+          (s) =>
+            s.active && parseGrade(grades[s.student_id] ?? "") === undefined,
+        )
+        .map((s) => [s.student_id, lm.gradeInvalid]),
+    );
+    setGradeErrors(errors);
+    if (Object.keys(errors).length) {
+      setGradeAttempt((n) => n + 1);
+      return;
+    }
+    const changedGrades = lesson.students
+      .filter(
+        (s) => s.active && parseGrade(grades[s.student_id] ?? "") !== s.grade,
+      )
+      .map((s) => ({
+        student_id: s.student_id,
+        value: parseGrade(grades[s.student_id] ?? ""),
+      }));
     const attendance = lesson.students
       .filter((s) => s.active && marks[s.student_id] !== s.attendance)
       .map((s) => ({ student_id: s.student_id, value: marks[s.student_id] }));
@@ -212,6 +253,7 @@ export function JournalLessonsPanel({
             lesson_id: lesson.id,
             topic: topic === lesson.topic ? null : topic,
             attendance,
+            grades: changedGrades,
             reason,
           }
         : {
@@ -221,6 +263,7 @@ export function JournalLessonsPanel({
             event_id: lesson.source.event_id,
             topic,
             attendance,
+            grades: changedGrades,
             conducted,
             reason,
           },
@@ -229,6 +272,8 @@ export function JournalLessonsPanel({
   const locked =
     command.busy || command.stale || !!command.pending || !lesson?.can_write;
   const markLabel = (mark: Attendance) => lm.attendanceValues[mark ?? ""];
+  const gradeLabel = (value: number | null | undefined) =>
+    value == null ? lm.ungraded : String(value);
   return (
     <section className="journal-lessons">
       <div className="lesson-toolbar">
@@ -301,6 +346,27 @@ export function JournalLessonsPanel({
               {jm.retry}
             </button>
           )}
+        </div>
+      )}
+      {lesson && gradeAttempt > 0 && Object.keys(gradeErrors).length > 0 && (
+        <div
+          role="alert"
+          tabIndex={-1}
+          ref={gradeErrorRef}
+          className="journal-error"
+        >
+          <p>{lm.errors.JOURNAL_GRADE_INVALID}</p>
+          <ul>
+            {lesson.students
+              .filter((s) => gradeErrors[s.student_id])
+              .map((s) => (
+                <li key={s.student_id}>
+                  <a href={`#lesson-grade-${s.student_id}`}>
+                    {s.display_name}: {lm.grade}
+                  </a>
+                </li>
+              ))}
+          </ul>
         </div>
       )}
       {!selected && page && (
@@ -445,17 +511,22 @@ export function JournalLessonsPanel({
                 {command.field === "topic" ? command.error : lm.topicHelp}
               </p>
               <h4>{lesson.recorded ? lm.snapshot : lm.preview}</h4>
+              <p id="lesson-grade-help" className="journal-note">
+                {lm.gradeHelp}
+              </p>
+              <p className="journal-note lesson-scroll-help">{lm.scrollHelp}</p>
               <div
                 className="table-scroll"
                 role="region"
-                aria-label={lm.attendance}
+                aria-label={lm.records}
                 tabIndex={0}
               >
-                <table>
+                <table className="lesson-records">
                   <thead>
                     <tr>
                       <th>{lm.student}</th>
                       <th>{lm.attendance}</th>
+                      <th>{lm.grade} · 0–100</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -490,6 +561,71 @@ export function JournalLessonsPanel({
                             </select>
                           ) : (
                             markLabel(s.attendance)
+                          )}
+                        </td>
+                        <td className="lesson-grade-cell">
+                          <span
+                            className="lesson-grade-student"
+                            aria-hidden="true"
+                          >
+                            {s.display_name}
+                          </span>
+                          {s.active && lesson.can_write ? (
+                            <>
+                              <input
+                                id={`lesson-grade-${s.student_id}`}
+                                type="text"
+                                inputMode="numeric"
+                                autoComplete="off"
+                                maxLength={16}
+                                aria-label={`${lm.grade}: ${s.display_name}`}
+                                aria-invalid={
+                                  !!gradeErrors[s.student_id] ||
+                                  command.field === `grade-${s.student_id}` ||
+                                  undefined
+                                }
+                                aria-describedby={`lesson-grade-help lesson-grade-status-${s.student_id}`}
+                                value={grades[s.student_id] ?? ""}
+                                placeholder="—"
+                                onChange={(e) => {
+                                  setGradeAttempt(0);
+                                  setGradeErrors((old) => {
+                                    const next = { ...old };
+                                    delete next[s.student_id];
+                                    return next;
+                                  });
+                                  setGrades((old) => ({
+                                    ...old,
+                                    [s.student_id]: e.target.value,
+                                  }));
+                                }}
+                                onBlur={() =>
+                                  setGradeErrors((old) => {
+                                    const next = { ...old };
+                                    if (
+                                      parseGrade(grades[s.student_id] ?? "") ===
+                                      undefined
+                                    )
+                                      next[s.student_id] = lm.gradeInvalid;
+                                    else delete next[s.student_id];
+                                    return next;
+                                  })
+                                }
+                              />
+                              <small
+                                id={`lesson-grade-status-${s.student_id}`}
+                                className="lesson-time lesson-grade-status"
+                              >
+                                {gradeErrors[s.student_id] ||
+                                  (command.field === `grade-${s.student_id}`
+                                    ? command.error
+                                    : (grades[s.student_id] ?? "").trim() === ""
+                                      ? lm.ungraded
+                                      : "")}
+                              </small>
+                            </>
+                          ) : (
+                            gradeLabel(s.grade)
                           )}
                         </td>
                       </tr>
@@ -593,6 +729,24 @@ export function JournalLessonsPanel({
                           {h.after.lesson?.topic || "—"}
                         </p>
                       )}
+                      {(h.after.students ?? [])
+                        .filter(
+                          (s) =>
+                            (h.before.students?.find(
+                              (b) => b.student_id === s.student_id,
+                            )?.grade ?? null) !== (s.grade ?? null),
+                        )
+                        .map((s) => (
+                          <p key={`grade-${s.student_id}`}>
+                            {s.display_name} · {lm.grade}:{" "}
+                            {gradeLabel(
+                              h.before.students?.find(
+                                (b) => b.student_id === s.student_id,
+                              )?.grade,
+                            )}{" "}
+                            → {gradeLabel(s.grade)}
+                          </p>
+                        ))}
                       {(h.after.students ?? [])
                         .filter(
                           (s) =>

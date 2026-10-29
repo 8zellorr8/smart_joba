@@ -13,7 +13,7 @@ from .auth import ApiError, audit
 from .journal_setup import JournalSetupService, required, snapshot
 from .planning_inputs import input_token
 from .publications import PUBLICATION_LOCK
-from ..domain.journal import attendance_change, topic_value
+from ..domain.journal import attendance_change, grade_change, topic_value
 from ..domain.publication import utc_interval
 from ..infrastructure.journal_models import Journal, JournalRegistry, Student, StudentMembership
 from ..infrastructure.lesson_models import JournalEventLink, JournalLesson, JournalLessonChange, JournalLessonOperation, JournalLessonStudent
@@ -109,7 +109,7 @@ class JournalLessonService:
 
     @staticmethod
     def roster_dto(rows):
-        return [{"student_id": str(r.student_id), "display_name": r.display_name, "active": r.active, "attendance": r.attendance} for r in rows]
+        return [{"student_id": str(r.student_id), "display_name": r.display_name, "active": r.active, "attendance": r.attendance, "grade": r.grade} for r in rows]
 
     def dto(self, db, lesson, permissions, grants):
         journal = db.get(Journal, lesson.journal_id)
@@ -145,7 +145,7 @@ class JournalLessonService:
             ended = self.ended(event, publication.snapshot["timezone"])
             return {"id": None, "journal_id": str(journal.id), "revision": 0, "registry_revision": self.catalog.revision(db, scope_id),
                     "recorded": False, "source": self.origin(publication, event, journal), "topic": "",
-                    "students": [{"student_id": str(s.id), "display_name": s.display_name, "active": True, "attendance": None} for s, _ in rows],
+                    "students": [{"student_id": str(s.id), "display_name": s.display_name, "active": True, "attendance": None, "grade": None} for s, _ in rows],
                     "source_changed": False, "current_links": [], "blocked": blocked or (None if ended else "JOURNAL_NOT_ENDED"),
                     "can_write": not blocked and ended and self.allowed(db, journal, grants, permissions, event["date"], True, event["teacher_id"])}
 
@@ -207,7 +207,12 @@ class JournalLessonService:
                     "registry_revision": self.catalog.revision(db, scope_id)}
 
     def command(self, token, scope_id, body, request_id, admin=False):
-        digest = input_token({"scope_id": str(scope_id), "admin": admin, **body})
+        # Omitted/empty grades have the v0008 fingerprint: outstanding old
+        # operations must still replay their immutable pre-migration receipt.
+        canonical = {**body, "command": dict(body["command"])}
+        if not canonical["command"].get("grades"):
+            canonical["command"].pop("grades", None)
+        digest = input_token({"scope_id": str(scope_id), "admin": admin, **canonical})
         c = body["command"]
         with self.factory.begin() as db:
             user, grants, permissions = self.access(db, token, scope_id, "journal.setup" if admin else "journal.write.own", True)
@@ -236,6 +241,8 @@ class JournalLessonService:
                 raise ApiError("JOURNAL_STALE", 409)
             if (lesson.revision if lesson else 0) != body["expected_revision"]:
                 raise ApiError("JOURNAL_STALE", 409)
+            if len({r["student_id"] for r in c.get("attendance", []) + c.get("grades", [])}) > 100:
+                raise ApiError("JOURNAL_ROWS_LIMIT", 422)
             reason = c.get("reason", "").strip()
             before = self.fact_snapshot(db, lesson) if lesson else {}
             if admin:
@@ -281,6 +288,7 @@ class JournalLessonService:
                                            lesson_id=lesson.id, decided_by=user.id, reason=""))
                 db.flush()
                 self.attendance(db, lesson, c["attendance"], reason)
+                self.grades(db, lesson, c.get("grades", []), reason)
             else:
                 if c["topic"] is not None:
                     topic = self.topic(c["topic"])
@@ -288,6 +296,7 @@ class JournalLessonService:
                         required(reason, "reason")
                         lesson.topic = topic
                 self.attendance(db, lesson, c["attendance"], reason)
+                self.grades(db, lesson, c.get("grades", []), reason)
                 lesson.revision += 1
             db.flush()
             after = self.fact_snapshot(db, lesson) if lesson else {"new_event": {"publication_id": str(publication.id), "event_id": event["id"]}}
@@ -323,6 +332,22 @@ class JournalLessonService:
             if correction:
                 required(reason, "reason")
             row.attendance = change["value"]
+
+    def grades(self, db, lesson, changes, reason):
+        rows = {str(r.student_id): r for r in self.rows(db, lesson)}
+        if len({c["student_id"] for c in changes}) != len(changes):
+            raise ApiError("JOURNAL_ROWS_DUPLICATE", 422)
+        for change in changes:
+            row = rows.get(change["student_id"])
+            if not row or not row.active:
+                raise ApiError("ACCESS_DENIED", 403)
+            try:
+                correction = grade_change(row.grade, change["value"])
+            except ValueError as e:
+                raise ApiError(str(e), 422, {"field": f"grade-{row.student_id}"}) from None
+            if correction:
+                required(reason, "reason")
+            row.grade = change["value"]
 
     def correct_roster(self, db, lesson, journal, context, ids):
         if len(set(ids)) != len(ids) or not ids:

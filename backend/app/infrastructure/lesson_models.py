@@ -30,7 +30,11 @@ class JournalLessonStudent(Base):
     membership: Mapped[dict] = mapped_column(JSONB)
     active: Mapped[bool] = mapped_column(Boolean)
     attendance: Mapped[str | None] = mapped_column(String(16), nullable=True)
-    __table_args__ = (CheckConstraint("attendance IN ('present','absent','late','excused')", name="lesson_attendance"),)
+    grade: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    __table_args__ = (
+        CheckConstraint("attendance IN ('present','absent','late','excused')", name="lesson_attendance"),
+        CheckConstraint("grade BETWEEN 0 AND 100", name="lesson_grade"),
+    )
 
 
 class JournalEventLink(Base):
