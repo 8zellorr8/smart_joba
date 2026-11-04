@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "./api";
 import { journalApi } from "./journal-api";
-import type { Journal, Roster, StudyProfile } from "./journal-api";
+import type { Journal, Roster } from "./journal-api";
 import { jm } from "./locales/journal.kk";
 import { demoName } from "./demo-labels";
 import { PageHeading } from "./ui/PageHeading";
@@ -9,22 +9,41 @@ import { Icon } from "./icons";
 import { JournalLessonsPanel } from "./JournalLessonsPanel";
 import { lm } from "./locales/lesson.kk";
 import "./journal.css";
+import { StudentResultsPage } from "./StudentResultsPage";
 
-export function JournalReadPage({
-  scope,
-  personal,
-  onExpired,
-  csrfToken = "",
-  onDirtyChange = () => {},
-}: {
+type Props = {
   scope: string;
   personal: boolean;
   onExpired: () => void;
   csrfToken?: string;
   onDirtyChange?: (dirty: boolean) => void;
+  onSchedule?: () => void;
+};
+
+export function JournalReadPage(props: Props) {
+  return props.personal ? (
+    <StudentResultsPage
+      scope={props.scope}
+      onExpired={props.onExpired}
+      onSchedule={props.onSchedule}
+    />
+  ) : (
+    <StaffJournalReadPage {...props} />
+  );
+}
+
+function StaffJournalReadPage({
+  scope,
+  onExpired,
+  csrfToken = "",
+  onDirtyChange = () => {},
+}: {
+  scope: string;
+  onExpired: () => void;
+  csrfToken?: string;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [catalog, setCatalog] = useState<Journal[] | null>(null);
-  const [profile, setProfile] = useState<StudyProfile | null>(null);
   const [selected, setSelected] = useState<Journal | null>(null);
   const [lessonMode, setLessonMode] = useState(false);
   const [date, setDate] = useState("");
@@ -41,7 +60,6 @@ export function JournalReadPage({
     setError(denied ? jm.denied : jm.loadError);
     if (denied) {
       setCatalog(null);
-      setProfile(null);
       setSelected(null);
     }
     setRoster(null);
@@ -49,24 +67,19 @@ export function JournalReadPage({
   useEffect(() => {
     const id = ++epoch.current;
     setCatalog(null);
-    setProfile(null);
     setSelected(null);
     setRoster(null);
     setError("");
-    const promise = personal
-      ? journalApi.me(scope).then((data) => {
-          if (epoch.current === id) setProfile(data);
-        })
-      : journalApi.journals(scope).then((data) => {
-          if (epoch.current === id) setCatalog(data.journals);
-        });
+    const promise = journalApi.journals(scope).then((data) => {
+      if (epoch.current === id) setCatalog(data.journals);
+    });
     void promise.catch((e: unknown) => {
       if (epoch.current === id) failed(e);
     });
     return () => {
       epoch.current++;
     };
-  }, [scope, personal, visit]);
+  }, [scope, visit]);
   async function showRoster() {
     if (!selected || !date) return;
     const id = ++epoch.current;
@@ -85,9 +98,9 @@ export function JournalReadPage({
   const heading = (
     <PageHeading
       id="journal-read-title"
-      eyebrow={personal ? jm.foundation : lm.eyebrow}
-      title={personal ? jm.profile : jm.title}
-      description={personal ? jm.profileDescription : lm.intro}
+      eyebrow={lm.eyebrow}
+      title={jm.title}
+      description={lm.intro}
     />
   );
   return (
@@ -107,37 +120,7 @@ export function JournalReadPage({
           </button>
         </div>
       )}
-      {!error && !catalog && !profile && <p role="status">{jm.loading}</p>}
-      {profile && (
-        <section className="panel">
-          <h2>{profile.student.display_name}</h2>
-          <p>
-            {profile.student.data_kind === "synthetic"
-              ? jm.synthetic
-              : jm.college}
-          </p>
-          <h3>{jm.memberships}</h3>
-          {profile.memberships.length ? (
-            <div className="journal-catalog">
-              {profile.memberships.map((m) => (
-                <article key={m.id}>
-                  <strong>
-                    {demoName(m.group, profile.student.data_kind)}
-                  </strong>
-                  <p>{m.academic_year}</p>
-                  <p>
-                    {m.start} — {m.end}
-                  </p>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p>{jm.noMemberships}</p>
-          )}
-          <p className="journal-note">{jm.intervalHelp}</p>
-          <p className="journal-note">{jm.next}</p>
-        </section>
-      )}
+      {!error && !catalog && <p role="status">{jm.loading}</p>}
       {catalog &&
         !selected &&
         (catalog.length ? (

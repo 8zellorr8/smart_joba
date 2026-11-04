@@ -14,6 +14,7 @@ vi.mock("./journal-api", () => ({
     journals: vi.fn(),
     roster: vi.fn(),
     me: vi.fn(),
+    results: vi.fn(),
   },
 }));
 const fixture: SetupData = {
@@ -262,7 +263,7 @@ it("discards a late roster response after changing the date", async () => {
   expect(screen.queryByText("Old private name")).not.toBeInTheDocument();
 });
 it("shows a missing personal binding as access denial", async () => {
-  vi.mocked(journalApi.me).mockRejectedValue(
+  vi.mocked(journalApi.results).mockRejectedValue(
     new ApiError(403, "ACCESS_DENIED"),
   );
   render(<JournalReadPage scope="scope" personal onExpired={vi.fn()} />);
@@ -271,13 +272,19 @@ it("shows a missing personal binding as access denial", async () => {
   expect(screen.queryByText(jm.noMemberships)).not.toBeInTheDocument();
 });
 it("personal profile asks only for the current account projection", async () => {
-  vi.mocked(journalApi.me).mockResolvedValue({
+  vi.mocked(journalApi.results).mockResolvedValue({
     student: fixture.students[0],
     memberships: [],
+    periods: [],
+    subjects: [],
+    items: [],
+    page: 1,
+    has_next: false,
+    revision: "revision",
   });
   render(<JournalReadPage scope="scope" personal onExpired={vi.fn()} />);
-  await screen.findByRole("heading", { name: "Демо студент А" });
-  expect(journalApi.me).toHaveBeenCalledWith("scope");
+  await screen.findByText("Демо студент А", { selector: "strong" });
+  expect(journalApi.results).toHaveBeenCalledWith("scope", {});
   expect(journalApi.setup).not.toHaveBeenCalled();
 });
 it("requests a new login when journal reading expires", async () => {

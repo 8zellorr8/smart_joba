@@ -20,6 +20,8 @@ from .journal_http import journal_router
 from ..application.journal_setup import JournalSetupService
 from .lesson_http import lesson_router
 from ..application.journal_lessons import JournalLessonService
+from ..application.student_results import StudentResultsService
+from .student_http import student_router
 from ..application.auth import ApiError, AuthService, audit
 from ..application.imports import ImportService
 from ..application.calendars import CalendarService
@@ -188,6 +190,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(publication_router(versions, PublicationService(versions)))
     app.include_router(journal_router(JournalSetupService(session_factory, auth)))
     app.include_router(lesson_router(JournalLessonService(session_factory, auth)))
+    app.include_router(student_router(StudentResultsService(session_factory, auth)))
 
     dist = ROOT / "frontend" / "dist"
     if (dist / "assets").is_dir():

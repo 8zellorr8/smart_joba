@@ -675,6 +675,12 @@ function WorkspaceScreen({
               <JournalReadPage
                 scope={workspace.scope.id}
                 personal={view === "study-profile"}
+                onSchedule={() => {
+                  setPublicationFocus(undefined);
+                  setPublicationGroup("");
+                  setPublicationDate(undefined);
+                  setView("publications");
+                }}
                 onExpired={onExpired}
                 csrfToken={csrfToken}
                 onDirtyChange={setPlanningDirty}

@@ -92,6 +92,38 @@ export interface StudyProfile {
   }[];
 }
 
+export interface StudentResult {
+  id: string;
+  revision: number;
+  date: string;
+  start: string;
+  end: string;
+  timezone: string;
+  subject: string;
+  group: string;
+  academic_year: string;
+  semester: number;
+  topic: string;
+  grade: number | null;
+  attendance: "present" | "absent" | "late" | "excused" | null;
+  active: boolean;
+}
+export interface StudentResults extends StudyProfile {
+  revision: string;
+  periods: { context_id: string; semester: number; academic_year: string }[];
+  subjects: { id: string; name: string }[];
+  items: StudentResult[];
+  page: number;
+  has_next: boolean;
+}
+export interface ResultQuery {
+  context_id?: string;
+  semester?: number;
+  subject_id?: string;
+  page?: number;
+  revision?: string;
+}
+
 const path = (scope: string) =>
   `/api/scopes/${encodeURIComponent(scope)}/journal`;
 export const journalApi = {
@@ -111,4 +143,11 @@ export const journalApi = {
       `${path(scope)}/journals/${encodeURIComponent(id)}/roster?on=${encodeURIComponent(date)}`,
     ),
   me: (scope: string) => request<StudyProfile>(`${path(scope)}/me`),
+  results: (scope: string, query: ResultQuery = {}) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined) params.set(key, String(value));
+    });
+    return request<StudentResults>(`${path(scope)}/me/results?${params}`);
+  },
 };

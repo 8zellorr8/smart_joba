@@ -313,11 +313,20 @@ class JournalSetupService:
 
     def me(self, token, scope_id):
         with self.factory.begin() as db:
-            user, _, _ = self.access(db, token, scope_id, "journal.read.self")
-            binding = db.scalar(select(StudentAccountBinding).where(StudentAccountBinding.user_id == user.id, StudentAccountBinding.scope_id == scope_id))
-            if not binding or not binding.student_id:
-                raise ApiError("ACCESS_DENIED", 403)
-            student = self.scoped(db, Student, binding.student_id, scope_id)
-            memberships = db.scalars(select(StudentMembership).where(StudentMembership.student_id == student.id).order_by(StudentMembership.start, StudentMembership.id)).all()
-            return {"student": {"id": str(student.id), "display_name": student.display_name, "data_kind": student.data_kind},
-                    "memberships": [{k: item[k] for k in ("id", "group", "academic_year", "start", "end")} for item in [self.membership_dto(db, m) for m in memberships]]}
+            return self.personal_profile(db, self.personal_student(db, token, scope_id))
+
+    def personal_student(self, db, token, scope_id):
+        user, _, _ = self.access(db, token, scope_id, "journal.read.self")
+        binding = db.scalar(select(StudentAccountBinding).where(StudentAccountBinding.user_id == user.id, StudentAccountBinding.scope_id == scope_id))
+        if not binding or not binding.student_id:
+            raise ApiError("ACCESS_DENIED", 403)
+        return self.scoped(db, Student, binding.student_id, scope_id)
+
+    def personal_profile(self, db, student):
+        memberships = db.scalars(select(StudentMembership).join(ImportContext, ImportContext.id == StudentMembership.context_id)
+            .join(Group, Group.id == StudentMembership.group_id)
+            .where(StudentMembership.student_id == student.id, ImportContext.scope_id == student.scope_id,
+                   ImportContext.data_kind == student.data_kind, Group.scope_id == student.scope_id, Group.data_kind == student.data_kind)
+            .order_by(StudentMembership.start, StudentMembership.id)).all()
+        return {"student": {"id": str(student.id), "display_name": student.display_name, "data_kind": student.data_kind},
+                "memberships": [{k: item[k] for k in ("id", "group", "academic_year", "start", "end")} for item in [self.membership_dto(db, m) for m in memberships]]}
