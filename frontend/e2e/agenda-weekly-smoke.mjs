@@ -11,6 +11,8 @@ import { wb } from "../src/locales/workbench.kk.ts";
 import { em } from "../src/locales/editor.kk.ts";
 import { vm } from "../src/locales/publication.kk.ts";
 import { pm } from "../src/locales/planning.kk.ts";
+import { portal as p } from "../src/locales/portal.kk.ts";
+import { demoName } from "../src/demo-labels.ts";
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
@@ -25,7 +27,7 @@ const { accounts, scope_id: scope } = JSON.parse(
     "utf8",
   ),
 );
-const dir = resolve(root, ".local/qa/agenda-weekly");
+const dir = resolve(root, ".local/qa/learning-portal");
 await mkdir(dir, { recursive: true });
 const checks = [];
 const consoleErrors = [];
@@ -56,6 +58,16 @@ async function settled(page, selector) {
 async function capture(page, filename) {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.screenshot({ path: resolve(dir, filename), fullPage: true });
+}
+async function openStaffSection(page, label) {
+  await page.getByRole("button", { name: p.sections, exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: p.sections, exact: true });
+  await dialog.getByRole("button", { name: label, exact: true }).click();
+  await page.locator("main:focus").waitFor();
+  ensure(
+    (await page.locator("dialog[open]").count()) === 0,
+    "drawer_stayed_open_after_navigation",
+  );
 }
 try {
   browser = await chromium.launch({
@@ -113,6 +125,60 @@ try {
     const canRead = workspace.permissions.some((p) =>
       p.startsWith("publication.read"),
     );
+    if (["student", "teacher"].includes(role)) {
+      ensure(
+        (await page
+          .getByRole("button", { name: p.sections, exact: true })
+          .count()) === 0,
+        "reader_staff_menu_exposed",
+      );
+      passed("reader_navigation_has_no_staff_tools");
+    } else {
+      phase = "drawer-keyboard";
+      const trigger = page.getByRole("button", {
+        name: p.sections,
+        exact: true,
+      });
+      await trigger.click();
+      const dialog = page.getByRole("dialog", {
+        name: p.sections,
+        exact: true,
+      });
+      await dialog.waitFor();
+      for (let tab = 0; tab < 12; tab++) {
+        await page.keyboard.press("Tab");
+        // Chromium can briefly focus the document at the cycle boundary.
+        await page.keyboard.press("Shift+Tab");
+        ensure(
+          await dialog.evaluate(
+            (node) =>
+              node.matches(":modal") &&
+              (node.contains(document.activeElement) ||
+                document.activeElement === document.body),
+          ),
+          "drawer_background_received_focus",
+        );
+        await page.keyboard.press("Tab");
+      }
+      await page.keyboard.press("Escape");
+      ensure(
+        await trigger.evaluate((node) => node === document.activeElement),
+        "drawer_escape_focus_not_restored",
+      );
+      ensure(
+        (await page.locator("dialog[open]").count()) === 0,
+        "drawer_escape_not_closed",
+      );
+      await trigger.click();
+      await dialog
+        .getByRole("button", { name: p.closeMenu, exact: true })
+        .click();
+      ensure(
+        await trigger.evaluate((node) => node === document.activeElement),
+        "drawer_close_focus_not_restored",
+      );
+      passed("drawer_keyboard_trap_escape_and_focus_return");
+    }
     if (!canDraft) {
       ensure(
         !reads.some((path) => path.endsWith("/schedule-versions")),
@@ -139,6 +205,101 @@ try {
         )
       ).json();
       ensure(published.events.length, "fixture_needs_visible_lesson");
+      phase = "subject-overview";
+      ensure(
+        published.total === published.events.length,
+        "subject_fixture_needs_one_reader_page",
+      );
+      await settled(page, ".portal-subjects[aria-busy=false]");
+      const subjectNames = [
+        ...new Set(
+          published.events.map((event) =>
+            demoName(event.subject, published.data_kind),
+          ),
+        ),
+      ];
+      const visibleNames = await page
+        .locator(".subject-card h3")
+        .allTextContents();
+      ensure(
+        subjectNames.length === visibleNames.length &&
+          subjectNames.every((name) => visibleNames.includes(name)),
+        "subjects_differ_from_authorized_events",
+      );
+      passed("subject_cards_match_authorized_reader_events");
+      const subjectNav = workspace.permissions.includes("publication.read")
+        ? p.subjects
+        : p.mySubjects;
+      await page
+        .locator(".portal-primary-nav")
+        .getByRole("button", { name: subjectNav, exact: true })
+        .click();
+      await settled(page, ".portal-subjects[aria-busy=false]");
+      for (const width of [320, 360, 857, 1440]) {
+        await page.setViewportSize({ width, height: width < 400 ? 800 : 1024 });
+        await fits(page, `subjects_no_body_overflow_${width}`);
+      }
+      if (role === "scheduler") await capture(page, "subjects-desktop.png");
+      await page
+        .getByLabel(p.search, { exact: true })
+        .fill("missing-subject-qa");
+      await page.getByText(p.noMatches, { exact: true }).waitFor();
+      ensure(
+        (await page.locator(".subject-card").count()) === 0,
+        "empty_subject_search_retains_cards",
+      );
+      await page
+        .getByRole("button", { name: p.clearSearch, exact: true })
+        .click();
+      const subjectName = subjectNames[0];
+      await page
+        .getByRole("link", {
+          name: `${p.openSubject}: ${subjectName}`,
+          exact: true,
+        })
+        .click();
+      await page.getByRole("table").waitFor();
+      ensure(
+        (await page.locator("tbody tr").count()) ===
+          published.events.filter(
+            (event) =>
+              demoName(event.subject, published.data_kind) === subjectName,
+          ).length,
+        "subject_detail_has_wrong_lessons",
+      );
+      for (const width of [360, 1440]) {
+        await page.setViewportSize({
+          width,
+          height: width === 360 ? 800 : 1024,
+        });
+        await fits(page, `subject_detail_no_body_overflow_${width}`);
+      }
+      if (role === "scheduler")
+        await capture(page, "subject-detail-desktop.png");
+      const subjectDate = published.events
+        .filter(
+          (event) =>
+            demoName(event.subject, published.data_kind) === subjectName,
+        )
+        .map((event) => event.date)
+        .sort()[0];
+      await page
+        .getByRole("button", { name: new RegExp(`^${p.openSchedule}:`) })
+        .first()
+        .click();
+      await settled(page, ".week-panel[aria-busy=false]");
+      ensure(
+        (await page.getByLabel(wb.date, { exact: true }).inputValue()) ===
+          subjectDate,
+        "subject_to_week_lost_date",
+      );
+      passed("subject_search_detail_and_exact_published_week_navigation");
+      await page
+        .locator(".portal-primary-nav")
+        .getByRole("link", { name: p.home, exact: true })
+        .click();
+      await settled(page, ".home-agenda[aria-busy=false]");
+      await settled(page, ".portal-subjects[aria-busy=false]");
       const date =
         published.events.find((event) => event.date === "2026-10-29")?.date ||
         published.events[0].date;
@@ -242,7 +403,7 @@ try {
     if (canDraft) {
       phase = "draft-inspector";
       await page
-        .locator(".sidebar")
+        .locator(".portal-primary-nav")
         .getByRole("link", { name: kk.overview, exact: true })
         .click();
       await settled(page, ".home-agenda[aria-busy=false]");
@@ -316,10 +477,7 @@ try {
         [pm.title, ".planning-page", "planning"],
         [kk.publication, ".version-page", "versions"],
       ]) {
-        await page
-          .locator(".sidebar")
-          .getByRole("button", { name: label, exact: true })
-          .click();
+        await openStaffSection(page, label);
         await page.locator(selector).waitFor();
         // These screens load their own data; wait for their first API request to settle.
         await page.waitForLoadState("networkidle");

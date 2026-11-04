@@ -16,15 +16,24 @@ import { StatusBadge, statusTone } from "./ui/StatusBadge";
 import { dayLabel, todayInZone } from "./timetable/dates";
 import { collectWeek } from "./timetable/pages";
 import { subjectTone } from "./timetable/WeekPanel";
+import { SubjectOverview } from "./SubjectOverview";
+import { portal } from "./locales/portal.kk";
 
 export type WorkbenchDestination =
-  "import" | "calendar" | "editor" | "planning" | "versions" | "publications";
+  | "import"
+  | "calendar"
+  | "editor"
+  | "planning"
+  | "versions"
+  | "publications"
+  | "subjects";
 export function WorkbenchHome({
   workspace,
   onNavigate,
   onOpenDraft,
   onOpenPublication,
   onExpired,
+  onOpenSubject,
 }: {
   workspace: Workspace;
   onNavigate: (view: WorkbenchDestination) => void;
@@ -35,6 +44,7 @@ export function WorkbenchHome({
     group: string,
   ) => void;
   onExpired: () => void;
+  onOpenSubject?: (key: string) => void;
 }) {
   const canRead = workspace.permissions.some((p) =>
     p.startsWith("publication.read"),
@@ -213,7 +223,9 @@ export function WorkbenchHome({
   return (
     <section className="workbench-home" aria-labelledby="home-title">
       <div className="home-heading">
-        <h1 id="home-title">{wb.overview}</h1>
+        <p className="portal-kicker">{portal.title}</p>
+        <h1 id="home-title">{portal.home}</h1>
+        <span className="portal-welcome">{portal.welcome}</span>
         <p>{dayLabel(date, true)}</p>
         <span className="home-provenance">
           {workspace.scope.is_demo ? wb.demo : workspace.scope.name}
@@ -222,6 +234,22 @@ export function WorkbenchHome({
       <div
         className={`home-columns ${!canDraft && !actions.length ? "home-columns--reader" : ""}`}
       >
+        <div className="portal-learning">
+          {canRead && (
+            <SubjectOverview
+              workspace={workspace}
+              sources={publications}
+              waiting={busy && !source}
+              sourceError={!source ? error : ""}
+              onRetry={() => setReload((value) => value + 1)}
+              onExpired={onExpired}
+              onOpenPublication={onOpenPublication}
+              preview
+              onAllSubjects={() => onNavigate("subjects")}
+              onOpenSubject={onOpenSubject}
+            />
+          )}
+        </div>
         <section
           className="home-agenda"
           aria-labelledby="agenda-title"
@@ -353,7 +381,11 @@ export function WorkbenchHome({
           {!canRead && <p>{wb.permissionHint}</p>}
         </section>
         {(canDraft || !!actions.length) && (
-          <div className="home-secondary">
+          <div className="home-secondary portal-staff-content">
+            <div className="portal-staff-heading">
+              <Icon name="layers" size={20} />
+              <h2>{portal.staffTools}</h2>
+            </div>
             {canDraft && (
               <section className="home-draft">
                 <h2>{wb.draft}</h2>

@@ -1,0 +1,104 @@
+.student-results-actions,
+.student-results-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-block: 20px;
+}
+.student-results-identity {
+  overflow-wrap: anywhere;
+}
+.student-results-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-block: 24px;
+}
+.student-result-filter {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.student-results-filters select {
+  width: 100%;
+  min-width: 0;
+}
+.student-results-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+}
+.student-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.35fr);
+  gap: 24px;
+}
+.student-result-main,
+.student-result-values {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.student-result h3 {
+  margin-block: 8px;
+}
+.student-result-date {
+  color: var(--ui-muted);
+  font-size: 14px;
+}
+.student-result-topic {
+  white-space: pre-wrap;
+  line-height: 1.6;
+}
+.student-result-values {
+  margin: 0;
+  padding-inline-start: 24px;
+  border-inline-start: 1px solid var(--ui-border);
+  display: grid;
+  align-content: start;
+  gap: 20px;
+}
+.student-result-values dt {
+  color: var(--ui-muted);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.student-result-values dd {
+  margin: 0;
+}
+.student-result-grade {
+  color: var(--ui-accent);
+  font-size: 36px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.student-result-empty {
+  color: var(--ui-muted);
+}
+.student-profile-details {
+  margin-top: 24px;
+}
+.student-profile-details summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 10px;
+}
+@media (max-width: 640px) {
+  .student-results-filters,
+  .student-result {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .student-result-values {
+    padding-inline-start: 0;
+    padding-top: 16px;
+    border-inline-start: 0;
+    border-top: 1px solid var(--ui-border);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .student-results-pagination {
+    justify-content: space-between;
+  }
+}

@@ -6,6 +6,7 @@ export interface Grant {
   is_demo: boolean;
   group_id: string | null;
   teacher_id: string | null;
+  student_id?: string | null;
 }
 export interface User {
   id: string;

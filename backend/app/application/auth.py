@@ -7,6 +7,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 
 from ..infrastructure.models import AuditEvent, AuthSession, LoginThrottle, RoleGrant, Scope, User
+from ..infrastructure.journal_models import StudentAccountBinding
 from ..infrastructure.security import DUMMY_HASH, PASSWORDS, token_hash
 
 
@@ -26,9 +27,11 @@ class AuthService:
 
     def grants(self, db, user_id) -> list[dict]:
         rows = db.execute(select(RoleGrant, Scope).join(Scope, Scope.id == RoleGrant.scope_id).where(RoleGrant.user_id == user_id)).all()
+        students = {b.scope_id: b.student_id for b in db.scalars(select(StudentAccountBinding).where(StudentAccountBinding.user_id == user_id))}
         return [{"role": grant.role, "scope_id": str(scope.id), "scope_name": scope.name, "is_demo": scope.is_demo,
                  "group_id": str(grant.group_id) if grant.group_id else None,
                  "teacher_id": str(grant.teacher_id) if grant.teacher_id else None,
+                 "student_id": str(students[scope.id]) if grant.role == "student" and students.get(scope.id) else None,
                  "can_publish": grant.can_publish} for grant, scope in rows]
 
     def user_dto(self, db, user: User) -> dict:

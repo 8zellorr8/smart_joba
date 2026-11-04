@@ -1,0 +1,198 @@
+.journal-page {
+  max-width: 1440px;
+  margin-inline: auto;
+}
+.journal-page .panel {
+  padding: 24px;
+  min-width: 0;
+}
+.journal-note {
+  color: var(--ui-muted);
+  line-height: 1.6;
+  margin-block: 16px 24px;
+  max-width: 88ch;
+}
+.journal-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 24px;
+}
+.journal-tabs button {
+  padding: 12px 18px;
+  min-height: 44px;
+  border: 1px solid var(--ui-border);
+  background: white;
+  border-radius: 8px;
+  color: var(--ui-text);
+  cursor: pointer;
+  font: inherit;
+}
+.journal-tabs [aria-current] {
+  border-color: var(--ui-accent);
+  background: var(--ui-surface-soft);
+  color: var(--ui-accent);
+  font-weight: 650;
+}
+.journal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.journal-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.journal-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 20px;
+  min-width: 0;
+}
+.journal-form label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.journal-form :is(input, select) {
+  width: 100%;
+  min-width: 0;
+}
+.journal-form .journal-check {
+  display: flex;
+  align-items: start;
+  flex-direction: row-reverse;
+  justify-content: start;
+  gap: 12px;
+  line-height: 1.5;
+}
+.journal-form .journal-check input {
+  width: 22px;
+  height: 22px;
+  min-height: 22px;
+  flex: 0 0 22px;
+  margin-top: 2px;
+}
+.journal-form .error-message {
+  font-weight: 400;
+  font-size: 14px;
+}
+.journal-error {
+  border: 1px solid #b52a2a;
+  background: #fff6f4;
+  padding: 16px 20px;
+  margin-block: 20px;
+  border-radius: 8px;
+}
+.journal-error :is(button, a) {
+  margin-right: 12px;
+}
+.journal-page .table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.journal-page table {
+  min-width: 520px;
+  width: 100%;
+}
+.portal-layout .journal-page table thead th,
+.portal-layout .journal-page table tbody tr:nth-child(even) {
+  background: var(--ui-surface-soft);
+}
+.journal-page .panel > .button + h2 {
+  margin-top: 20px;
+}
+.journal-page td {
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.journal-page td small {
+  display: block;
+  color: var(--ui-muted);
+  margin-top: 6px;
+}
+.journal-page td .button {
+  display: block;
+  margin-bottom: 8px;
+}
+.journal-catalog {
+  display: grid;
+  gap: 16px;
+}
+.journal-catalog article {
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  padding: 18px;
+  overflow-wrap: anywhere;
+}
+.journal-assignment {
+  display: grid;
+  gap: 8px;
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid var(--ui-border);
+}
+.journal-assignment .button {
+  justify-self: start;
+}
+.journal-read-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 24px;
+}
+.journal-book {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  color: var(--ui-accent);
+  background: var(--ui-surface-soft);
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.journal-roster-date {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-block: 24px;
+}
+.journal-roster-date label {
+  display: grid;
+  gap: 8px;
+}
+.journal-roster li {
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--ui-border);
+}
+@media (max-width: 1000px) {
+  .journal-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .journal-form {
+    max-width: 680px;
+    width: 100%;
+  }
+}
+@media (max-width: 640px) {
+  .journal-page .panel {
+    padding: 18px;
+  }
+  .journal-tabs {
+    gap: 6px;
+  }
+  .journal-tabs button {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+  .journal-roster-date label {
+    width: 100%;
+  }
+}

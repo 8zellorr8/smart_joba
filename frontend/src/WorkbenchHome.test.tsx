@@ -8,6 +8,9 @@ import type { Workspace } from "./api";
 import { ApiError } from "./api";
 import { wb } from "./locales/workbench.kk";
 
+// The subject projection has separate pagination, privacy and navigation tests.
+vi.mock("./SubjectOverview", () => ({ SubjectOverview: () => null }));
+
 vi.mock("./publication-api", () => ({
   publicationApi: { list: vi.fn(), get: vi.fn() },
   versionApi: { list: vi.fn() },

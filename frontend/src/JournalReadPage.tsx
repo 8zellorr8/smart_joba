@@ -1,0 +1,256 @@
+import { useEffect, useRef, useState } from "react";
+import { ApiError } from "./api";
+import { journalApi } from "./journal-api";
+import type { Journal, Roster } from "./journal-api";
+import { jm } from "./locales/journal.kk";
+import { demoName } from "./demo-labels";
+import { PageHeading } from "./ui/PageHeading";
+import { Icon } from "./icons";
+import { JournalLessonsPanel } from "./JournalLessonsPanel";
+import { lm } from "./locales/lesson.kk";
+import "./journal.css";
+import { StudentResultsPage } from "./StudentResultsPage";
+
+type Props = {
+  scope: string;
+  personal: boolean;
+  onExpired: () => void;
+  csrfToken?: string;
+  onDirtyChange?: (dirty: boolean) => void;
+  onSchedule?: () => void;
+};
+
+export function JournalReadPage(props: Props) {
+  return props.personal ? (
+    <StudentResultsPage
+      scope={props.scope}
+      onExpired={props.onExpired}
+      onSchedule={props.onSchedule}
+    />
+  ) : (
+    <StaffJournalReadPage {...props} />
+  );
+}
+
+function StaffJournalReadPage({
+  scope,
+  onExpired,
+  csrfToken = "",
+  onDirtyChange = () => {},
+}: {
+  scope: string;
+  onExpired: () => void;
+  csrfToken?: string;
+  onDirtyChange?: (dirty: boolean) => void;
+}) {
+  const [catalog, setCatalog] = useState<Journal[] | null>(null);
+  const [selected, setSelected] = useState<Journal | null>(null);
+  const [lessonMode, setLessonMode] = useState(false);
+  const [date, setDate] = useState("");
+  const [roster, setRoster] = useState<Roster | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [visit, setVisit] = useState(0);
+  const epoch = useRef(0);
+  const expired = useRef(onExpired);
+  expired.current = onExpired;
+  function failed(e: unknown) {
+    if (e instanceof ApiError && e.status === 401) expired.current();
+    const denied = e instanceof ApiError && e.status === 403;
+    setError(denied ? jm.denied : jm.loadError);
+    if (denied) {
+      setCatalog(null);
+      setSelected(null);
+    }
+    setRoster(null);
+  }
+  useEffect(() => {
+    const id = ++epoch.current;
+    setCatalog(null);
+    setSelected(null);
+    setRoster(null);
+    setError("");
+    const promise = journalApi.journals(scope).then((data) => {
+      if (epoch.current === id) setCatalog(data.journals);
+    });
+    void promise.catch((e: unknown) => {
+      if (epoch.current === id) failed(e);
+    });
+    return () => {
+      epoch.current++;
+    };
+  }, [scope, visit]);
+  async function showRoster() {
+    if (!selected || !date) return;
+    const id = ++epoch.current;
+    setBusy(true);
+    setError("");
+    setRoster(null);
+    try {
+      const result = await journalApi.roster(scope, selected.id, date);
+      if (epoch.current === id) setRoster(result);
+    } catch (e) {
+      if (epoch.current === id) failed(e);
+    } finally {
+      if (epoch.current === id) setBusy(false);
+    }
+  }
+  const heading = (
+    <PageHeading
+      id="journal-read-title"
+      eyebrow={lm.eyebrow}
+      title={jm.title}
+      description={lm.intro}
+    />
+  );
+  return (
+    <div className="journal-page">
+      {heading}
+      {error && (
+        <div role="alert" className="journal-error">
+          <p>{error}</p>
+          <button
+            className="button button-quiet"
+            onClick={() => {
+              setBusy(false);
+              setVisit((v) => v + 1);
+            }}
+          >
+            {jm.retry}
+          </button>
+        </div>
+      )}
+      {!error && !catalog && <p role="status">{jm.loading}</p>}
+      {catalog &&
+        !selected &&
+        (catalog.length ? (
+          <div className="journal-read-grid">
+            {catalog.map((j) => (
+              <article className="panel" key={j.id}>
+                <span className="journal-book">
+                  <Icon name="book" size={25} />
+                </span>
+                <h2>{demoName(j.subject, j.data_kind)}</h2>
+                <p>
+                  {demoName(j.group, j.data_kind)} · {j.academic_year}
+                </p>
+                <p>
+                  {j.semester} {jm.semester} ·{" "}
+                  {j.data_kind === "synthetic" ? jm.synthetic : jm.college}
+                </p>
+                {j.periods?.map((p) => (
+                  <p key={`${p.start}-${p.end}`}>
+                    {p.start} — {p.end}
+                  </p>
+                ))}
+                <button
+                  className="button button-primary"
+                  onClick={() => {
+                    ++epoch.current;
+                    setSelected(j);
+                    setLessonMode(true);
+                    setError("");
+                    setRoster(null);
+                  }}
+                >
+                  {lm.open}
+                </button>
+                <button
+                  className="button button-quiet"
+                  onClick={() => {
+                    ++epoch.current;
+                    setSelected(j);
+                    setLessonMode(false);
+                    setDate("");
+                    setError("");
+                    setRoster(null);
+                  }}
+                >
+                  {jm.openRoster}
+                </button>
+              </article>
+            ))}
+          </div>
+        ) : (
+          !error && <p className="panel">{jm.emptyJournals}</p>
+        ))}
+      {selected && lessonMode && (
+        <JournalLessonsPanel
+          key={`${scope}-${selected.id}`}
+          scope={scope}
+          journal={selected}
+          csrfToken={csrfToken}
+          onExpired={onExpired}
+          onDirtyChange={onDirtyChange}
+          onClose={() => {
+            setSelected(null);
+            setLessonMode(false);
+          }}
+        />
+      )}
+      {selected && !lessonMode && (
+        <section className="panel">
+          <button
+            className="button button-quiet"
+            onClick={() => {
+              ++epoch.current;
+              setSelected(null);
+              setRoster(null);
+              setBusy(false);
+              setError("");
+            }}
+          >
+            {jm.back}
+          </button>
+          <h2>
+            {demoName(selected.subject, selected.data_kind)} ·{" "}
+            {demoName(selected.group, selected.data_kind)}
+          </h2>
+          <p>{jm.preview}</p>
+          <form
+            className="journal-roster-date"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void showRoster();
+            }}
+          >
+            <label>
+              {jm.date}
+              <input
+                type="date"
+                value={date}
+                required
+                onChange={(e) => {
+                  ++epoch.current;
+                  setDate(e.target.value);
+                  setRoster(null);
+                  setBusy(false);
+                  setError("");
+                }}
+              />
+            </label>
+            <button className="button button-primary" disabled={busy}>
+              {busy ? jm.loading : jm.show}
+            </button>
+          </form>
+          {roster && (
+            <>
+              <h3>
+                {jm.roster} · {roster.date}
+              </h3>
+              {roster.students.length ? (
+                <ol className="journal-roster">
+                  {roster.students.map((s) => (
+                    <li key={s.id}>{s.display_name}</li>
+                  ))}
+                </ol>
+              ) : (
+                <p>{jm.noRoster}</p>
+              )}
+            </>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
