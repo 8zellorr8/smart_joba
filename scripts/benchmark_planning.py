@@ -83,7 +83,8 @@ def main():
         "validation_event_count": len(validation_events), "validation_input": "Deterministic synthetic control independent of the solver outcome",
         "sampled_process_peak_rss_bytes": max(rss, default=psutil.Process().memory_info().rss), "validation_python_peak_bytes": python_peak,
         "sampling_interval_seconds": .01, "worker_memory_limit_mib": 768, "workers": 1}
-    destination = Path("docs/implementation/stage-5-planning-benchmark.json")
+    destination = Path(".local/benchmarks/stage-5-planning-benchmark.json")
+    destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(measured, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(measured, ensure_ascii=False, indent=2))
 

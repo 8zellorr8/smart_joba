@@ -44,3 +44,11 @@ pip-ephem-wheel-cache-*/
 pip-install-*/
 pytest-cache-files-*/
 pytest-of-*/
+
+# Local agent tooling and archived project materials
+/.agents/
+/design-qa.md
+/docs/design/agenda-weekly/
+/docs/implementation/
+/docs/spec/v0.9/
+/docs/spec/v1.0/
