@@ -18,8 +18,9 @@ from .publication_fixtures import approve, fork, publish, setup_version, submit
 
 
 @pytest.fixture
-def lesson_env(client, app, monkeypatch):
-    env = setup_version(client, app)
+def lesson_env(client, app, monkeypatch, request):
+    data_kind = getattr(request, "param", "synthetic")
+    env = setup_version(client, app, data_kind=data_kind)
     version = approve(client, app, submit(client, env))
     pub = publish(client, version)
     session = login(client, app, "admin")
@@ -34,7 +35,7 @@ def lesson_env(client, app, monkeypatch):
     journal_id = setup({"kind": "create_journal", "demand_id": assignment["demand_id"], "source": "Synthetic only", "confirmed": True})["id"]
     students = []
     for label in ("Демо студент А", "Демо студент Б"):
-        sid = setup({"kind": "create_student", "display_name": label, "data_kind": "synthetic"})["id"]
+        sid = setup({"kind": "create_student", "display_name": label, "data_kind": data_kind})["id"]
         setup({"kind": "save_membership", "student_id": sid, "context_id": assignment["context_id"],
             "group_id": assignment["group_id"], "start": "2026-09-01", "end": "2027-01-01", "source": "Synthetic", "confirmed": True})
         students.append(sid)

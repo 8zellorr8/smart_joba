@@ -8,20 +8,20 @@ from .s1_fixtures import ROW, workbook
 from .test_imports import upload, review, apply
 
 
-def setup_editor(client, app):
+def setup_editor(client, app, *, data_kind="synthetic"):
     login(client, app)
     rows = []
     for index, group in enumerate(("TEST-EDITOR-A", "TEST-EDITOR-A", "TEST-EDITOR-B")):
         row = list(ROW); row[0] = "SYNTHETIC Editor Teacher " + ("B" if index == 1 else "A")
         row[1] = f"SYNTHETIC Subject {index}"; row[2] = f"TEST-EDITOR-{index}"; row[3] = group; row[5] = "101"; row[10] = 4
         rows.append(row)
-    batch = upload(client, app, workbook(rows)).json()
+    batch = upload(client, app, workbook(rows), data_kind=data_kind).json()
     for index in range(3): batch = review(client, batch, {"whole_group": True}, True, index=index).json()
     assert apply(client, batch).status_code == 200
     login(client, app, "admin")
     rooms = []
     for code in ("TEST-101", "TEST-102"):
-        response = client.post(f"/api/scopes/{DEMO_SCOPE_ID}/rooms", headers=csrf(client), json={"code": code, "data_kind": "synthetic", "exclusive": True, "confirmed": True, "source": "SYNTHETIC TEST room"})
+        response = client.post(f"/api/scopes/{DEMO_SCOPE_ID}/rooms", headers=csrf(client), json={"code": code, "data_kind": data_kind, "exclusive": True, "confirmed": True, "source": "SYNTHETIC TEST room"})
         assert response.status_code == 201, response.text
         rooms.append(response.json())
     # Admin cannot read drafts; obtain references via scheduler, then configure
@@ -35,7 +35,7 @@ def setup_editor(client, app):
     for assignment in assignments:
         if assignment["group_id"] in calendars: continue
         doc = deepcopy(document()); doc["slots"].append({"id": "second", "label": "TEST next", "start": "10:30", "end": "12:00"})
-        response = client.post(f"/api/scopes/{DEMO_SCOPE_ID}/calendars", headers=csrf(client), json={"academic_year": "2026-2027", "data_kind": "synthetic", "group_id": assignment["group_id"], "document": doc})
+        response = client.post(f"/api/scopes/{DEMO_SCOPE_ID}/calendars", headers=csrf(client), json={"academic_year": "2026-2027", "data_kind": data_kind, "group_id": assignment["group_id"], "document": doc})
         assert response.status_code == 201, response.text
         calendars[assignment["group_id"]] = response.json()
     login(client, app)

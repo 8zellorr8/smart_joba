@@ -15,8 +15,8 @@ def services(app):
     return versions, PublicationService(versions)
 
 
-def setup_version(client, app):
-    env = setup_planning(client, app)
+def setup_version(client, app, *, data_kind="synthetic"):
+    env = setup_planning(client, app, data_kind=data_kind)
     job = create_job(client, env).json()
     inputs = mark_running(app, job)
     generator_service(app).finish(uuid.UUID(job["id"]), solve(inputs, 3))

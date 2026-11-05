@@ -35,8 +35,8 @@ def snapshot():
         "source_questions": []}
 
 
-def setup_planning(client, app):
-    env = setup_editor(client, app)
+def setup_planning(client, app, *, data_kind="synthetic"):
+    env = setup_editor(client, app, data_kind=data_kind)
     groups = list(env["calendars"])
     teachers = sorted({a["teacher_id"] for a in env["assignments"]})
     doc = rules_document(groups, teachers, [r["id"] for r in env["rooms"]], [a["demand_id"] for a in env["assignments"]])
