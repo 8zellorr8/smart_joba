@@ -24,6 +24,9 @@ import { WorkbenchHome } from "./WorkbenchHome";
 import { SubjectsPage, subjectsLabel } from "./SubjectOverview";
 import { portal } from "./locales/portal.kk";
 import { jm } from "./locales/journal.kk";
+const CoursesPage = lazy(() =>
+  import("./CoursesPage").then((module) => ({ default: module.CoursesPage })),
+);
 
 const JournalSetupPage = lazy(() =>
   import("./JournalSetupPage").then((module) => ({
@@ -45,6 +48,8 @@ const roleNames: Record<Role, string> = {
   student: t.roleStudent,
 };
 const permissionNames: Record<string, string> = {
+  "course.read": "Курс материалдарын оқу",
+  "course.manage": "Өз курсына тақырыптар мен материалдар қосу",
   "journal.setup": jm.setup,
   "journal.read": "Журналдың топ құрамын қарау",
   "journal.read.own": "Тағайындалған журналдардың топ құрамын қарау",
@@ -325,6 +330,7 @@ function WorkspaceScreen({
   const [view, setViewState] = useState<
     | "overview"
     | "subjects"
+    | "courses"
     | "journal-setup"
     | "journals"
     | "study-profile"
@@ -577,6 +583,14 @@ function WorkspaceScreen({
                 </button>
               </>
             )}
+            {workspace.permissions.includes("course.read") && (
+              <button
+                aria-current={view === "courses" ? "page" : undefined}
+                onClick={() => setView("courses")}
+              >
+                Курстар
+              </button>
+            )}
             {workspace.permissions.some(
               (p) => p === "journal.read" || p === "journal.read.own",
             ) && (
@@ -660,7 +674,15 @@ function WorkspaceScreen({
               {error}
             </p>
           )}
-          {view === "journal-setup" ? (
+          {view === "courses" ? (
+            <Suspense fallback={<p role="status">{jm.loading}</p>}>
+              <CoursesPage
+                scope={workspace.scope.id}
+                csrfToken={csrfToken}
+                onExpired={onExpired}
+              />
+            </Suspense>
+          ) : view === "journal-setup" ? (
             <Suspense fallback={<p role="status">{jm.loading}</p>}>
               <JournalSetupPage
                 key={workspace.scope.id}

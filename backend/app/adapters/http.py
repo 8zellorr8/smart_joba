@@ -17,6 +17,8 @@ from .editor_http import editor_router
 from .planning_http import planning_router
 from .publication_http import publication_router
 from .journal_http import journal_router
+from .course_http import course_router
+from ..application.courses import CourseService, MAX_PDF_BYTES
 from ..application.journal_setup import JournalSetupService
 from .lesson_http import lesson_router
 from ..application.journal_lessons import JournalLessonService
@@ -78,8 +80,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             calendar_write = request.url.path.startswith("/api/calendars/") or bool(re.fullmatch(r"/api/scopes/[^/]+/calendars", request.url.path))
             editor_write = request.url.path.startswith(("/api/drafts/", "/api/rooms/", "/api/solver-jobs/", "/api/planning-contexts/", "/api/schedule-versions/")) or bool(re.fullmatch(r"/api/scopes/[^/]+/(solver-jobs|generation-preview)", request.url.path)) or bool(re.fullmatch(r"/api/scopes/[^/]+/(drafts|rooms)", request.url.path))
             journal_write = bool(re.fullmatch(r"/api/scopes/[^/]+/journal/(commands|lesson-commands|lesson-admin/commands)", request.url.path))
-            if request.url.path.startswith("/api/auth/") or upload or request.url.path.startswith("/api/imports/") or calendar_write or editor_write or journal_write:
+            course_write = re.fullmatch(r"/api/scopes/[^/]+/courses/.*", request.url.path)
+            if request.url.path.startswith("/api/auth/") or upload or request.url.path.startswith("/api/imports/") or calendar_write or editor_write or journal_write or course_write:
                 limit = MAX_FILE_BYTES + 131072 if upload else (131072 if calendar_write or editor_write or journal_write else (65536 if request.url.path.startswith("/api/imports/") else 8192))
+                if course_write and request.url.path.endswith("/materials"):
+                    limit = MAX_PDF_BYTES + 65536
                 body = bytearray()
                 async for chunk in request.stream():
                     body.extend(chunk)
@@ -189,6 +194,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     versions = VersionService(EditorService(session_factory, auth))
     app.include_router(publication_router(versions, PublicationService(versions)))
     app.include_router(journal_router(JournalSetupService(session_factory, auth)))
+    app.include_router(course_router(CourseService(session_factory, auth)))
     app.include_router(lesson_router(JournalLessonService(session_factory, auth)))
     app.include_router(student_router(StudentResultsService(session_factory, auth)))
 

@@ -1,0 +1,144 @@
+.course-page {
+  max-width: 68rem;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+}
+.course-heading {
+  margin: 0 0 1.6rem;
+}
+.course-heading h1 {
+  margin: 0;
+  line-height: 1.15;
+  font-size: clamp(1.8rem, 3vw, 2.65rem);
+}
+.course-heading p,
+.course-card p,
+.course-topic > p {
+  color: var(--ui-muted, #50635d);
+  margin: 0.35rem 0;
+}
+.course-list {
+  display: grid;
+  gap: 1rem;
+}
+.course-page .panel {
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+.course-card,
+.course-toolbar,
+.course-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.course-card h2,
+.course-toolbar h2,
+.course-toolbar h3 {
+  margin: 0;
+}
+.course-toolbar {
+  justify-content: space-between;
+  margin-block: 1rem;
+}
+.course-card .button {
+  margin-inline-start: auto;
+}
+.course-mark {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  background: #e1efeb;
+  color: #14574a;
+  border-radius: 0.8rem;
+}
+.course-back {
+  margin-bottom: 1rem;
+}
+.course-topic {
+  margin-bottom: 1rem;
+}
+.course-topic .course-toolbar {
+  margin-top: 0;
+}
+.course-resource {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.8rem 0.2rem;
+  background: transparent;
+  color: var(--ui-accent, #155949);
+  border: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.course-resource:hover span {
+  text-decoration: underline;
+}
+.course-resource small {
+  margin-inline-start: auto;
+  color: var(--ui-muted, #50635d);
+  flex-shrink: 0;
+}
+.course-resource svg {
+  flex-shrink: 0;
+}
+.course-item {
+  border-top: 1px solid var(--ui-border, #dce4df);
+}
+.course-text {
+  white-space: pre-wrap;
+  line-height: 1.65;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  background: #f3f7f4;
+  border-radius: 0.4rem;
+}
+.course-form {
+  background: #f4f7f5;
+  border: 1px solid var(--ui-border, #dce4df);
+  padding: 1rem;
+  margin-block: 0.75rem;
+  border-radius: 0.6rem;
+}
+.course-form fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: grid;
+  gap: 0.8rem;
+}
+.course-form legend {
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+.course-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+.course-form :is(input, textarea, select) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.65rem;
+  border: 1px solid var(--ui-control-border, #8caaa1);
+  border-radius: 0.4rem;
+  background: white;
+  font: inherit;
+}
+@media (max-width: 38rem) {
+  .course-card .button {
+    margin: 0;
+    width: 100%;
+  }
+  .course-actions {
+    gap: 0.5rem;
+  }
+}
