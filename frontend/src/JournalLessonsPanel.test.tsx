@@ -170,7 +170,7 @@ it("retains input and focuses a linked validation error", async () => {
   await open();
   fill();
   const alert = await screen.findByRole("alert");
-  expect(alert).toHaveFocus();
+  await waitFor(() => expect(alert).toHaveFocus());
   expect(screen.getByLabelText(lm.topic)).toHaveValue("Тақырып");
   expect(screen.getByLabelText(lm.reason)).toHaveAttribute(
     "aria-invalid",

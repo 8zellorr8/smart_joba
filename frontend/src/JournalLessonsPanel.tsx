@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "./ui/dateTime";
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "./api";
 import type { Journal } from "./journal-api";
@@ -394,7 +395,7 @@ export function JournalLessonsPanel({
                     {page.items.map((row) => (
                       <tr key={`${row.publication_id}-${row.event_id}`}>
                         <td>
-                          {row.date}
+                          {formatDate(row.date)}
                           <small className="lesson-time">
                             {row.start}–{row.end}
                           </small>
@@ -466,7 +467,8 @@ export function JournalLessonsPanel({
                 {lesson.recorded ? lm.recorded : lm.planned}
               </span>
               <h3>
-                {lesson.source.date} · {lesson.source.start}–{lesson.source.end}
+                {formatDate(lesson.source.date)} · {lesson.source.start}–
+                {lesson.source.end}
               </h3>
               <p>
                 {lesson.source.timezone} ·{" "}
@@ -707,16 +709,8 @@ export function JournalLessonsPanel({
                         {lm.actions[h.action] ?? h.action} · r{h.revision}
                       </strong>
                       <p>
-                        {new Intl.DateTimeFormat("kk-KZ", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hourCycle: "h23",
-                          timeZone: lesson.source.timezone,
-                        }).format(new Date(h.created_at))}{" "}
-                        · {lm.actor}: {h.actor_name ?? h.actor_id}
+                        {formatDateTime(h.created_at, lesson.source.timezone)} ·{" "}
+                        {lm.actor}: {h.actor_name ?? h.actor_id}
                       </p>
                       {h.reason && (
                         <p>

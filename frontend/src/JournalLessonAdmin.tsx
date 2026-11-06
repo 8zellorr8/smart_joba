@@ -1,3 +1,4 @@
+import { formatDate } from "./ui/dateTime";
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "./api";
 import type { Journal } from "./journal-api";
@@ -294,7 +295,7 @@ export function JournalLessonAdmin({
                     {page.items.map((row) => (
                       <tr key={`${row.publication_id}-${row.event_id}`}>
                         <td>
-                          {row.date}
+                          {formatDate(row.date)}
                           <small className="lesson-time">
                             {row.start}–{row.end}
                           </small>
@@ -350,7 +351,7 @@ export function JournalLessonAdmin({
             {lm.back}
           </button>
           <h3>
-            {selected.date} · {selected.start}–{selected.end}
+            {formatDate(selected.date)} · {selected.start}–{selected.end}
           </h3>
           <p>{selected.recorded ? lm.rosterHelp : lm.mappingHelp}</p>
           {(roster || targetPage) && (
@@ -395,12 +396,13 @@ export function JournalLessonAdmin({
                             (r) => r.lesson_id === targetId,
                           ) && (
                             <option value={targetId}>
-                              {target.date} · {lm.existingLesson}
+                              {formatDate(target.date)} · {lm.existingLesson}
                             </option>
                           )}
                         {targetPage?.items.map((row) => (
                           <option key={row.lesson_id} value={row.lesson_id!}>
-                            {row.date} · {row.start}–{row.end} · {lm.recorded}
+                            {formatDate(row.date)} · {row.start}–{row.end} ·{" "}
+                            {lm.recorded}
                           </option>
                         ))}
                       </select>

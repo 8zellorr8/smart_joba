@@ -1,0 +1,114 @@
+.task-page {
+  margin-top: 1.5rem;
+  overflow-wrap: anywhere;
+}
+.task-page h2 {
+  margin-block: 1.3rem;
+}
+.task-description,
+.task-attempt {
+  margin-block: 1rem;
+}
+.task-description .course-text {
+  margin-top: 0;
+}
+.task-hint {
+  color: var(--ui-muted, #50635d);
+  font-size: 0.93rem;
+  line-height: 1.55;
+}
+.task-responses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  gap: 0.75rem;
+}
+.task-response {
+  display: grid;
+  gap: 0.45rem;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.task-response:hover {
+  border-color: var(--ui-accent);
+}
+.task-response[aria-pressed="true"] {
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-accent);
+  box-shadow: inset 0 0 0 1px var(--ui-accent);
+}
+.task-late {
+  color: #8a4a08;
+  font-weight: 600;
+  margin-inline-start: 0.3rem;
+}
+.task-review {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--ui-info-soft);
+  border-left: 3px solid var(--ui-info);
+  border-radius: 0 10px 10px 0;
+}
+.task-review p {
+  margin-block: 0.4rem;
+}
+.task-feedback {
+  white-space: pre-wrap;
+}
+.task-state {
+  font-weight: 700;
+  color: var(--ui-accent);
+}
+.task-return {
+  padding: 0.8rem 1rem;
+  background: var(--ui-warm);
+  border-radius: 0.5rem;
+}
+.task-attempt h4 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+.course-task-link {
+  margin-block: 12px;
+  display: flex;
+  width: 100%;
+  gap: 14px;
+  text-align: left;
+  justify-content: start;
+  padding: 16px;
+  background: var(--ui-accent-soft);
+  border-color: var(--ui-border);
+}
+.course-task-link > span {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+.course-task-link small {
+  color: var(--ui-muted);
+  font-weight: 400;
+  font-size: 13px;
+}
+.task-description > p:not(.course-text) {
+  margin-block: 16px 0;
+}
+.task-page .task-description .course-text {
+  padding: 0;
+  background: transparent;
+  line-height: 1.8;
+}
+.task-page section > h3 {
+  margin-block: 28px 16px;
+  font-size: 18px;
+}
+.task-page .task-response {
+  border-left: 4px solid var(--ui-accent);
+  font-size: 14px;
+}
+.task-response strong {
+  font-size: 16px;
+}
+.task-attempt > p {
+  margin-block: 10px;
+}

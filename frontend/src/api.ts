@@ -36,10 +36,10 @@ export class ApiError extends Error {
   }
 }
 
-export async function request<T>(
+async function responseFor(
   path: string,
   options: RequestInit = {},
-): Promise<T> {
+): Promise<Response> {
   let response: Response;
   try {
     response = await fetch(path, {
@@ -79,6 +79,18 @@ export async function request<T>(
     }
     throw new ApiError(response.status, code, params);
   }
+  return response;
+}
+
+export async function requestBlob(path: string): Promise<Blob> {
+  return (await responseFor(path)).blob();
+}
+
+export async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await responseFor(path, options);
   if (response.status === 204) return undefined as T;
   try {
     return (await response.json()) as T;

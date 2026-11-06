@@ -24,6 +24,9 @@ import { WorkbenchHome } from "./WorkbenchHome";
 import { SubjectsPage, subjectsLabel } from "./SubjectOverview";
 import { portal } from "./locales/portal.kk";
 import { jm } from "./locales/journal.kk";
+const CoursesPage = lazy(() =>
+  import("./CoursesPage").then((module) => ({ default: module.CoursesPage })),
+);
 
 const JournalSetupPage = lazy(() =>
   import("./JournalSetupPage").then((module) => ({
@@ -45,6 +48,9 @@ const roleNames: Record<Role, string> = {
   student: t.roleStudent,
 };
 const permissionNames: Record<string, string> = {
+  "course.read": "Курс материалдарын оқу",
+  "course.manage": "Өз курсына тақырыптар мен материалдар қосу",
+  "course.submit": "Тапсырма жауабын жіберу",
   "journal.setup": jm.setup,
   "journal.read": "Журналдың топ құрамын қарау",
   "journal.read.own": "Тағайындалған журналдардың топ құрамын қарау",
@@ -325,6 +331,7 @@ function WorkspaceScreen({
   const [view, setViewState] = useState<
     | "overview"
     | "subjects"
+    | "courses"
     | "journal-setup"
     | "journals"
     | "study-profile"
@@ -348,7 +355,8 @@ function WorkspaceScreen({
       (view === "planning" ||
         view === "versions" ||
         view === "journal-setup" ||
-        view === "journals") &&
+        view === "journals" ||
+        view === "courses") &&
       next !== view &&
       planningDirty &&
       !window.confirm(pm.leaveDirty)
@@ -544,58 +552,7 @@ function WorkspaceScreen({
       <div className="workspace-body">
         <header className="workspace-header portal-header">
           <Brand compact />
-          <nav className="portal-primary-nav" aria-label={portal.navigation}>
-            <a
-              href="#main"
-              aria-current={view === "overview" ? "page" : undefined}
-              onClick={(event) => {
-                event.preventDefault();
-                setView("overview");
-              }}
-            >
-              {portal.home}
-            </a>
-            {workspace.permissions.some((permission) =>
-              permission.startsWith("publication.read"),
-            ) && (
-              <>
-                <button
-                  aria-current={view === "subjects" ? "page" : undefined}
-                  onClick={() => {
-                    setSubjectFocus("");
-                    setSubjectVisit((value) => value + 1);
-                    setView("subjects");
-                  }}
-                >
-                  {subjectsLabel(workspace)}
-                </button>
-                <button
-                  aria-current={view === "publications" ? "page" : undefined}
-                  onClick={() => setView("publications")}
-                >
-                  {portal.schedule}
-                </button>
-              </>
-            )}
-            {workspace.permissions.some(
-              (p) => p === "journal.read" || p === "journal.read.own",
-            ) && (
-              <button
-                aria-current={view === "journals" ? "page" : undefined}
-                onClick={() => setView("journals")}
-              >
-                {jm.title}
-              </button>
-            )}
-            {workspace.role_codes.includes("student") && (
-              <button
-                aria-current={view === "study-profile" ? "page" : undefined}
-                onClick={() => setView("study-profile")}
-              >
-                {jm.profile}
-              </button>
-            )}
-          </nav>
+
           <div
             className={`portal-account ${canUseStaffTools ? "portal-account--staff" : ""}`}
           >
@@ -636,7 +593,8 @@ function WorkspaceScreen({
                   (view === "planning" ||
                     view === "versions" ||
                     view === "journal-setup" ||
-                    view === "journals") &&
+                    view === "journals" ||
+                    view === "courses") &&
                   planningDirty &&
                   !window.confirm(pm.leaveDirty)
                 )
@@ -649,8 +607,80 @@ function WorkspaceScreen({
               <span>{busy ? t.signingOut : t.signOut}</span>
             </button>
           </div>
+          <nav className="portal-primary-nav" aria-label={portal.navigation}>
+            <a
+              href="#main"
+              aria-current={view === "overview" ? "page" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setView("overview");
+              }}
+            >
+              <Icon name="grid" size={20} />
+              {portal.home}
+            </a>
+            {workspace.permissions.some((permission) =>
+              permission.startsWith("publication.read"),
+            ) && (
+              <>
+                <button
+                  aria-current={view === "subjects" ? "page" : undefined}
+                  onClick={() => {
+                    setSubjectFocus("");
+                    setSubjectVisit((value) => value + 1);
+                    setView("subjects");
+                  }}
+                >
+                  <Icon name="layers" size={20} />
+                  {subjectsLabel(workspace)}
+                </button>
+                <button
+                  aria-current={view === "publications" ? "page" : undefined}
+                  onClick={() => setView("publications")}
+                >
+                  <Icon name="calendar" size={20} />
+                  {portal.schedule}
+                </button>
+              </>
+            )}
+            {workspace.permissions.includes("course.read") && (
+              <button
+                aria-current={view === "courses" ? "page" : undefined}
+                onClick={() => setView("courses")}
+              >
+                <Icon name="book" size={20} />
+                Курстар
+              </button>
+            )}
+            {workspace.permissions.some(
+              (p) => p === "journal.read" || p === "journal.read.own",
+            ) && (
+              <button
+                aria-current={view === "journals" ? "page" : undefined}
+                onClick={() => setView("journals")}
+              >
+                <Icon name="book" size={20} />
+                {jm.title}
+              </button>
+            )}
+            {workspace.role_codes.includes("student") && (
+              <button
+                aria-current={view === "study-profile" ? "page" : undefined}
+                onClick={() => setView("study-profile")}
+              >
+                <Icon name="user" size={20} />
+                {jm.profile}
+              </button>
+            )}
+          </nav>
         </header>
         <div className="portal-context">
+          <span className="portal-context-role">
+            {t.roleLabel}:{" "}
+            {activeRoles
+              .map((role) => roleNames[role] ?? t.unknownRole)
+              .join(", ")}
+          </span>
           <Icon name="grid" size={15} />
           <span>{workspace.scope.name}</span>
         </div>
@@ -660,7 +690,16 @@ function WorkspaceScreen({
               {error}
             </p>
           )}
-          {view === "journal-setup" ? (
+          {view === "courses" ? (
+            <Suspense fallback={<p role="status">{jm.loading}</p>}>
+              <CoursesPage
+                scope={workspace.scope.id}
+                csrfToken={csrfToken}
+                onExpired={onExpired}
+                onDirtyChange={setPlanningDirty}
+              />
+            </Suspense>
+          ) : view === "journal-setup" ? (
             <Suspense fallback={<p role="status">{jm.loading}</p>}>
               <JournalSetupPage
                 key={workspace.scope.id}

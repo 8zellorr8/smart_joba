@@ -8,7 +8,7 @@ ROLE_PERMISSIONS: dict[str, frozenset[str]] = {
     "admin": frozenset({"journal.setup", "accounts.prepare", "catalog.manage", "calendar.manage", "import.source.read", "publication.read", "publication.export"}),
     "scheduler": frozenset({"import.write", "import.source.read", "draft.read", "draft.edit", "generator.run", "draft.submit", "publication.read", "publication.export"}),
     "approver": frozenset({"journal.read", "draft.read", "draft.approve", "draft.reject", "publication.read", "publication.export"}),
-    "teacher": frozenset({"journal.read.own", "journal.write.own", "publication.read.own", "publication.export.own"}),
+    "teacher": frozenset({"course.read", "course.manage", "journal.read.own", "journal.write.own", "publication.read.own", "publication.export.own"}),
     "student": frozenset({"publication.read.group", "publication.export.group"}),
 }
 
@@ -27,6 +27,8 @@ def permissions_for(grants: list[dict], scope_id: str) -> list[str]:
         permissions.update(ROLE_PERMISSIONS.get(role, ()))
         if role == "student" and grant.get("student_id"):
             permissions.add("journal.read.self")
+            permissions.add("course.read")
+            permissions.add("course.submit")
         if role == "approver" and grant.get("can_publish", False):
             permissions.add("draft.publish")
     return sorted(permissions)

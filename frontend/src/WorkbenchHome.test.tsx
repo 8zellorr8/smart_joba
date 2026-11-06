@@ -7,6 +7,7 @@ import type { PublishedView, VersionSummary } from "./publication-api";
 import type { Workspace } from "./api";
 import { ApiError } from "./api";
 import { wb } from "./locales/workbench.kk";
+import { portal } from "./locales/portal.kk";
 
 // The subject projection has separate pagination, privacy and navigation tests.
 vi.mock("./SubjectOverview", () => ({ SubjectOverview: () => null }));
@@ -79,6 +80,51 @@ const setup = (props = {}) =>
       {...props}
     />,
   );
+
+it("opens the student's own results and courses through the home shortcuts", async () => {
+  const navigate = vi.fn();
+  setup({
+    workspace: {
+      ...workspace,
+      permissions: [...workspace.permissions, "course.read"],
+    },
+    onNavigate: navigate,
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: new RegExp(portal.resultsHint) }),
+  );
+  expect(navigate).toHaveBeenLastCalledWith("study-profile");
+  fireEvent.click(
+    screen.getByRole("button", { name: new RegExp(portal.coursesHint) }),
+  );
+  expect(navigate).toHaveBeenLastCalledWith("courses");
+  expect(
+    screen.queryByRole("button", { name: new RegExp(portal.journalsHint) }),
+  ).not.toBeInTheDocument();
+  await screen.findByText("Қазақ тілі");
+});
+
+it("keeps courses and student results out of the administrator's shortcuts", async () => {
+  const navigate = vi.fn();
+  setup({
+    workspace: {
+      ...workspace,
+      role_codes: ["admin"],
+      permissions: ["journal.setup"],
+    },
+    onNavigate: navigate,
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: new RegExp(portal.studentsHint) }),
+  );
+  expect(navigate).toHaveBeenCalledWith("journal-setup");
+  expect(
+    screen.queryByRole("button", { name: new RegExp(portal.coursesHint) }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: new RegExp(portal.resultsHint) }),
+  ).not.toBeInTheDocument();
+});
 
 it("uses the publication timezone for today's agenda and only requests the reader API", async () => {
   const open = vi.fn();

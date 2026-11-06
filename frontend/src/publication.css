@@ -39,7 +39,7 @@
   min-width: 0;
 }
 .publication-meta dt {
-  color: var(--text-muted, #52635b);
+  color: var(--ui-muted);
   font-size: 13px;
 }
 .publication-meta dd {

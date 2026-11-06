@@ -7,19 +7,29 @@
 }
 
 :root {
-  --ui-text: #213d38;
-  --ui-muted: #52645e;
-  --ui-accent: #1b5c4b;
+  --ui-canvas: #f5f7f5;
+  --ui-accent-hover: #154b40;
+  --ui-accent-soft: #e9f2ec;
+  --ui-on-accent: #ffffff;
+  --ui-warm: #fbf5e8;
+  --ui-warm-text: #795820;
+  --ui-error: #a92c37;
+  --ui-error-soft: #fff2f1;
+  --ui-info: #28547c;
+  --ui-info-soft: #edf3f9;
+  --ui-text: #213c34;
+  --ui-muted: #586b62;
+  --ui-accent: #216653;
   --ui-surface: #ffffff;
-  --ui-border: #d7e1d8;
-  --ui-control-border: #80968a;
-  --ui-surface-soft: #f3f6f0;
-  --ui-focus: #98601c;
+  --ui-border: #dce5df;
+  --ui-control-border: #7e9387;
+  --ui-surface-soft: #f1f5f1;
+  --ui-focus: #9a5919;
   --ui-radius: 10px;
-  --ui-card-radius: 16px;
+  --ui-card-radius: 18px;
   --ui-card-padding: clamp(18px, 2.2vw, 26px);
   --ui-control-height: 48px;
-  --ui-shadow: 0 2px 7px #213d3805;
+  --ui-shadow: 0 4px 20px #213c3406;
   color: var(--ui-text);
 }
 
@@ -49,6 +59,8 @@ textarea {
   grid-template-columns: minmax(0, 1fr);
   gap: 8px;
   margin-bottom: 28px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--ui-border);
 }
 
 .page-heading--document .eyebrow {
@@ -57,7 +69,7 @@ textarea {
   line-height: 1.5;
   letter-spacing: 0.07em;
   font-weight: 650;
-  color: var(--ui-muted);
+  color: var(--ui-accent);
 }
 
 .workspace-main .page-heading--document h1 {
@@ -245,7 +257,7 @@ textarea {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #edf3ec;
+  background: var(--ui-surface-soft);
   color: var(--ui-text);
   font-size: 13px;
   line-height: 1.5;
@@ -254,12 +266,12 @@ textarea {
 }
 
 .workspace-main tbody tr:nth-child(even):not(.editor-row-cancelled) {
-  background: #f8faf6;
+  background: var(--ui-canvas);
 }
 
 .workspace-main tbody tr:hover,
 .workspace-main tbody tr:focus-within {
-  background: #edf4ed;
+  background: var(--ui-accent-soft);
 }
 
 .workspace-main caption {

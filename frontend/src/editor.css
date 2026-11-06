@@ -191,7 +191,7 @@
 .editor-page th,
 .editor-page td {
   padding: 12px 14px;
-  border-top: 1px solid #e3e9df;
+  border-top: 1px solid var(--ui-border);
   vertical-align: top;
 }
 .editor-page th:first-child,

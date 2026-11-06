@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from "./ui/dateTime";
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "./api";
 import { demoName } from "./demo-labels";
@@ -134,11 +135,7 @@ export function PublicationsPage({
         </div>
         <div>
           <dt>{vm.publishedAt}</dt>
-          <dd>
-            {new Date(value.published_at).toLocaleString("kk-KZ", {
-              timeZone: value.timezone,
-            })}
-          </dd>
+          <dd>{formatDateTime(value.published_at, value.timezone)}</dd>
         </div>
         <div>
           <dt>{vm.revision}</dt>
@@ -285,9 +282,7 @@ export function PublicationsPage({
           <p className="publication-context">
             {value.academic_year} · {vm.semester} {value.semester} ·{" "}
             {value.timezone} · {vm.publishedAt}:{" "}
-            {new Date(value.published_at).toLocaleString("kk-KZ", {
-              timeZone: value.timezone,
-            })}
+            {formatDateTime(value.published_at, value.timezone)}
           </p>
           {mode === "list" && metadata}
           {!value.external_verified && (
@@ -415,7 +410,7 @@ export function PublicationsPage({
                   <tbody>
                     {value.events.map((e) => (
                       <tr key={e.id}>
-                        <td>{e.date}</td>
+                        <td>{formatDate(e.date)}</td>
                         <td>
                           {e.start}–{e.end}
                         </td>
