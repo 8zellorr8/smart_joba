@@ -1,7 +1,5 @@
 .workbench-layout {
-  --ui-accent: #087f75;
-  --ui-surface-soft: #f4f8f6;
-  background: #f5f8f6;
+  background: var(--ui-canvas);
 }
 .workbench-layout .sidebar {
   width: 224px;
@@ -123,12 +121,12 @@
   background: #ffffff14;
 }
 .workbench-layout .button-primary {
-  background: #087f75;
-  border-color: #087f75;
+  background: var(--ui-accent);
+  border-color: var(--ui-accent);
 }
 .workbench-layout .button-primary:not(:disabled):hover {
-  background: #06685f;
-  border-color: #06685f;
+  background: var(--ui-accent-hover);
+  border-color: var(--ui-accent-hover);
 }
 .workbench-layout .button-primary:disabled {
   background: #edf1eb;
@@ -245,7 +243,7 @@
   border-inline-start: 4px solid var(--subject-edge);
   border-radius: 5px;
   background: var(--subject-bg);
-  color: #213d38;
+  color: var(--ui-text);
   min-width: 0;
 }
 .agenda-lesson strong {
@@ -342,7 +340,7 @@
   height: 38px;
   background: #eaf6f0;
   border-radius: 9px;
-  color: #087f75;
+  color: var(--ui-accent);
   flex: none;
 }
 .account-disclosure {
@@ -373,10 +371,10 @@
   border-radius: 0 9px 9px 0;
   border-left: 0;
 }
-.schedule-display-toggle [aria-pressed="true"] {
-  color: white;
-  background: #087f75;
-  border-color: #087f75;
+.portal-layout .schedule-display-toggle [aria-pressed="true"] {
+  color: var(--ui-on-accent);
+  background: var(--ui-accent);
+  border-color: var(--ui-accent);
 }
 .workbench-layout .week-mode .page-heading--document {
   margin-bottom: 18px;
@@ -653,7 +651,7 @@
   background: #ecf8f2;
 }
 .week-grid-heading .is-today {
-  color: #075f58;
+  color: var(--ui-accent-hover);
 }
 .subject-tone-0 {
   --subject-bg: #e3f4eb;
@@ -679,7 +677,7 @@
   border-inline-start: 3px solid var(--subject-edge);
   border-radius: 5px;
   background: var(--subject-bg);
-  color: #213d38;
+  color: var(--ui-text);
   text-align: left;
   cursor: pointer;
   font: inherit;
@@ -698,7 +696,7 @@
   overflow-wrap: anywhere;
 }
 .week-lesson.is-selected {
-  outline: 2px solid #087f75;
+  outline: 2px solid var(--ui-accent);
   outline-offset: 0;
   z-index: 2;
 }

@@ -1,3 +1,4 @@
+import { formatDate } from "./ui/dateTime";
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "./api";
 import { journalApi } from "./journal-api";
@@ -236,7 +237,7 @@ function StaffJournalReadPage({
           {roster && (
             <>
               <h3>
-                {jm.roster} · {roster.date}
+                {jm.roster} · {formatDate(roster.date)}
               </h3>
               {roster.students.length ? (
                 <ol className="journal-roster">

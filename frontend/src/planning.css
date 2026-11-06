@@ -25,17 +25,17 @@
   width: 100%;
   min-height: 44px;
   padding: 10px;
-  border: 1px solid #bacac3;
+  border: 1px solid var(--ui-control-border);
   border-radius: 7px;
   background: #fff;
-  color: #183d43;
+  color: var(--ui-text);
   min-width: 0;
 }
 .planning-page input[type="checkbox"] {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  accent-color: #245b50;
+  accent-color: var(--ui-accent);
 }
 .planning-page .planning-checkbox,
 .planning-checks label {
@@ -56,14 +56,14 @@
   margin: 16px 0;
 }
 .planning-page .planning-interval {
-  border: 1px solid #ced9d3;
+  border: 1px solid var(--ui-border);
   border-radius: 8px;
   padding: 16px;
   margin: 18px 0;
 }
 .planning-rules details {
   margin: 20px 0;
-  border-bottom: 1px solid #dce4df;
+  border-bottom: 1px solid var(--ui-border);
   padding-bottom: 18px;
 }
 .planning-page summary {
@@ -72,15 +72,15 @@
   padding: 8px 0;
 }
 .planning-warning {
-  background: #fff5da;
-  color: #674a12;
+  background: var(--ui-warm);
+  color: var(--ui-warm-text);
   border-left: 4px solid #be8a28;
   border-radius: 5px;
   padding: 14px 18px;
 }
 .planning-success {
-  background: #e4f2e9;
-  color: #1e5846;
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent);
   border-left: 4px solid #3c8568;
   padding: 14px 18px;
 }
@@ -101,10 +101,10 @@
 .planning-table td {
   text-align: left;
   padding: 12px;
-  border-bottom: 1px solid #dce4df;
+  border-bottom: 1px solid var(--ui-border);
 }
 .planning-table th {
-  background: #eef3ee;
+  background: var(--ui-surface-soft);
 }
 .planning-page p,
 .planning-diagnostics li,
@@ -118,7 +118,7 @@
   margin-top: 12px;
 }
 .planning-page :focus-visible {
-  outline: 3px solid #bd842c;
+  outline: 3px solid var(--ui-focus);
   outline-offset: 3px;
 }
 @media (max-width: 620px) {

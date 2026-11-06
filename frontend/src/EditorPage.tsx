@@ -1,3 +1,4 @@
+import { formatDate } from "./ui/dateTime";
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "./api";
 import { editorApi } from "./editor-api";
@@ -696,7 +697,7 @@ export function EditorPage({
                               e.cancelled ? "editor-row-cancelled" : ""
                             }
                           >
-                            <td>{e.date}</td>
+                            <td>{formatDate(e.date)}</td>
                             <td>
                               {e.start}–{e.end}
                             </td>
@@ -727,7 +728,7 @@ export function EditorPage({
                                     setNotice("");
                                   }}
                                 >
-                                  {em.oneEdit} · {e.date}
+                                  {em.oneEdit} · {formatDate(e.date)}
                                 </button>
                                 <button
                                   className="editor-link"

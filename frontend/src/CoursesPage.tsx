@@ -140,6 +140,7 @@ function CourseWorkspace({
   onDirtyChange,
 }: Props) {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [search, setSearch] = useState("");
   const [detail, setDetail] = useState<CourseContents | null>(null);
   const [reading, setReading] = useState<{ id: string; text: string } | null>(
     null,
@@ -274,6 +275,14 @@ function CourseWorkspace({
     setReading(null);
     setReload((r) => r + 1);
   }
+  const query = search.trim().toLocaleLowerCase("kk");
+  const visibleCourses = courses.filter((c) =>
+    [
+      demoName(c.subject, c.data_kind),
+      demoName(c.group, c.data_kind),
+      c.academic_year,
+    ].some((value) => value.toLocaleLowerCase("kk").includes(query)),
+  );
   return (
     <section className="course-page" aria-labelledby="courses-title">
       {detail && (
@@ -333,38 +342,75 @@ function CourseWorkspace({
           }}
         />
       ) : !detail ? (
-        <div className="course-list">
-          {!courses.length && !busy && !error && (
-            <p className="panel">Сізге қолжетімді курстар әзірге жоқ.</p>
-          )}
-          {courses.map((c) => (
-            <article key={c.id} className="panel course-card">
-              <span className="course-mark">
-                <Icon name="book" size={25} />
+        <>
+          {!!courses.length && (
+            <div className="course-filters">
+              <label>
+                Курстарды іздеу
+                <span className="subject-search">
+                  <Icon name="search" size={20} />
+                  <input
+                    type="search"
+                    value={search}
+                    placeholder="Пән немесе топ атауы"
+                    onChange={(event) => setSearch(event.target.value)}
+                  />
+                </span>
+              </label>
+              <span className="course-count" role="status">
+                {visibleCourses.length} / {courses.length} курс
               </span>
-              <div>
-                <h2>{demoName(c.subject, c.data_kind)}</h2>
-                <p>
-                  {demoName(c.group, c.data_kind)} · {c.academic_year} ·{" "}
-                  {c.semester}-семестр
-                </p>
-              </div>
-              <button
-                className="button button-primary"
-                disabled={busy}
-                onClick={() =>
-                  run(async () => {
-                    if (!c.opened) await courseApi.open(scope, c.id, csrfToken);
-                    await loadCourse(c.id);
-                  })
-                }
-              >
-                {c.opened ? "Курсқа кіру" : "Курс құру"}
-                <Icon name="right" size={16} />
-              </button>
-            </article>
-          ))}
-        </div>
+              {!!search && (
+                <button
+                  className="button button-quiet"
+                  onClick={() => setSearch("")}
+                >
+                  Іздеуді тазалау
+                </button>
+              )}
+            </div>
+          )}
+          <div className="course-list">
+            {!courses.length && !busy && !error && (
+              <p className="panel">Сізге қолжетімді курстар әзірге жоқ.</p>
+            )}
+            {!!courses.length && !visibleCourses.length && (
+              <p className="panel" role="status">
+                Іздеу бойынша курс табылмады.
+              </p>
+            )}
+            {visibleCourses.map((c) => (
+              <article key={c.id} className="panel course-card">
+                <div className="course-card-cover">
+                  <span className="course-mark">
+                    <Icon name="book" size={25} />
+                  </span>
+                  <span className="course-semester">{c.semester}-семестр</span>
+                </div>
+                <div className="course-card-body">
+                  <h2>{demoName(c.subject, c.data_kind)}</h2>
+                  <p>
+                    {demoName(c.group, c.data_kind)} · {c.academic_year}
+                  </p>
+                  <button
+                    className="button button-primary"
+                    disabled={busy}
+                    onClick={() =>
+                      run(async () => {
+                        if (!c.opened)
+                          await courseApi.open(scope, c.id, csrfToken);
+                        await loadCourse(c.id);
+                      })
+                    }
+                  >
+                    {c.opened ? "Курсқа кіру" : "Курс құру"}
+                    <Icon name="right" size={16} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
       ) : (
         <>
           <div className="course-toolbar">
@@ -402,10 +448,15 @@ function CourseWorkspace({
           {!detail.topics.length && (
             <p className="panel">Курста әзірге тақырыптар жоқ.</p>
           )}
-          {detail.topics.map((topic) => (
+          {detail.topics.map((topic, index) => (
             <article className="panel course-topic" key={topic.id}>
               <div className="course-toolbar">
-                <h3>{topic.title}</h3>
+                <h3>
+                  <span className="topic-number" aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  {topic.title}
+                </h3>
                 {detail.course.can_manage && !form && (
                   <div className="course-actions">
                     <button
@@ -431,6 +482,7 @@ function CourseWorkspace({
               {topic.tasks?.map((task) => (
                 <button
                   className="button button-quiet course-task-link"
+                  aria-label={`${task.title} · ${tm.open}`}
                   key={task.id}
                   disabled={busy}
                   onClick={() => {
@@ -443,7 +495,12 @@ function CourseWorkspace({
                     }
                   }}
                 >
-                  {task.title} · {tm.open}
+                  <Icon name="edit" size={21} />
+                  <span>
+                    {task.title}
+                    <small>{tm.open}</small>
+                  </span>
+                  <Icon name="right" size={18} />
                 </button>
               ))}
               {form === "task:" + topic.id && (

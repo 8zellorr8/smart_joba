@@ -1,3 +1,4 @@
+import { formatDateTime } from "./ui/dateTime";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError } from "./api";
 import { planningApi } from "./planning-api";
@@ -503,7 +504,7 @@ export function PlanningPage({
                     >
                       {jobs.map((j) => (
                         <option key={j.id} value={j.id} title={j.id}>
-                          {new Date(j.created_at).toLocaleString("kk-KZ")} ·{" "}
+                          {formatDateTime(j.created_at)} ·{" "}
                           {jobStatuses[j.status] ?? pm.error}
                         </option>
                       ))}

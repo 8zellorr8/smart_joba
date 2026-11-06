@@ -26,7 +26,11 @@ export type WorkbenchDestination =
   | "planning"
   | "versions"
   | "publications"
-  | "subjects";
+  | "subjects"
+  | "courses"
+  | "journals"
+  | "study-profile"
+  | "journal-setup";
 export function WorkbenchHome({
   workspace,
   onNavigate,
@@ -220,17 +224,84 @@ export function WorkbenchHome({
       (a.view === "planning" &&
         workspace.permissions.includes("catalog.manage")),
   );
+  const learningActions = [
+    {
+      view: "courses" as const,
+      label: portal.courses,
+      description: portal.coursesHint,
+      icon: "book" as const,
+      allowed: workspace.permissions.includes("course.read"),
+    },
+    {
+      view: "journals" as const,
+      label: portal.journals,
+      description: portal.journalsHint,
+      icon: "edit" as const,
+      allowed: workspace.permissions.some(
+        (p) => p === "journal.read" || p === "journal.read.own",
+      ),
+    },
+    {
+      view: "study-profile" as const,
+      label: portal.results,
+      description: portal.resultsHint,
+      icon: "check" as const,
+      allowed: workspace.role_codes.includes("student"),
+    },
+    {
+      view: "journal-setup" as const,
+      label: portal.students,
+      description: portal.studentsHint,
+      icon: "user" as const,
+      allowed: workspace.permissions.includes("journal.setup"),
+    },
+    {
+      view: "publications" as const,
+      label: portal.schedule,
+      description: portal.scheduleHint,
+      icon: "calendar" as const,
+      allowed: canRead,
+    },
+  ].filter((action) => action.allowed);
   return (
     <section className="workbench-home" aria-labelledby="home-title">
       <div className="home-heading">
-        <p className="portal-kicker">{portal.title}</p>
-        <h1 id="home-title">{portal.home}</h1>
-        <span className="portal-welcome">{portal.welcome}</span>
-        <p>{dayLabel(date, true)}</p>
-        <span className="home-provenance">
-          {workspace.scope.is_demo ? wb.demo : workspace.scope.name}
-        </span>
+        <div className="home-heading-copy">
+          <p className="portal-kicker">{portal.title}</p>
+          <h1 id="home-title">{portal.home}</h1>
+          <span className="portal-welcome">{portal.welcome}</span>
+          {workspace.scope.is_demo && (
+            <span className="home-provenance">{wb.demo}</span>
+          )}
+        </div>
+        <div className="home-date">
+          <Icon name="calendar" size={24} />
+          <span>
+            {portal.today}
+            <strong>{dayLabel(today, true)}</strong>
+          </span>
+        </div>
       </div>
+      {!!learningActions.length && (
+        <nav className="home-shortcuts" aria-label={portal.quickAccess}>
+          {learningActions.map((action) => (
+            <button
+              key={action.view}
+              className="home-shortcut"
+              onClick={() => onNavigate(action.view)}
+            >
+              <span className="shortcut-icon">
+                <Icon name={action.icon} size={24} />
+              </span>
+              <span>
+                <strong>{action.label}</strong>
+                <small>{action.description}</small>
+              </span>
+              <Icon name="right" size={18} />
+            </button>
+          ))}
+        </nav>
+      )}
       <div
         className={`home-columns ${!canDraft && !actions.length ? "home-columns--reader" : ""}`}
       >

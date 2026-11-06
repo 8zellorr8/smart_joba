@@ -10,6 +10,8 @@ import type {
   TaskReview,
 } from "./task-api";
 import { tm } from "./locales/tasks.kk";
+import { StatusBadge } from "./ui/StatusBadge";
+import { formatDate as day, formatDateTime as time } from "./ui/dateTime";
 import "./tasks.css";
 
 type Save = (operation: () => Promise<unknown>) => Promise<void>;
@@ -19,16 +21,6 @@ type FormProps = {
   dirty: () => void;
   save: Save;
 };
-const day = (value: string) => value.split("-").reverse().join(".");
-const time = (value: string, timezone: string) =>
-  new Intl.DateTimeFormat("kk-KZ", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: timezone,
-  }).format(new Date(value));
 const resultLabel = (review: TaskReview | null) =>
   review
     ? review.outcome === "graded"
@@ -497,6 +489,7 @@ export function CourseTaskPage({
                   <button
                     className="panel task-response"
                     key={row.id}
+                    aria-pressed={latest?.id === row.id}
                     disabled={busy}
                     onClick={() => {
                       if (dirty.current && !window.confirm(tm.leave)) return;
@@ -574,7 +567,19 @@ export function CourseTaskPage({
                     {time(item.submitted_at, data.task.timezone)}{" "}
                     {item.late && <span className="task-late">{tm.late}</span>}
                   </p>
-                  <p className="task-state">{resultLabel(item.review)}</p>
+                  <p className="task-state">
+                    <StatusBadge
+                      tone={
+                        item.review?.outcome === "graded"
+                          ? "success"
+                          : item.review?.outcome === "returned"
+                            ? "warning"
+                            : "info"
+                      }
+                    >
+                      {resultLabel(item.review)}
+                    </StatusBadge>
+                  </p>
                   {item.kind === "text" ? (
                     <p className="course-text">{item.text}</p>
                   ) : (

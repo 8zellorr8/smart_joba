@@ -204,7 +204,7 @@ button {
   max-width: 280px;
 }
 .step-number {
-  color: #8eafa0;
+  color: #b7d2be;
   font-size: 11px;
   letter-spacing: 1px;
   margin-left: auto;
@@ -313,7 +313,7 @@ button {
 }
 .form-description {
   font-size: 14px;
-  color: #67766f;
+  color: var(--ui-muted);
   line-height: 1.8;
   margin-top: 11px;
   margin-bottom: 29px;
@@ -981,7 +981,7 @@ button {
 .next-step p {
   font-size: 11px;
   line-height: 1.85;
-  color: #65775b;
+  color: var(--ui-muted);
   margin-top: 7px;
 }
 .upcoming-label {
@@ -990,7 +990,7 @@ button {
   gap: 6px;
   font-size: 10px;
   line-height: 1.7;
-  color: #637959;
+  color: var(--ui-muted);
   margin-top: 14px;
 }
 .workspace-footer {

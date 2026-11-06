@@ -144,8 +144,23 @@
 }
 .journal-read-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
   gap: 24px;
+}
+.journal-read-grid .panel {
+  border-top: 4px solid var(--ui-accent);
+}
+.journal-read-grid .panel > p {
+  color: var(--ui-muted);
+  font-size: 14px;
+  margin-block: 10px;
+}
+.journal-read-grid .panel > .button {
+  width: 100%;
+  margin-top: 14px;
+}
+.journal-read-grid .panel > .button-quiet {
+  margin-top: 8px;
 }
 .journal-book {
   display: inline-grid;
@@ -153,7 +168,7 @@
   width: 52px;
   height: 52px;
   color: var(--ui-accent);
-  background: var(--ui-surface-soft);
+  background: var(--ui-accent-soft);
   border-radius: 12px;
   margin-bottom: 16px;
 }

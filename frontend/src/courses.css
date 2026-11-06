@@ -1,5 +1,5 @@
 .course-page {
-  max-width: 68rem;
+  max-width: 82rem;
   margin-inline: auto;
   overflow-wrap: anywhere;
 }
@@ -19,12 +19,12 @@
 }
 .course-list {
   display: grid;
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 310px), 1fr));
+  gap: 24px;
 }
 .course-page .panel {
   padding: clamp(1rem, 2.5vw, 1.5rem);
 }
-.course-card,
 .course-toolbar,
 .course-actions {
   display: flex;
@@ -41,23 +41,106 @@
   justify-content: space-between;
   margin-block: 1rem;
 }
+.course-page .course-card {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.course-card:hover {
+  border-color: var(--ui-control-border);
+  box-shadow: 0 8px 24px #213c340c;
+}
+.course-card-cover {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 128px;
+  padding: 24px;
+  background: var(--ui-accent-soft);
+  border-bottom: 1px solid var(--ui-border);
+}
+.course-card:nth-child(3n + 2) .course-card-cover {
+  background: var(--ui-warm);
+}
+.course-card:nth-child(3n + 3) .course-card-cover {
+  background: var(--ui-info-soft);
+}
+.course-semester {
+  align-self: start;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--ui-surface);
+  font-size: 12px;
+  font-weight: 550;
+  color: var(--ui-muted);
+}
+.course-card-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.course-card-body > p {
+  font-size: 14px;
+  margin: 10px 0 24px;
+}
 .course-card .button {
-  margin-inline-start: auto;
+  width: 100%;
+  margin-top: auto;
+  justify-content: space-between;
+}
+.course-filters {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.course-filters label {
+  display: grid;
+  gap: 8px;
+  width: min(100%, 440px);
+  font-size: 14px;
+  font-weight: 550;
+}
+.course-count {
+  color: var(--ui-muted);
+  font-size: 14px;
+  padding-block: 12px;
 }
 .course-mark {
   display: grid;
   place-items: center;
-  width: 3rem;
-  height: 3rem;
-  background: #e1efeb;
-  color: #14574a;
-  border-radius: 0.8rem;
+  width: 56px;
+  height: 56px;
+  background: var(--ui-surface);
+  color: var(--ui-accent);
+  border-radius: 16px;
 }
 .course-back {
   margin-bottom: 1rem;
 }
 .course-topic {
-  margin-bottom: 1rem;
+  margin-bottom: 24px;
+}
+.course-topic h3 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+}
+.topic-number {
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--ui-surface-soft);
+  color: var(--ui-accent);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
 .course-topic .course-toolbar {
   margin-top: 0;
@@ -67,7 +150,8 @@
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  padding: 0.8rem 0.2rem;
+  min-height: 64px;
+  padding: 16px 12px;
   background: transparent;
   color: var(--ui-accent, #155949);
   border: 0;
@@ -78,6 +162,14 @@
 }
 .course-resource:hover span {
   text-decoration: underline;
+}
+.course-resource:hover {
+  background: var(--ui-surface-soft);
+}
+.course-resource > span {
+  min-width: 0;
+  flex: 1;
+  font-weight: 550;
 }
 .course-resource small {
   margin-inline-start: auto;
@@ -95,15 +187,16 @@
   line-height: 1.65;
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
-  background: #f3f7f4;
-  border-radius: 0.4rem;
+  background: var(--ui-surface-soft);
+  border-radius: var(--ui-radius);
+  max-width: 90ch;
 }
 .course-form {
-  background: #f4f7f5;
+  background: var(--ui-surface-soft);
   border: 1px solid var(--ui-border, #dce4df);
-  padding: 1rem;
+  padding: clamp(16px, 2.5vw, 28px);
   margin-block: 0.75rem;
-  border-radius: 0.6rem;
+  border-radius: var(--ui-card-radius);
 }
 .course-form fieldset {
   border: 0;
@@ -135,10 +228,15 @@
 }
 @media (max-width: 38rem) {
   .course-card .button {
-    margin: 0;
+    margin-top: auto;
     width: 100%;
   }
   .course-actions {
     gap: 0.5rem;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-card {
+    transition: none;
   }
 }

@@ -246,7 +246,7 @@ describe("manual schedule editor", () => {
       screen.getByRole("button", { name: em.createSeries }),
     ).toBeDisabled();
     const edit = screen.getByRole("button", {
-      name: `${em.oneEdit} · 2026-09-01`,
+      name: `${em.oneEdit} · 01.09.2026`,
     });
     expect(edit).toBeDisabled();
     await userEvent.click(edit);
@@ -263,7 +263,7 @@ describe("manual schedule editor", () => {
       screen.queryByRole("button", { name: em.createSeries }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: `${em.oneEdit} · 2026-09-01` }),
+      screen.queryByRole("button", { name: `${em.oneEdit} · 01.09.2026` }),
     ).not.toBeInTheDocument();
     expect(screen.getByText(em.readonly)).toBeVisible();
   });
@@ -271,7 +271,7 @@ describe("manual schedule editor", () => {
     const user = userEvent.setup();
     setup();
     await user.click(
-      await screen.findByRole("button", { name: `${em.oneEdit} · 2026-09-01` }),
+      await screen.findByRole("button", { name: `${em.oneEdit} · 01.09.2026` }),
     );
     await user.clear(screen.getByLabelText(em.date));
     await user.type(screen.getByLabelText(em.date), "2026-09-08");
@@ -290,7 +290,7 @@ describe("manual schedule editor", () => {
     const user = userEvent.setup();
     setup();
     await user.click(
-      await screen.findByRole("button", { name: `${em.oneEdit} · 2026-09-01` }),
+      await screen.findByRole("button", { name: `${em.oneEdit} · 01.09.2026` }),
     );
     await user.selectOptions(screen.getByLabelText(em.time), "10:30|12:00");
     vi.mocked(editorApi.one).mockResolvedValue({ ...draft(), revision: 3 });
@@ -308,7 +308,7 @@ describe("manual schedule editor", () => {
     const user = userEvent.setup();
     setup();
     await user.click(
-      await screen.findByRole("button", { name: `${em.oneEdit} · 2026-09-01` }),
+      await screen.findByRole("button", { name: `${em.oneEdit} · 01.09.2026` }),
     );
     await user.click(screen.getByLabelText(em.cancelled));
     vi.mocked(editorApi.one).mockRejectedValue(
@@ -323,7 +323,7 @@ describe("manual schedule editor", () => {
     const user = userEvent.setup();
     setup();
     await user.click(
-      await screen.findByRole("button", { name: `${em.oneEdit} · 2026-09-01` }),
+      await screen.findByRole("button", { name: `${em.oneEdit} · 01.09.2026` }),
     );
     await user.click(screen.getByLabelText(em.pinned));
     vi.mocked(editorApi.get).mockResolvedValue({ ...draft(), revision: 3 });
@@ -336,7 +336,7 @@ describe("manual schedule editor", () => {
     const user = userEvent.setup();
     setup();
     await user.click(
-      await screen.findByRole("button", { name: `${em.oneEdit} · 2026-09-01` }),
+      await screen.findByRole("button", { name: `${em.oneEdit} · 01.09.2026` }),
     );
     vi.mocked(editorApi.one)
       .mockRejectedValueOnce(new ApiError(403, "CSRF_INVALID"))

@@ -73,6 +73,30 @@ async function topicForm() {
 const save = () =>
   fireEvent.click(screen.getByRole("button", { name: "Сақтау" }));
 
+it("filters only authorized courses by subject or group and can clear no matches", async () => {
+  vi.mocked(courseApi.list).mockResolvedValue([
+    structuredClone(course),
+    { ...course, id: "second", subject: "Математика", group: "102-Б" },
+  ]);
+  mount();
+  await screen.findByRole("heading", { name: /Математика/ });
+  const search = screen.getByRole("searchbox", { name: "Курстарды іздеу" });
+  fireEvent.change(search, { target: { value: "102-Б" } });
+  expect(screen.getAllByRole("button", { name: "Курсқа кіру" })).toHaveLength(
+    1,
+  );
+  expect(
+    screen.queryByRole("heading", { name: /English/ }),
+  ).not.toBeInTheDocument();
+  fireEvent.change(search, { target: { value: "жоқ" } });
+  expect(screen.getByText("Іздеу бойынша курс табылмады.")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Іздеуді тазалау" }));
+  expect(screen.getAllByRole("button", { name: "Курсқа кіру" })).toHaveLength(
+    2,
+  );
+  expect(courseApi.list).toHaveBeenCalledTimes(1);
+});
+
 it("shows only read actions to a student and renders material as plain text", async () => {
   vi.mocked(courseApi.contents).mockResolvedValue({
     ...detail,

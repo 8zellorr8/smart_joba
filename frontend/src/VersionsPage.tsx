@@ -1,3 +1,4 @@
+import { formatDateTime } from "./ui/dateTime";
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "./api";
 import { demoName } from "./demo-labels";
@@ -624,7 +625,7 @@ export function VersionsPage(props: Props) {
                 {version.history.map((h) => (
                   <li key={h.workflow_revision}>
                     <strong>{versionActions[h.action] ?? vm.status}</strong> ·{" "}
-                    {h.actor} · {new Date(h.created_at).toLocaleString("kk-KZ")}
+                    {h.actor} · {formatDateTime(h.created_at)}
                     <p>
                       {vm.revision}: {h.revision} · {vm.workflow}:{" "}
                       {h.workflow_revision}

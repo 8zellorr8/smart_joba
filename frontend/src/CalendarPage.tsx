@@ -1,3 +1,4 @@
+import { formatDate } from "./ui/dateTime";
 import { useEffect, useState } from "react";
 import { demoName } from "./demo-labels";
 import type { FormEvent, ReactNode } from "react";
@@ -949,7 +950,7 @@ export function CalendarPage({
                       <tbody>
                         {days.map((day) => (
                           <tr key={day.date}>
-                            <td>{day.date}</td>
+                            <td>{formatDate(day.date)}</td>
                             <td>{weekdays[day.weekday]}</td>
                             <td>{dayKinds[day.kind]}</td>
                             <td>
@@ -1181,7 +1182,7 @@ export function CalendarPage({
                         <tbody>
                           {preview.occurrences.map((o) => (
                             <tr key={`${o.pattern_id}-${o.date}`}>
-                              <td>{o.date}</td>
+                              <td>{formatDate(o.date)}</td>
                               <td>
                                 {o.start}–{o.end}
                               </td>
