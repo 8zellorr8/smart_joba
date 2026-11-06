@@ -50,6 +50,7 @@ const roleNames: Record<Role, string> = {
 const permissionNames: Record<string, string> = {
   "course.read": "Курс материалдарын оқу",
   "course.manage": "Өз курсына тақырыптар мен материалдар қосу",
+  "course.submit": "Тапсырма жауабын жіберу",
   "journal.setup": jm.setup,
   "journal.read": "Журналдың топ құрамын қарау",
   "journal.read.own": "Тағайындалған журналдардың топ құрамын қарау",
@@ -354,7 +355,8 @@ function WorkspaceScreen({
       (view === "planning" ||
         view === "versions" ||
         view === "journal-setup" ||
-        view === "journals") &&
+        view === "journals" ||
+        view === "courses") &&
       next !== view &&
       planningDirty &&
       !window.confirm(pm.leaveDirty)
@@ -680,6 +682,7 @@ function WorkspaceScreen({
                 scope={workspace.scope.id}
                 csrfToken={csrfToken}
                 onExpired={onExpired}
+                onDirtyChange={setPlanningDirty}
               />
             </Suspense>
           ) : view === "journal-setup" ? (

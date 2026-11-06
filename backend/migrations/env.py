@@ -6,6 +6,7 @@ from backend.app.infrastructure.models import Base
 from backend.app.infrastructure import journal_models  # register the journal schema
 from backend.app.infrastructure import lesson_models  # register recorded lessons
 from backend.app.infrastructure import course_models  # register courses and materials
+from backend.app.infrastructure import task_models  # register submissions and reviews
 
 config = context.config
 settings = Settings()

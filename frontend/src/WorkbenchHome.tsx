@@ -234,6 +234,16 @@ export function WorkbenchHome({
       <div
         className={`home-columns ${!canDraft && !actions.length ? "home-columns--reader" : ""}`}
       >
+        {workspace.role_codes.includes("admin") &&
+          !workspace.permissions.includes("course.read") && (
+            <section
+              className="panel home-course-note"
+              aria-labelledby="course-access-title"
+            >
+              <h2 id="course-access-title">{portal.courseAccess}</h2>
+              <p>{portal.adminCourses}</p>
+            </section>
+          )}
         <div className="portal-learning">
           {canRead && (
             <SubjectOverview

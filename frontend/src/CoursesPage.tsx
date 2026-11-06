@@ -6,21 +6,26 @@ import type { Course, CourseContents } from "./course-api";
 import { demoName } from "./demo-labels";
 import { Icon } from "./icons";
 import { PageHeading } from "./ui/PageHeading";
+import { CourseTaskPage, TaskCreateForm } from "./CourseTaskPage";
+import { taskApi } from "./task-api";
+import { tm } from "./locales/tasks.kk";
 import "./courses.css";
 
-type Save = (operation: () => Promise<void>) => Promise<void>;
+type Save = (operation: () => Promise<unknown>) => Promise<void>;
 function CourseForm({
   material,
   busy,
   save,
   onSave,
   cancel,
+  onDirty,
 }: {
   material: boolean;
   busy: boolean;
   save: Save;
   onSave: (id: string, title: string, form: FormData) => Promise<void>;
   cancel: () => void;
+  onDirty: () => void;
 }) {
   const [kind, setKind] = useState("text");
   const [error, setError] = useState("");
@@ -55,6 +60,7 @@ function CourseForm({
       onChange={() => {
         operation.current = crypto.randomUUID();
         setError("");
+        onDirty();
       }}
     >
       <fieldset disabled={busy}>
@@ -120,13 +126,19 @@ type Props = {
   scope: string;
   csrfToken: string;
   onExpired: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 export function CoursesPage(props: Props) {
   return <CourseWorkspace key={props.scope} {...props} />;
 }
 
-function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
+function CourseWorkspace({
+  scope,
+  csrfToken,
+  onExpired,
+  onDirtyChange,
+}: Props) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [detail, setDetail] = useState<CourseContents | null>(null);
   const [reading, setReading] = useState<{ id: string; text: string } | null>(
@@ -137,6 +149,37 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [reload, setReload] = useState(0);
+  const [activeTask, setActiveTask] = useState<string | null>(null);
+  const [unsaved, setUnsaved] = useState(false);
+  const dirty = useRef(false);
+  const dirtyHandler = useRef(onDirtyChange);
+  dirty.current = unsaved;
+  dirtyHandler.current = onDirtyChange;
+  useEffect(() => {
+    onDirtyChange?.(unsaved);
+  }, [unsaved, onDirtyChange]);
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if (dirty.current) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => {
+      window.removeEventListener("beforeunload", warn);
+      dirtyHandler.current?.(false);
+    };
+  }, []);
+  function discard() {
+    return !dirty.current || window.confirm(tm.leave);
+  }
+  function cancelForm() {
+    if (discard()) {
+      setForm(null);
+      setUnsaved(false);
+    }
+  }
   const mounted = useRef(false);
   const expired = useRef(onExpired);
   expired.current = onExpired;
@@ -147,6 +190,8 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
       setDetail(null);
       setReading(null);
       setForm(null);
+      setActiveTask(null);
+      setUnsaved(false);
       setNotice("");
       setError("Курсты көруге рұқсат жоқ.");
       if (e.status === 401) expired.current();
@@ -180,7 +225,7 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
       mounted.current = false;
     };
   }, [scope, reload]);
-  async function run(operation: () => Promise<void>) {
+  async function run(operation: () => Promise<unknown>) {
     if (busy) return;
     setBusy(true);
     setError("");
@@ -199,11 +244,14 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
       setDetail(data);
       setForm(null);
       setReading(null);
+      setActiveTask(null);
+      setUnsaved(false);
     }
   }
   async function saved(course: string) {
     if (!mounted.current) return;
     setForm(null);
+    setUnsaved(false);
     setNotice("Сақталды.");
     try {
       await loadCourse(course);
@@ -215,6 +263,9 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
     }
   }
   function back() {
+    if (!discard()) return;
+    setActiveTask(null);
+    setUnsaved(false);
     setDetail(null);
     setCourses([]);
     setError("");
@@ -265,7 +316,23 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
       )}
       {busy && <p role="status">Жүктелуде…</p>}
       {notice && <p role="status">{notice}</p>}
-      {!detail ? (
+      {detail && activeTask ? (
+        <CourseTaskPage
+          key={activeTask}
+          scope={scope}
+          course={detail.course.id}
+          task={activeTask}
+          csrfToken={csrfToken}
+          onDenied={failed}
+          onDirtyChange={setUnsaved}
+          onBack={() => {
+            if (discard()) {
+              setActiveTask(null);
+              setUnsaved(false);
+            }
+          }}
+        />
+      ) : !detail ? (
         <div className="course-list">
           {!courses.length && !busy && !error && (
             <p className="panel">Сізге қолжетімді курстар әзірге жоқ.</p>
@@ -318,7 +385,8 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
               material={false}
               busy={busy}
               save={run}
-              cancel={() => setForm(null)}
+              cancel={cancelForm}
+              onDirty={() => setUnsaved(true)}
               onSave={async (id, title) => {
                 await courseApi.addTopic(
                   scope,
@@ -339,17 +407,63 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
               <div className="course-toolbar">
                 <h3>{topic.title}</h3>
                 {detail.course.can_manage && !form && (
-                  <button
-                    className="button button-quiet"
-                    disabled={busy}
-                    onClick={() => setForm(topic.id)}
-                  >
-                    Материал қосу
-                  </button>
+                  <div className="course-actions">
+                    <button
+                      className="button button-quiet"
+                      disabled={busy}
+                      onClick={() => setForm(topic.id)}
+                    >
+                      Материал қосу
+                    </button>
+                    <button
+                      className="button button-quiet"
+                      disabled={busy}
+                      onClick={() => setForm("task:" + topic.id)}
+                    >
+                      {tm.add}
+                    </button>
+                  </div>
                 )}
               </div>
               {!topic.materials.length && (
                 <p>Бұл тақырыпқа материал әлі қосылған жоқ.</p>
+              )}
+              {topic.tasks?.map((task) => (
+                <button
+                  className="button button-quiet course-task-link"
+                  key={task.id}
+                  disabled={busy}
+                  onClick={() => {
+                    if (discard()) {
+                      setForm(null);
+                      setUnsaved(false);
+                      setNotice("");
+                      setError("");
+                      setActiveTask(task.id);
+                    }
+                  }}
+                >
+                  {task.title} · {tm.open}
+                </button>
+              ))}
+              {form === "task:" + topic.id && (
+                <TaskCreateForm
+                  topic={topic.id}
+                  timezone={detail.course.timezone ?? ""}
+                  busy={busy}
+                  dirty={() => setUnsaved(true)}
+                  save={run}
+                  cancel={cancelForm}
+                  onSave={async (body) => {
+                    await taskApi.create(
+                      scope,
+                      detail.course.id,
+                      body,
+                      csrfToken,
+                    );
+                    await saved(detail.course.id);
+                  }}
+                />
               )}
               {topic.materials.map((m) => (
                 <div className="course-item" key={m.id}>
@@ -420,7 +534,8 @@ function CourseWorkspace({ scope, csrfToken, onExpired }: Props) {
                   material
                   busy={busy}
                   save={run}
-                  cancel={() => setForm(null)}
+                  cancel={cancelForm}
+                  onDirty={() => setUnsaved(true)}
                   onSave={async (_id, _title, data) => {
                     await courseApi.addMaterial(
                       scope,

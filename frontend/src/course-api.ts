@@ -9,6 +9,7 @@ export interface Course {
   semester: number;
   opened: boolean;
   can_manage: boolean;
+  timezone?: string;
 }
 export interface Material {
   id: string;
@@ -19,6 +20,7 @@ export interface Topic {
   id: string;
   title: string;
   materials: Material[];
+  tasks?: { id: string; title: string; due_on: string | null }[];
 }
 export interface CourseContents {
   course: Course;

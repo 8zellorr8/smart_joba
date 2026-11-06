@@ -28,6 +28,7 @@ def permissions_for(grants: list[dict], scope_id: str) -> list[str]:
         if role == "student" and grant.get("student_id"):
             permissions.add("journal.read.self")
             permissions.add("course.read")
+            permissions.add("course.submit")
         if role == "approver" and grant.get("can_publish", False):
             permissions.add("draft.publish")
     return sorted(permissions)

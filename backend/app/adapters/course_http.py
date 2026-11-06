@@ -17,6 +17,22 @@ class TopicInput(BaseModel):
     title: Title
 
 
+def material_payload(text, file):
+    if (text is None) == (file is None):
+        raise ApiError("VALIDATION_ERROR", 422)
+    if file is not None:
+        pdf = file.file.read(MAX_PDF_BYTES + 1)
+        if len(pdf) > MAX_PDF_BYTES:
+            raise ApiError("REQUEST_TOO_LARGE", 413)
+        if not (pdf.startswith(b"%PDF-") and pdf.rstrip().endswith(b"%%EOF")):
+            raise ApiError("COURSE_PDF_INVALID", 422)
+        return None, pdf
+    text = text.strip()
+    if not text:
+        raise ApiError("VALIDATION_ERROR", 422)
+    return text, None
+
+
 def course_router(service):
     router = APIRouter(prefix="/api/scopes/{scope_id}/courses")
 
@@ -45,19 +61,9 @@ def course_router(service):
                      text: Annotated[str | None, Form(max_length=20000)] = None,
                      file: Annotated[UploadFile | None, File()] = None):
         title = title.strip()
-        if not title or (text is None) == (file is None):
+        if not title:
             raise ApiError("VALIDATION_ERROR", 422)
-        pdf = None
-        if file is not None:
-            pdf = file.file.read(MAX_PDF_BYTES + 1)
-            if len(pdf) > MAX_PDF_BYTES:
-                raise ApiError("REQUEST_TOO_LARGE", 413)
-            if not (pdf.startswith(b"%PDF-") and pdf.rstrip().endswith(b"%%EOF")):
-                raise ApiError("COURSE_PDF_INVALID", 422)
-        else:
-            text = text.strip()
-            if not text:
-                raise ApiError("VALIDATION_ERROR", 422)
+        text, pdf = material_payload(text, file)
         return service.add_material(token(request), scope_id, course_id, topic_id, id, title, text, pdf)
 
     @router.get("/{course_id}/materials/{material_id}")

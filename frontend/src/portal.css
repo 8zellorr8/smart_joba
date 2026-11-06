@@ -956,3 +956,15 @@
     transition: none;
   }
 }
+.home-course-note {
+  grid-column: 1 / -1;
+  padding: 1rem 1.25rem;
+  line-height: 1.6;
+}
+.home-course-note h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.15rem;
+}
+.home-course-note p {
+  margin: 0;
+}

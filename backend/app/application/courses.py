@@ -1,11 +1,12 @@
 """Course visibility follows current, confirmed academic links, not lesson history."""
 import uuid
 
-from sqlalchemy import Date, and_, cast, func, or_, select
+from sqlalchemy import Date, and_, cast, false, func, or_, select
 
 from .auth import ApiError
 from .journal_setup import JournalSetupService
 from ..infrastructure.course_models import Course, CourseMaterial, CourseTopic
+from ..infrastructure.task_models import CourseTask
 from ..infrastructure.journal_models import Journal, JournalAssignment, Student, StudentMembership
 from ..infrastructure.models import CalendarProfile, Group, ImportContext, Subject, Teacher
 
@@ -17,9 +18,9 @@ class CourseService:
         self.factory = factory
         self.catalog = JournalSetupService(factory, auth)
 
-    def accessible(self, db, token, scope_id, write=False):
-        action = "course.manage" if write else "course.read"
-        user, grants, _ = self.catalog.access(db, token, scope_id, action, write=write)
+    def accessible(self, db, token, scope_id, write=False, *, student_only=False, lock_write=False):
+        action = "course.submit" if student_only else ("course.manage" if write else "course.read")
+        user, grants, _ = self.catalog.access(db, token, scope_id, action, write=write or lock_write)
         teacher_ids = [uuid.UUID(g["teacher_id"]) for g in grants if g["role"] == "teacher" and g["teacher_id"]]
         students = [g for g in grants if g["role"] == "student" and g["student_id"] and g["group_id"]]
         today = cast(func.timezone(CalendarProfile.document["timezone"].astext, func.statement_timestamp()), Date)
@@ -28,7 +29,7 @@ class CourseService:
                    Teacher.scope_id == scope_id, Teacher.data_kind == ImportContext.data_kind, JournalAssignment.active.is_(True),
                    JournalAssignment.start <= today, today < JournalAssignment.end)
             .correlate(Journal, CalendarProfile, ImportContext).exists())
-        visible = manages
+        visible = false() if student_only else manages
         if students and not write:
             # Role grants are unique per role and scope.
             grant = students[0]
@@ -38,9 +39,10 @@ class CourseService:
                        StudentMembership.group_id == Journal.group_id, StudentMembership.context_id == Journal.context_id,
                        StudentMembership.start <= today, today < StudentMembership.end)
                 .correlate(Journal, CalendarProfile, ImportContext).exists())
-            visible = or_(manages, and_(Course.journal_id.is_not(None), enrolled))
+            visible = enrolled if student_only else or_(manages, and_(Course.journal_id.is_not(None), enrolled))
         query = (select(Journal.id.label("id"), Subject.name.label("subject"), Group.code.label("group"),
                         ImportContext.academic_year, ImportContext.data_kind, Journal.semester, manages.label("can_manage"),
+                        CalendarProfile.document["timezone"].astext.label("timezone"),
                         Course.journal_id.is_not(None).label("opened"))
             .join(ImportContext, ImportContext.id == Journal.context_id)
             .join(Group, Group.id == Journal.group_id).join(Subject, Subject.id == Journal.subject_id)
@@ -52,8 +54,8 @@ class CourseService:
                    CalendarProfile.document["timezone_confirmed"].as_boolean().is_(True), visible))
         return user, query
 
-    def require(self, db, token, scope_id, course_id, *, write=False, opening=False):
-        user, query = self.accessible(db, token, scope_id, write)
+    def require(self, db, token, scope_id, course_id, *, write=False, opening=False, student_only=False, lock_write=False):
+        user, query = self.accessible(db, token, scope_id, write, student_only=student_only, lock_write=lock_write)
         row = db.execute(query.where(Journal.id == course_id)).mappings().one_or_none()
         if row is None or (not opening and not row["opened"]):
             raise ApiError("ACCESS_DENIED", 403)
@@ -74,7 +76,7 @@ class CourseService:
     def contents(self, token, scope_id, course_id):
         with self.factory.begin() as db:
             _, course = self.require(db, token, scope_id, course_id)
-            topics = {t.id: {"id": t.id, "title": t.title, "materials": []} for t in db.scalars(
+            topics = {t.id: {"id": t.id, "title": t.title, "materials": [], "tasks": []} for t in db.scalars(
                 select(CourseTopic).where(CourseTopic.journal_id == course_id).order_by(CourseTopic.created_at, CourseTopic.id))}
             query = (select(CourseMaterial.id, CourseMaterial.topic_id, CourseMaterial.title,
                             CourseMaterial.body.is_(None).label("is_pdf"))
@@ -83,6 +85,9 @@ class CourseService:
             for item in db.execute(query):
                 topics[item.topic_id]["materials"].append({"id": item.id, "title": item.title,
                                                           "kind": "pdf" if item.is_pdf else "text"})
+            for task in db.scalars(select(CourseTask).join(CourseTopic).where(CourseTopic.journal_id == course_id)
+                                   .order_by(CourseTask.created_at, CourseTask.id)):
+                topics[task.topic_id]["tasks"].append({"id": task.id, "title": task.title, "due_on": task.due_on})
             return {"course": dict(course), "topics": list(topics.values())}
 
     def add_topic(self, token, scope_id, course_id, topic_id, title):
