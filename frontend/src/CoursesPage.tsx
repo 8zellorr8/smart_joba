@@ -14,6 +14,7 @@ import "./courses.css";
 type Save = (operation: () => Promise<unknown>) => Promise<void>;
 function CourseForm({
   material,
+  weekNumber,
   busy,
   save,
   onSave,
@@ -21,9 +22,10 @@ function CourseForm({
   onDirty,
 }: {
   material: boolean;
+  weekNumber: number | null;
   busy: boolean;
   save: Save;
-  onSave: (id: string, title: string, form: FormData) => Promise<void>;
+  onSave: (id: string, title: string, form: FormData, week: number | null) => Promise<void>;
   cancel: () => void;
   onDirty: () => void;
 }) {
@@ -51,7 +53,7 @@ function CourseForm({
     }
     form.set("title", title);
     form.set("id", operation.current);
-    await save(() => onSave(operation.current, title, form));
+    await save(() => onSave(operation.current, title, form, weekNumber));
   }
   return (
     <form
@@ -151,6 +153,7 @@ function CourseWorkspace({
   const [notice, setNotice] = useState("");
   const [reload, setReload] = useState(0);
   const [activeTask, setActiveTask] = useState<string | null>(null);
+  const [selectedWeek, setSelectedWeek] = useState<number | null>(1);
   const [unsaved, setUnsaved] = useState(false);
   const dirty = useRef(false);
   const dirtyHandler = useRef(onDirtyChange);
@@ -399,6 +402,7 @@ function CourseWorkspace({
                       run(async () => {
                         if (!c.opened)
                           await courseApi.open(scope, c.id, csrfToken);
+                        setSelectedWeek(1);
                         await loadCourse(c.id);
                       })
                     }
@@ -414,41 +418,55 @@ function CourseWorkspace({
       ) : (
         <>
           <div className="course-toolbar">
-            <h2>Курс тақырыптары</h2>
+            <div>
+              <h2>{selectedWeek == null ? "Жалпы материалдар" : `${selectedWeek}-апта`}</h2>
+              <p>Аптаны таңдап, сабақ тақырыптары мен оқу материалдарын қараңыз.</p>
+            </div>
             {detail.course.can_manage && !form && (
               <button
                 className="button button-primary"
                 disabled={busy}
-                onClick={() => setForm("topic")}
+                onClick={() => setForm(selectedWeek == null ? "topic:general" : `topic:${selectedWeek}`)}
               >
                 Тақырып қосу
               </button>
             )}
           </div>
-          {form === "topic" && (
+          <nav className="course-week-nav" aria-label="Курс аптасы">
+            {Array.from({ length: 10 }, (_, index) => index + 1).map((week) => {
+              const count = detail.topics.filter((topic) => topic.week_number === week).length;
+              return <button key={week} type="button" aria-pressed={selectedWeek === week} className={`course-week-button${selectedWeek === week ? " is-active" : ""}`} onClick={() => { if (discard()) { setSelectedWeek(week); setForm(null); setUnsaved(false); } }}>
+                <span>{week}-апта</span>{count > 0 && <small>{count} тақырып</small>}
+              </button>;
+            })}
+            <button type="button" aria-pressed={selectedWeek == null} className={`course-week-button${selectedWeek == null ? " is-active" : ""}`} onClick={() => { if (discard()) { setSelectedWeek(null); setForm(null); setUnsaved(false); } }}>Жалпы материалдар</button>
+          </nav>
+          {(form === `topic:${selectedWeek}` || (form === "topic:general" && selectedWeek == null)) && (
             <CourseForm
-              key="topic"
+              key={form}
               material={false}
+              weekNumber={selectedWeek}
               busy={busy}
               save={run}
               cancel={cancelForm}
               onDirty={() => setUnsaved(true)}
-              onSave={async (id, title) => {
+              onSave={async (id, title, _data, weekNumber) => {
                 await courseApi.addTopic(
                   scope,
                   detail.course.id,
                   id,
                   title,
                   csrfToken,
+                  weekNumber,
                 );
                 await saved(detail.course.id);
               }}
             />
           )}
-          {!detail.topics.length && (
-            <p className="panel">Курста әзірге тақырыптар жоқ.</p>
+          {!detail.topics.some((topic) => topic.week_number === selectedWeek) && (
+            <p className="panel">{selectedWeek == null ? "Жалпы материалдар әзірге жоқ." : "Бұл аптада тақырыптар әзірге жоқ."}</p>
           )}
-          {detail.topics.map((topic, index) => (
+          {detail.topics.filter((topic) => topic.week_number === selectedWeek).map((topic, index) => (
             <article className="panel course-topic" key={topic.id}>
               <div className="course-toolbar">
                 <h3>
@@ -589,6 +607,7 @@ function CourseWorkspace({
                 <CourseForm
                   key={topic.id}
                   material
+                  weekNumber={null}
                   busy={busy}
                   save={run}
                   cancel={cancelForm}

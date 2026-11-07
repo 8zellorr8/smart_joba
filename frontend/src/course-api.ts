@@ -19,6 +19,7 @@ export interface Material {
 export interface Topic {
   id: string;
   title: string;
+  week_number: number | null;
   materials: Material[];
   tasks?: { id: string; title: string; due_on: string | null }[];
 }
@@ -46,11 +47,12 @@ export const courseApi = {
     id: string,
     title: string,
     csrf: string,
+    weekNumber: number | null = null,
   ) =>
     request(root(scope) + "/" + course + "/topics", {
       method: "POST",
       headers: { "X-CSRF-Token": csrf, "Content-Type": "application/json" },
-      body: JSON.stringify({ id, title }),
+      body: JSON.stringify({ id, title, week_number: weekNumber }),
     }),
   addMaterial: (
     scope: string,

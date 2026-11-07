@@ -128,6 +128,44 @@
 .course-topic {
   margin-bottom: 24px;
 }
+.course-week-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 118px), 1fr));
+  gap: 10px;
+  margin: 1rem 0 1.5rem;
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-card-radius);
+  background: var(--ui-surface);
+}
+.course-week-button {
+  display: grid;
+  gap: 3px;
+  min-height: 54px;
+  padding: 8px 12px;
+  border: 1px solid var(--ui-control-border);
+  border-radius: 10px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.course-week-button:hover { background: var(--ui-surface-soft); }
+.course-week-button.is-active {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent);
+  font-weight: 650;
+}
+.course-week-button small { color: var(--ui-muted); font-size: 12px; }
+.course-week-nav > .course-week-button:last-child {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: fit-content;
+  max-width: 100%;
+}
+.course-week-button:focus-visible { outline: 3px solid var(--ui-focus, #226f5e); outline-offset: 2px; }
 .course-topic h3 {
   display: flex;
   align-items: center;

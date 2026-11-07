@@ -3,7 +3,7 @@ from typing import Annotated
 from urllib.parse import quote
 
 from fastapi import APIRouter, File, Form, Request, Response, UploadFile
-from pydantic import BaseModel, ConfigDict, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
 from ..application.auth import ApiError
 from ..application.courses import MAX_PDF_BYTES
@@ -15,6 +15,7 @@ class TopicInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: uuid.UUID
     title: Title
+    week_number: int | None = Field(default=None, ge=1, le=10, strict=True)
 
 
 def material_payload(text, file):
@@ -53,7 +54,7 @@ def course_router(service):
 
     @router.post("/{course_id}/topics")
     def topic(scope_id: uuid.UUID, course_id: uuid.UUID, body: TopicInput, request: Request):
-        return service.add_topic(token(request), scope_id, course_id, body.id, body.title)
+        return service.add_topic(token(request), scope_id, course_id, body.id, body.title, body.week_number)
 
     @router.post("/{course_id}/topics/{topic_id}/materials")
     def add_material(scope_id: uuid.UUID, course_id: uuid.UUID, topic_id: uuid.UUID, request: Request,
