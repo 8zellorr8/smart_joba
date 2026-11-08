@@ -2,7 +2,7 @@
 import uuid
 
 import pytest
-from sqlalchemy import select, update
+from sqlalchemy import event, select, update
 
 from backend.app.infrastructure.journal_models import Student, StudentAccountBinding, StudentMembership
 from backend.app.infrastructure.lesson_models import JournalLessonStudent
@@ -121,6 +121,23 @@ def test_filters_and_pagination_preserve_period_subject_and_revision(client, app
     assert send(client, e, modify(client, e, e["saved"], topic="Түзету", reason="Synthetic edit")).status_code == 200
     login(client, app, "student")
     assert client.get(e["url"], params={**filters, "page": 2, "revision": first["revision"]}).status_code == 409
+
+
+def test_result_rows_are_limited_by_database_pagination(client, app, personal):
+    statements = []
+
+    def capture(_connection, _cursor, statement, _parameters, _context, _executemany):
+        if "journal_lessons" in statement:
+            statements.append(statement.upper())
+
+    event.listen(app.state.engine, "before_cursor_execute", capture)
+    try:
+        data = result(client, personal)
+    finally:
+        event.remove(app.state.engine, "before_cursor_execute", capture)
+
+    assert data["items"]
+    assert any("LIMIT" in statement and "OFFSET" in statement for statement in statements)
 
 
 def test_historical_membership_and_removed_roster_survive_transfer(client, app, personal):

@@ -298,6 +298,13 @@ class JournalLessonService:
                 self.attendance(db, lesson, c["attendance"], reason)
                 self.grades(db, lesson, c.get("grades", []), reason)
                 lesson.revision += 1
+            # Keep result pagination stable without invalidating catalog edits.
+            registry = db.get(JournalRegistry, scope_id)
+            if registry is None:
+                registry = JournalRegistry(scope_id=scope_id, revision=0, results_revision=1)
+                db.add(registry)
+            else:
+                registry.results_revision += 1
             db.flush()
             after = self.fact_snapshot(db, lesson) if lesson else {"new_event": {"publication_id": str(publication.id), "event_id": event["id"]}}
             if c["kind"] == "resolve_event":

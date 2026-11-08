@@ -13,7 +13,11 @@ class JournalRegistry(Base):
     __tablename__ = "journal_registries"
     scope_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("scopes.id", ondelete="RESTRICT"), primary_key=True)
     revision: Mapped[int] = mapped_column(Integer)
-    __table_args__ = (CheckConstraint("revision >= 0", name="journal_registry_revision"),)
+    results_revision: Mapped[int] = mapped_column(Integer, server_default="0")
+    __table_args__ = (
+        CheckConstraint("revision >= 0", name="journal_registry_revision"),
+        CheckConstraint("results_revision >= 0", name="journal_results_revision"),
+    )
 
 
 class Student(Base):
