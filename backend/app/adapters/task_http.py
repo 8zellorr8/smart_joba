@@ -19,6 +19,15 @@ class TaskInput(BaseModel):
     due_on: date | None = None
 
 
+class TaskUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: uuid.UUID
+    expected_revision: int = Field(ge=1, strict=True)
+    title: Title
+    instructions: Text
+    due_on: date | None = None
+
+
 class ReviewInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: uuid.UUID
@@ -50,6 +59,10 @@ def task_router(service):
     @router.post("")
     def create(scope_id: uuid.UUID, course_id: uuid.UUID, body: TaskInput, request: Request):
         return service.create(token(request), scope_id, course_id, body.model_dump())
+
+    @router.put("/{task_id}")
+    def update(scope_id: uuid.UUID, course_id: uuid.UUID, task_id: uuid.UUID, body: TaskUpdate, request: Request):
+        return service.update(token(request), scope_id, course_id, task_id, body.model_dump())
 
     @router.get("/{task_id}")
     def detail(scope_id: uuid.UUID, course_id: uuid.UUID, task_id: uuid.UUID, request: Request):

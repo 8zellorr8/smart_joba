@@ -71,6 +71,41 @@ def test_course_workflow_and_safe_retries(client, app, course):
     assert client.get(read_url).status_code == client.get(url).status_code == 403
 
 
+def test_teacher_can_edit_text_material_with_stale_revision_protection(client, app, course):
+    _, url = course
+    _, data, read_url = content(client, course)
+    edit_url = read_url + "/edit"
+    assert client.get(edit_url).json() == {
+        "id": data["id"], "title": data["title"], "kind": "text",
+        "text": data["text"], "revision": 1,
+    }
+    update_url = read_url
+    changed = {"expected_revision": "1", "title": "Updated reading", "text": "Revised text"}
+    response = client.put(update_url, headers=csrf(client), data=changed)
+    assert response.status_code == 200 and response.json()["revision"] == 2
+    assert client.put(update_url, headers=csrf(client), data=changed).json()["revision"] == 2
+    stale = client.put(update_url, headers=csrf(client), data={**changed, "title": "Another title"})
+    assert stale.status_code == 409 and stale.json()["error"]["code"] == "COURSE_MATERIAL_STALE"
+    login(client, app, "student")
+    assert client.get(read_url).json() == {"title": "Updated reading", "text": "Revised text"}
+    assert client.get(edit_url).status_code == 403
+    assert client.put(update_url, headers=csrf(client), data={**changed, "expected_revision": "2"}).status_code == 403
+    login(client, app, "admin")
+    assert client.get(edit_url).status_code == 403
+
+
+def test_teacher_can_rename_pdf_without_replacing_its_file(client, app, course):
+    _, _, read_url = content(client, course, file=True)
+    response = client.put(read_url, headers=csrf(client), data={
+        "expected_revision": "1", "title": "Updated handout",
+    })
+    assert response.status_code == 200 and response.json()["revision"] == 2
+    login(client, app, "student")
+    downloaded = client.get(read_url)
+    assert downloaded.status_code == 200 and downloaded.content == PDF
+    assert "Updated%20handout.pdf" in downloaded.headers["content-disposition"]
+
+
 def test_pdf_download_and_direct_access_boundaries(client, app, course):
     root, url = course
     path, data, read_url = content(client, course, file=True)

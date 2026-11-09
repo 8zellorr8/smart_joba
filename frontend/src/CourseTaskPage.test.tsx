@@ -179,6 +179,33 @@ it("shows a pending submission without another submit form", async () => {
   await screen.findByText(tm.submitted);
   expect(screen.queryByLabelText(tm.answer)).not.toBeInTheDocument();
 });
+it("offers a fresh response after task conditions change and preserves the old snapshot", async () => {
+  vi.mocked(taskApi.get).mockResolvedValue({
+    ...base,
+    task: {
+      ...base.task,
+      title: "Updated task",
+      instructions: "Use the new prompt.",
+      revision: 2,
+    },
+    attempts: [
+      {
+        ...submission,
+        task_revision: 1,
+        conditions: { ...base.task, revision: 1 },
+      },
+    ],
+  });
+  mount();
+  await screen.findByText(tm.updatedTerms);
+  fireEvent.click(screen.getByText(tm.conditionsAtSubmission));
+  expect(screen.getByText("Write a dialogue.")).toBeVisible();
+  await answer();
+  await waitFor(() => expect(taskApi.submit).toHaveBeenCalledOnce());
+  expect(
+    vi.mocked(taskApi.submit).mock.calls[0][3].get("expected_attempt"),
+  ).toBe("1");
+});
 it("shows a real zero independently of the ungraded state", async () => {
   vi.mocked(taskApi.get).mockResolvedValue({
     ...base,

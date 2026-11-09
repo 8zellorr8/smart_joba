@@ -6,6 +6,7 @@ export interface Task {
   instructions: string;
   due_on: string | null;
   timezone: string;
+  revision?: number;
 }
 export interface TaskReview {
   revision: number;
@@ -22,6 +23,8 @@ export interface Submission {
   submitted_at: string;
   kind: "text" | "pdf";
   late: boolean;
+  task_revision?: number;
+  conditions?: Task;
   review: TaskReview | null;
   text?: string | null;
   reviews?: TaskReview[];
@@ -38,6 +41,13 @@ export interface SubmissionPage {
 export interface TaskCreate {
   id: string;
   topic_id: string;
+  title: string;
+  instructions: string;
+  due_on: string | null;
+}
+export interface TaskUpdate {
+  id: string;
+  expected_revision: number;
   title: string;
   instructions: string;
   due_on: string | null;
@@ -60,6 +70,17 @@ const post = (csrf: string, body: unknown) => ({
 export const taskApi = {
   create: (scope: string, course: string, data: TaskCreate, csrf: string) =>
     request<{ id: string }>(root(scope, course), post(csrf, data)),
+  update: (
+    scope: string,
+    course: string,
+    task: string,
+    data: TaskUpdate,
+    csrf: string,
+  ) =>
+    request<{ id: string; revision: number }>(
+      `${root(scope, course)}/${task}`,
+      { ...post(csrf, data), method: "PUT" },
+    ),
   get: (scope: string, course: string, task: string) =>
     request<TaskDetails>(`${root(scope, course)}/${task}`),
   submissions: (scope: string, course: string, task: string, after?: string) =>
