@@ -24,6 +24,7 @@ export function JournalLessonsPanel({
   onExpired,
   onDirtyChange,
   onClose,
+  initialDate = "",
 }: {
   scope: string;
   journal: Journal;
@@ -31,9 +32,10 @@ export function JournalLessonsPanel({
   onExpired: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onClose: () => void;
+  initialDate?: string;
 }) {
   const [page, setPage] = useState<LessonPage | null>(null);
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selected, setSelected] = useState<LessonSummary | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [topic, setTopic] = useState("");
@@ -171,12 +173,12 @@ export function JournalLessonsPanel({
     }
   }
   useEffect(() => {
-    setSelectedDate("");
-    void loadList(0, "");
+    setSelectedDate(initialDate);
+    void loadList(0, initialDate);
     return () => {
       ++epoch.current;
     };
-  }, [scope, journal.id]);
+  }, [scope, journal.id, initialDate]);
   function canLeave() {
     return !command.busy && (!changeRef.current || window.confirm(jm.leave));
   }

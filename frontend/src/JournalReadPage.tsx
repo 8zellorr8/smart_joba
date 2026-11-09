@@ -19,6 +19,7 @@ type Props = {
   csrfToken?: string;
   onDirtyChange?: (dirty: boolean) => void;
   onSchedule?: () => void;
+  initialDate?: string;
 };
 
 export function JournalReadPage(props: Props) {
@@ -38,11 +39,13 @@ function StaffJournalReadPage({
   onExpired,
   csrfToken = "",
   onDirtyChange = () => {},
+  initialDate = "",
 }: {
   scope: string;
   onExpired: () => void;
   csrfToken?: string;
   onDirtyChange?: (dirty: boolean) => void;
+  initialDate?: string;
 }) {
   const [catalog, setCatalog] = useState<Journal[] | null>(null);
   const [selected, setSelected] = useState<Journal | null>(null);
@@ -180,6 +183,7 @@ function StaffJournalReadPage({
           key={`${scope}-${selected.id}`}
           scope={scope}
           journal={selected}
+          initialDate={initialDate}
           csrfToken={csrfToken}
           onExpired={onExpired}
           onDirtyChange={onDirtyChange}

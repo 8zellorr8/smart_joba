@@ -89,6 +89,7 @@ it("opens the student's own results and courses through the home shortcuts", asy
       permissions: [...workspace.permissions, "course.read"],
     },
     onNavigate: navigate,
+    onOpenJournalDate: vi.fn(),
   });
   fireEvent.click(
     screen.getByRole("button", { name: new RegExp(portal.resultsHint) }),
@@ -102,6 +103,9 @@ it("opens the student's own results and courses through the home shortcuts", asy
     screen.queryByRole("button", { name: new RegExp(portal.journalsHint) }),
   ).not.toBeInTheDocument();
   await screen.findByText("Қазақ тілі");
+  expect(
+    screen.queryByRole("button", { name: /^Журналдар$/ }),
+  ).not.toBeInTheDocument();
 });
 
 it("keeps courses and student results out of the administrator's shortcuts", async () => {
@@ -141,6 +145,20 @@ it("uses the publication timezone for today's agenda and only requests the reade
   ).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: wb.openWeek }));
   expect(open).toHaveBeenCalledWith("pub", "2026-10-22", "");
+});
+it("opens a teacher's journals with the selected agenda date", async () => {
+  const openJournalDate = vi.fn();
+  setup({
+    workspace: {
+      ...workspace,
+      role_codes: ["teacher"],
+      permissions: ["publication.read.own", "journal.read.own"],
+    },
+    onOpenJournalDate: openJournalDate,
+  });
+  await screen.findByText("Қазақ тілі");
+  fireEvent.click(screen.getByRole("button", { name: /^Журналдар$/ }));
+  expect(openJournalDate).toHaveBeenCalledWith("2026-10-22");
 });
 it("shows an empty agenda only after the server confirms zero lessons", async () => {
   vi.mocked(publicationApi.get).mockResolvedValue({

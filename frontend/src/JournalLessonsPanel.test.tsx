@@ -173,6 +173,29 @@ it("filters a teacher's lesson list by date and restores all dates", async () =>
     ),
   );
 });
+it("starts with the date selected from the agenda", async () => {
+  render(
+    <JournalLessonsPanel
+      scope="s"
+      journal={journal}
+      csrfToken="csrf"
+      initialDate="2026-09-01"
+      onExpired={vi.fn()}
+      onDirtyChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  await screen.findByRole("button", { name: lm.openLesson });
+  expect(screen.getByLabelText(lm.date)).toHaveValue("2026-09-01");
+  expect(lessonApi.list).toHaveBeenCalledWith(
+    "s",
+    "j",
+    0,
+    false,
+    false,
+    "2026-09-01",
+  );
+});
 function fill() {
   fireEvent.change(screen.getByLabelText(lm.topic), {
     target: { value: "Тақырып" },

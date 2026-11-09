@@ -345,6 +345,7 @@ function WorkspaceScreen({
   const [publicationFocus, setPublicationFocus] = useState<string>();
   const [publicationGroup, setPublicationGroup] = useState("");
   const [publicationDate, setPublicationDate] = useState<string>();
+  const [journalDate, setJournalDate] = useState("");
   const [planningDirty, setPlanningDirty] = useState(false);
   const navigationDialog = useRef<HTMLDialogElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -363,6 +364,7 @@ function WorkspaceScreen({
     )
       return;
     if (next !== view) setPlanningDirty(false);
+    if (next === "journals") setJournalDate("");
     setViewState(next);
     if (navigationDialog.current?.open) navigationDialog.current.close();
     requestAnimationFrame(() => document.getElementById("main")?.focus());
@@ -714,6 +716,7 @@ function WorkspaceScreen({
               <JournalReadPage
                 scope={workspace.scope.id}
                 personal={view === "study-profile"}
+                initialDate={journalDate}
                 onSchedule={() => {
                   setPublicationFocus(undefined);
                   setPublicationGroup("");
@@ -819,6 +822,10 @@ function WorkspaceScreen({
                   setView("subjects");
                 }}
                 onNavigate={setView}
+                onOpenJournalDate={(date) => {
+                  setView("journals");
+                  setJournalDate(date);
+                }}
                 onExpired={onExpired}
                 onOpenDraft={(id) => {
                   setEditorDraftId(id);

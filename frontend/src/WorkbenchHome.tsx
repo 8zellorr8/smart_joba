@@ -36,6 +36,7 @@ export function WorkbenchHome({
   onNavigate,
   onOpenDraft,
   onOpenPublication,
+  onOpenJournalDate,
   onExpired,
   onOpenSubject,
 }: {
@@ -47,6 +48,7 @@ export function WorkbenchHome({
     date: string,
     group: string,
   ) => void;
+  onOpenJournalDate?: (date: string) => void;
   onExpired: () => void;
   onOpenSubject?: (key: string) => void;
 }) {
@@ -457,6 +459,18 @@ export function WorkbenchHome({
                 {wb.openWeek}
                 <Icon name="arrow" size={18} />
               </button>
+              {events.length > 0 &&
+                workspace.role_codes.includes("teacher") &&
+                workspace.permissions.includes("journal.read.own") &&
+                onOpenJournalDate && (
+                  <button
+                    className="button button-quiet"
+                    onClick={() => onOpenJournalDate(date)}
+                  >
+                    {portal.journals}
+                    <Icon name="arrow" size={18} />
+                  </button>
+                )}
             </div>
           )}
           {!canRead && <p>{wb.permissionHint}</p>}

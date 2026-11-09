@@ -301,6 +301,8 @@
 }
 .portal-layout .agenda-actions {
   justify-content: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 18px;
 }
 .portal-layout .agenda-actions .button {
