@@ -1,0 +1,60 @@
+.teacher-queue {
+  display: grid;
+  gap: 18px;
+}
+.teacher-queue-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+.teacher-queue-heading h2,
+.teacher-queue-grid h3 {
+  margin: 0 0 6px;
+}
+.teacher-queue-heading p,
+.teacher-queue-grid p {
+  margin: 0;
+  color: var(--ui-muted);
+}
+.teacher-queue-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.teacher-queue-grid > section {
+  min-width: 0;
+}
+.teacher-queue-grid ul {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+}
+.teacher-queue-item {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  background: var(--ui-surface);
+  color: var(--ui-text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.teacher-queue-item:hover,
+.teacher-queue-item:focus-visible {
+  border-color: var(--ui-accent);
+}
+.teacher-queue-item small {
+  color: var(--ui-muted);
+}
+@media (max-width: 760px) {
+  .teacher-queue-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

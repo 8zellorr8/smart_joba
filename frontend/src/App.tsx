@@ -346,6 +346,15 @@ function WorkspaceScreen({
   const [publicationGroup, setPublicationGroup] = useState("");
   const [publicationDate, setPublicationDate] = useState<string>();
   const [journalDate, setJournalDate] = useState("");
+  const [taskFocus, setTaskFocus] = useState<{
+    course: string;
+    task: string;
+    submission: string;
+  }>();
+  const [lessonFocus, setLessonFocus] = useState<{
+    journal: string;
+    lesson: string;
+  }>();
   const [planningDirty, setPlanningDirty] = useState(false);
   const navigationDialog = useRef<HTMLDialogElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -364,7 +373,9 @@ function WorkspaceScreen({
     )
       return;
     if (next !== view) setPlanningDirty(false);
+    if (next === "courses") setTaskFocus(undefined);
     if (next === "journals") setJournalDate("");
+    if (next === "journals") setLessonFocus(undefined);
     setViewState(next);
     if (navigationDialog.current?.open) navigationDialog.current.close();
     requestAnimationFrame(() => document.getElementById("main")?.focus());
@@ -696,6 +707,7 @@ function WorkspaceScreen({
             <Suspense fallback={<p role="status">{jm.loading}</p>}>
               <CoursesPage
                 scope={workspace.scope.id}
+                initialFocus={taskFocus}
                 csrfToken={csrfToken}
                 onExpired={onExpired}
                 onDirtyChange={setPlanningDirty}
@@ -717,6 +729,8 @@ function WorkspaceScreen({
                 scope={workspace.scope.id}
                 personal={view === "study-profile"}
                 initialDate={journalDate}
+                initialJournalId={lessonFocus?.journal}
+                initialLessonId={lessonFocus?.lesson}
                 onSchedule={() => {
                   setPublicationFocus(undefined);
                   setPublicationGroup("");
@@ -825,6 +839,14 @@ function WorkspaceScreen({
                 onOpenJournalDate={(date) => {
                   setView("journals");
                   setJournalDate(date);
+                }}
+                onOpenTask={(course, task, submission) => {
+                  setView("courses");
+                  setTaskFocus({ course, task, submission });
+                }}
+                onOpenLesson={(journal, lesson) => {
+                  setView("journals");
+                  setLessonFocus({ journal, lesson });
                 }}
                 onExpired={onExpired}
                 onOpenDraft={(id) => {

@@ -18,6 +18,7 @@ import { collectWeek } from "./timetable/pages";
 import { subjectTone } from "./timetable/WeekPanel";
 import { SubjectOverview } from "./SubjectOverview";
 import { portal } from "./locales/portal.kk";
+import { TeacherQueue } from "./TeacherQueue";
 
 export type WorkbenchDestination =
   | "import"
@@ -37,6 +38,8 @@ export function WorkbenchHome({
   onOpenDraft,
   onOpenPublication,
   onOpenJournalDate,
+  onOpenTask,
+  onOpenLesson,
   onExpired,
   onOpenSubject,
 }: {
@@ -49,6 +52,8 @@ export function WorkbenchHome({
     group: string,
   ) => void;
   onOpenJournalDate?: (date: string) => void;
+  onOpenTask?: (course: string, task: string, submission: string) => void;
+  onOpenLesson?: (journal: string, lesson: string) => void;
   onExpired: () => void;
   onOpenSubject?: (key: string) => void;
 }) {
@@ -304,6 +309,18 @@ export function WorkbenchHome({
           ))}
         </nav>
       )}
+      {workspace.role_codes.includes("teacher") &&
+        workspace.permissions.includes("course.manage") &&
+        workspace.permissions.includes("journal.write.own") &&
+        onOpenTask &&
+        onOpenLesson && (
+          <TeacherQueue
+            scope={workspace.scope.id}
+            onExpired={onExpired}
+            onOpenTask={onOpenTask}
+            onOpenLesson={onOpenLesson}
+          />
+        )}
       <div
         className={`home-columns ${!canDraft && !actions.length ? "home-columns--reader" : ""}`}
       >

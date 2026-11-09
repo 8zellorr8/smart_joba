@@ -19,6 +19,7 @@ from .publication_http import publication_router
 from .journal_http import journal_router
 from .course_http import course_router
 from .task_http import task_router
+from .teacher_queue_http import teacher_queue_router
 from ..application.course_tasks import CourseTaskService
 from ..application.courses import CourseService, MAX_PDF_BYTES
 from ..application.journal_setup import JournalSetupService
@@ -197,9 +198,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(publication_router(versions, PublicationService(versions)))
     app.include_router(journal_router(JournalSetupService(session_factory, auth)))
     courses = CourseService(session_factory, auth)
+    tasks = CourseTaskService(courses)
+    lessons = JournalLessonService(session_factory, auth)
     app.include_router(course_router(courses))
-    app.include_router(task_router(CourseTaskService(courses)))
-    app.include_router(lesson_router(JournalLessonService(session_factory, auth)))
+    app.include_router(task_router(tasks))
+    app.include_router(lesson_router(lessons))
+    app.include_router(teacher_queue_router(tasks, lessons))
     app.include_router(student_router(StudentResultsService(session_factory, auth)))
 
     dist = ROOT / "frontend" / "dist"

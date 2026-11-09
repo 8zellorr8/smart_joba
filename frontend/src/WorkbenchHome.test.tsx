@@ -11,6 +11,9 @@ import { portal } from "./locales/portal.kk";
 
 // The subject projection has separate pagination, privacy and navigation tests.
 vi.mock("./SubjectOverview", () => ({ SubjectOverview: () => null }));
+vi.mock("./TeacherQueue", () => ({
+  TeacherQueue: () => <p>Teacher queue marker</p>,
+}));
 
 vi.mock("./publication-api", () => ({
   publicationApi: { list: vi.fn(), get: vi.fn() },
@@ -80,6 +83,28 @@ const setup = (props = {}) =>
       {...props}
     />,
   );
+
+it("shows the review queue only to a teacher with both permissions", () => {
+  const callbacks = { onOpenTask: vi.fn(), onOpenLesson: vi.fn() };
+  const teacher: Workspace = {
+    ...workspace,
+    role_codes: ["teacher"],
+    permissions: ["course.manage", "journal.write.own"],
+  };
+  const view = setup({ ...callbacks, workspace: teacher });
+  expect(screen.getByText("Teacher queue marker")).toBeInTheDocument();
+  view.rerender(
+    <WorkbenchHome
+      workspace={{ ...teacher, permissions: ["course.manage"] }}
+      onNavigate={vi.fn()}
+      onOpenDraft={vi.fn()}
+      onOpenPublication={vi.fn()}
+      onExpired={vi.fn()}
+      {...callbacks}
+    />,
+  );
+  expect(screen.queryByText("Teacher queue marker")).not.toBeInTheDocument();
+});
 
 it("opens the student's own results and courses through the home shortcuts", async () => {
   const navigate = vi.fn();

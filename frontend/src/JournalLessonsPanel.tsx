@@ -25,6 +25,7 @@ export function JournalLessonsPanel({
   onDirtyChange,
   onClose,
   initialDate = "",
+  initialLessonId,
 }: {
   scope: string;
   journal: Journal;
@@ -33,6 +34,7 @@ export function JournalLessonsPanel({
   onDirtyChange: (dirty: boolean) => void;
   onClose: () => void;
   initialDate?: string;
+  initialLessonId?: string;
 }) {
   const [page, setPage] = useState<LessonPage | null>(null);
   const [selectedDate, setSelectedDate] = useState(initialDate);
@@ -174,11 +176,42 @@ export function JournalLessonsPanel({
   }
   useEffect(() => {
     setSelectedDate(initialDate);
-    void loadList(0, initialDate);
+    if (initialLessonId) void openInitial(initialLessonId);
+    else void loadList(0, initialDate);
     return () => {
       ++epoch.current;
     };
-  }, [scope, journal.id, initialDate]);
+  }, [scope, journal.id, initialDate, initialLessonId]);
+  async function openInitial(id: string) {
+    const request = ++epoch.current;
+    setLoading(true);
+    setError("");
+    setPage(null);
+    try {
+      const data = await lessonApi.get(scope, id);
+      if (data.journal_id !== journal.id)
+        throw new ApiError(403, "ACCESS_DENIED");
+      if (epoch.current === request) {
+        setSelectedDate(data.source.date);
+        setSelected({
+          lesson_id: id,
+          publication_id: data.source.publication_id,
+          event_id: data.source.event_id,
+          date: data.source.date,
+          start: data.source.start,
+          end: data.source.end,
+          recorded: true,
+          needs_mapping: false,
+          blocked: null,
+        });
+        install(data);
+      }
+    } catch (e) {
+      if (epoch.current === request) fail(e);
+    } finally {
+      if (epoch.current === request) setLoading(false);
+    }
+  }
   function canLeave() {
     return !command.busy && (!changeRef.current || window.confirm(jm.leave));
   }

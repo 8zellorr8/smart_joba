@@ -40,6 +40,33 @@ def review(client, task, submission, **extra):
     return client.post(task["url"] + f"/submissions/{submission}/reviews", headers=csrf(client), json=body)
 
 
+def test_teacher_queue_shows_only_unreviewed_authorized_submissions(client, app, task):
+    queue = task["course"].split("/courses/")[0] + "/teacher/queue/submissions"
+    assert client.get(queue).json() == {"items": [], "next": None}
+    second_task = {**task["body"], "id": str(uuid.uuid4()), "title": "Демо задание 2"}
+    assert client.post(task["course"] + "/tasks", headers=csrf(client), json=second_task).status_code == 200
+    other = {"url": task["course"] + "/tasks/" + second_task["id"]}
+    login(client, app, "student")
+    assert client.get(queue).status_code == 403
+    first_id = submit(client, task).json()["id"]
+    second_id = submit(client, other).json()["id"]
+    login(client, app, "teacher")
+    first = client.get(queue, params={"limit": 1}).json()
+    assert len(first["items"]) == 1 and first["next"]
+    later = client.get(queue, params={"limit": 1, "after_at": first["next"]["at"],
+                                     "after_id": first["next"]["id"]}).json()
+    assert {first["items"][0]["id"], later["items"][0]["id"]} == {first_id, second_id}
+    assert later["next"] is None
+    assert client.get(queue, params={"after_id": first_id}).status_code == 422
+    assert review(client, task, first_id, grade=0).status_code == 200
+    assert [row["id"] for row in client.get(queue).json()["items"]] == [second_id]
+    with app.state.session_factory.begin() as db:
+        db.execute(update(JournalAssignment).values(active=False))
+    assert client.get(queue).json()["items"] == []
+    login(client, app, "admin")
+    assert client.get(queue).status_code == 403
+
+
 def test_task_submit_return_resubmit_grade_and_history(client, app, task):
     login(client, app, "student")
     assert client.get(task["url"]).json()["attempts"] == []

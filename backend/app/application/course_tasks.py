@@ -1,8 +1,9 @@
 """Task condition revisions, submissions and reviews are append-only."""
 import uuid
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import aliased
 from .auth import ApiError
 from ..infrastructure.course_models import CourseTopic
@@ -139,6 +140,30 @@ class CourseTaskService:
             rows = db.scalars(query.order_by(CourseSubmission.student_id).limit(26)).all()
             return {"items": [self.submission_dto(db, a, task, True) for a in rows[:25]],
                     "next": str(rows[24].student_id) if len(rows) > 25 else None}
+
+    def pending(self, token, scope, after_at: datetime | None = None, after_id: uuid.UUID | None = None, limit=25):
+        if (after_at is None) != (after_id is None):
+            raise ApiError("VALIDATION_ERROR", 422)
+        with self.factory.begin() as db:
+            self.courses.catalog.access(db, token, scope, "course.manage")
+            _, visible = self.courses.accessible(db, token, scope)
+            visible = visible.subquery()
+            reviewed = select(CourseReview.id).where(CourseReview.submission_id == CourseSubmission.id).exists()
+            query = (select(CourseSubmission.id, CourseSubmission.task_id, CourseSubmission.student_name,
+                            CourseSubmission.submitted_at, CourseSubmission.attempt, CourseTaskRevision.title,
+                            visible.c.id.label("course_id"), visible.c.subject, visible.c.group,
+                            visible.c.data_kind, visible.c.timezone)
+                .join(CourseTask, CourseTask.id == CourseSubmission.task_id)
+                .join(CourseTopic, CourseTopic.id == CourseTask.topic_id)
+                .join(visible, visible.c.id == CourseTopic.journal_id)
+                .join(CourseTaskRevision, CourseTaskRevision.id == CourseSubmission.task_revision_id)
+                .where(visible.c.can_manage.is_(True), visible.c.opened.is_(True), ~reviewed))
+            if after_at:
+                query = query.where(or_(CourseSubmission.submitted_at > after_at,
+                    and_(CourseSubmission.submitted_at == after_at, CourseSubmission.id > after_id)))
+            rows = db.execute(query.order_by(CourseSubmission.submitted_at, CourseSubmission.id).limit(limit + 1)).mappings().all()
+            items = [dict(row) for row in rows[:limit]]
+            return {"items": items, "next": {"at": rows[limit - 1]["submitted_at"], "id": rows[limit - 1]["id"]} if len(rows) > limit else None}
 
     def student_attempts(self, token, scope, course, task_id, submission_id):
         with self.factory.begin() as db:

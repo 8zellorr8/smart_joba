@@ -176,6 +176,7 @@ type Props = {
   csrfToken: string;
   onExpired: () => void;
   onDirtyChange?: (dirty: boolean) => void;
+  initialFocus?: { course: string; task: string; submission: string };
 };
 
 export function CoursesPage(props: Props) {
@@ -187,6 +188,7 @@ function CourseWorkspace({
   csrfToken,
   onExpired,
   onDirtyChange,
+  initialFocus,
 }: Props) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [search, setSearch] = useState("");
@@ -238,6 +240,10 @@ function CourseWorkspace({
     }
   }
   const mounted = useRef(false);
+  const queuedFocus = useRef(initialFocus);
+  const [focusedSubmission, setFocusedSubmission] = useState(
+    initialFocus?.submission,
+  );
   const expired = useRef(onExpired);
   expired.current = onExpired;
 
@@ -276,8 +282,15 @@ function CourseWorkspace({
     setCourses([]);
     courseApi
       .list(scope)
-      .then((data) => {
-        if (active) setCourses(data);
+      .then(async (data) => {
+        if (!active) return;
+        setCourses(data);
+        const focus = queuedFocus.current;
+        queuedFocus.current = undefined;
+        if (focus) {
+          await loadCourse(focus.course);
+          if (active) setActiveTask(focus.task);
+        }
       })
       .catch((e) => {
         if (active) failed(e);
@@ -333,6 +346,7 @@ function CourseWorkspace({
   }
   function back() {
     if (!discard()) return;
+    setFocusedSubmission(undefined);
     setActiveTask(null);
     setUnsaved(false);
     setDetail(null);
@@ -401,11 +415,15 @@ function CourseWorkspace({
           scope={scope}
           course={detail.course.id}
           task={activeTask}
+          initialSubmissionId={
+            activeTask === initialFocus?.task ? focusedSubmission : undefined
+          }
           csrfToken={csrfToken}
           onDenied={failed}
           onDirtyChange={setUnsaved}
           onBack={() => {
             if (discard()) {
+              setFocusedSubmission(undefined);
               setActiveTask(null);
               setUnsaved(false);
             }

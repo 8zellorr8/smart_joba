@@ -20,6 +20,8 @@ type Props = {
   onDirtyChange?: (dirty: boolean) => void;
   onSchedule?: () => void;
   initialDate?: string;
+  initialJournalId?: string;
+  initialLessonId?: string;
 };
 
 export function JournalReadPage(props: Props) {
@@ -40,15 +42,21 @@ function StaffJournalReadPage({
   csrfToken = "",
   onDirtyChange = () => {},
   initialDate = "",
+  initialJournalId,
+  initialLessonId,
 }: {
   scope: string;
   onExpired: () => void;
   csrfToken?: string;
   onDirtyChange?: (dirty: boolean) => void;
   initialDate?: string;
+  initialJournalId?: string;
+  initialLessonId?: string;
 }) {
   const [catalog, setCatalog] = useState<Journal[] | null>(null);
   const [selected, setSelected] = useState<Journal | null>(null);
+  const queuedJournal = useRef(initialJournalId);
+  const [focusedLesson, setFocusedLesson] = useState(initialLessonId);
   const [lessonMode, setLessonMode] = useState(false);
   const [date, setDate] = useState("");
   const [roster, setRoster] = useState<Roster | null>(null);
@@ -75,7 +83,17 @@ function StaffJournalReadPage({
     setRoster(null);
     setError("");
     const promise = journalApi.journals(scope).then((data) => {
-      if (epoch.current === id) setCatalog(data.journals);
+      if (epoch.current === id) {
+        setCatalog(data.journals);
+        const focus = data.journals.find(
+          (item) => item.id === queuedJournal.current,
+        );
+        queuedJournal.current = undefined;
+        if (focus) {
+          setSelected(focus);
+          setLessonMode(true);
+        }
+      }
     });
     void promise.catch((e: unknown) => {
       if (epoch.current === id) failed(e);
@@ -83,7 +101,7 @@ function StaffJournalReadPage({
     return () => {
       epoch.current++;
     };
-  }, [scope, visit]);
+  }, [scope, visit, initialJournalId]);
   async function showRoster() {
     if (!selected || !date) return;
     const id = ++epoch.current;
@@ -153,6 +171,7 @@ function StaffJournalReadPage({
                     ++epoch.current;
                     setSelected(j);
                     setLessonMode(true);
+                    setFocusedLesson(undefined);
                     setError("");
                     setRoster(null);
                   }}
@@ -184,10 +203,12 @@ function StaffJournalReadPage({
           scope={scope}
           journal={selected}
           initialDate={initialDate}
+          initialLessonId={focusedLesson}
           csrfToken={csrfToken}
           onExpired={onExpired}
           onDirtyChange={onDirtyChange}
           onClose={() => {
+            setFocusedLesson(undefined);
             setSelected(null);
             setLessonMode(false);
           }}

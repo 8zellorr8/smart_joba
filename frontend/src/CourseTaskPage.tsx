@@ -325,6 +325,7 @@ export function CourseTaskPage({
   scope,
   course,
   task,
+  initialSubmissionId,
   csrfToken,
   onDenied,
   onBack,
@@ -333,6 +334,7 @@ export function CourseTaskPage({
   scope: string;
   course: string;
   task: string;
+  initialSubmissionId?: string;
   csrfToken: string;
   onDenied: (e: ApiError) => void;
   onBack: () => void;
@@ -381,11 +383,15 @@ export function CourseTaskPage({
     const list = result.can_manage
       ? await taskApi.submissions(scope, course, task)
       : null;
+    const focused =
+      result.can_manage && initialSubmissionId
+        ? await taskApi.attempts(scope, course, task, initialSubmissionId)
+        : null;
     if (!active.current) return;
     setData(result);
     setRows(list?.items ?? []);
     setNext(list?.next ?? null);
-    setSelected(null);
+    setSelected(focused?.attempts ?? null);
     setStale(false);
     change(false);
   }
@@ -402,7 +408,7 @@ export function CourseTaskPage({
       active.current = false;
       dirtyHandler.current(false);
     };
-  }, [scope, course, task]);
+  }, [scope, course, task, initialSubmissionId]);
   async function run(operation: () => Promise<unknown>, save = false) {
     if (busy) return;
     setBusy(true);

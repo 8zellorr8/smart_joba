@@ -196,6 +196,22 @@ it("starts with the date selected from the agenda", async () => {
     "2026-09-01",
   );
 });
+it("opens the exact recorded lesson selected from the teacher queue", async () => {
+  render(
+    <JournalLessonsPanel
+      scope="s"
+      journal={journal}
+      csrfToken="csrf"
+      initialLessonId="lesson"
+      onExpired={vi.fn()}
+      onDirtyChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  expect(await screen.findByLabelText(lm.topic)).toHaveValue("Тақырып");
+  expect(lessonApi.get).toHaveBeenCalledWith("s", "lesson");
+  expect(lessonApi.list).not.toHaveBeenCalled();
+});
 function fill() {
   fireEvent.change(screen.getByLabelText(lm.topic), {
     target: { value: "Тақырып" },
