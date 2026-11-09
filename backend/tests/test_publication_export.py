@@ -27,7 +27,9 @@ def test_export_uses_selected_publication_and_every_filtered_row(client, app):
     assert filtered["total"] > 1 and len(filtered["events"]) == 1
     result = client.get(f"/api/publications/{first['publication_id']}/export.xlsx",
         params={"view": "group", "resource_id": group["id"]})
+    assert result.headers["content-disposition"] == f'attachment; filename="oqujol-{first["publication_id"]}.xlsx"'
     sheet = workbook(result).active
+    assert sheet["A1"].value == "Оқужол · жарияланған сабақ кестесі"
     assert sheet["B2"].value == first["version_number"]
     assert sheet["B3"].value == first["publication_id"]
     assert sheet["D7"].value == group["name"]

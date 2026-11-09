@@ -290,7 +290,7 @@ export function PublicationsPage({
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement("a");
                   link.href = url;
-                  link.download = `smart-joba-${value.publication_id}.xlsx`;
+                  link.download = `oqujol-${value.publication_id}.xlsx`;
                   link.click();
                   setTimeout(() => URL.revokeObjectURL(url), 1000);
                 })

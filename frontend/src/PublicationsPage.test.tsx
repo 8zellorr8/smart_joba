@@ -72,6 +72,9 @@ it("downloads the selected publication with applied filters, not the current pag
   await user.click(screen.getByRole("button", { name: vm.show }));
   await user.click(screen.getByRole("button", { name: vm.exportXlsx }));
   await waitFor(() => expect(click).toHaveBeenCalledOnce());
+  expect((click.mock.contexts[0] as HTMLAnchorElement).download).toBe(
+    "oqujol-publication.xlsx",
+  );
   expect(publicationApi.export).toHaveBeenCalledWith("publication", {
     start: "2026-09-01",
     end: "2026-09-08",

@@ -93,7 +93,7 @@ def publication_router(versions, publications):
         content = publications.export(token(request), publication_id, start.isoformat() if start else None,
             end.isoformat() if end else None, view, str(resource_id) if resource_id else None)
         return Response(content, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f'attachment; filename="smart-joba-{publication_id}.xlsx"',
+            headers={"Content-Disposition": f'attachment; filename="oqujol-{publication_id}.xlsx"',
                      "Cache-Control": "no-store"})
 
     return router

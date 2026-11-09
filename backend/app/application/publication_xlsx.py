@@ -19,7 +19,7 @@ def build_workbook(view, start, end, resource_kind, resource_id):
                 cell.data_type = "s"
                 cell.number_format = "@"
 
-    row(["Smart Joba · жарияланған сабақ кестесі"])
+    row(["Оқужол · жарияланған сабақ кестесі"])
     row(["Нұсқа", view["version_number"], "Мазмұн редакциясы", view["revision"]])
     row(["Жарияланым ID", view["publication_id"], "Жарияланған уақыты", view["published_at"]])
     row(["Жұмыс аймағы", view["scope_name"], "Оқу жылы", view["academic_year"]])

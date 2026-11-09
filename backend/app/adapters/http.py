@@ -56,7 +56,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
     engine, session_factory = create_database(settings.database_url)
     auth = AuthService(session_factory, settings)
-    app = FastAPI(title="Smart Joba API", version="0.1.0", docs_url=None, openapi_url="/api/openapi.json", redoc_url=None)
+    app = FastAPI(title="Оқужол API", version="0.1.0", docs_url=None, openapi_url="/api/openapi.json", redoc_url=None)
     app.state.settings, app.state.engine = settings, engine
     app.state.session_factory, app.state.auth = session_factory, auth
     app.add_middleware(CORSMiddleware, allow_origins=settings.origins, allow_credentials=True,

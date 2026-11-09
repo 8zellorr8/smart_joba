@@ -1,15 +1,15 @@
 /** Locale resources are separate from college data; RU/EN are later queues. */
 export const kk = {
-  appName: "Smart Joba",
+  appName: "Оқужол",
   appDescription: "Колледждің оқу порталы",
   language: "Қазақша",
   skipLink: "Негізгі мазмұнға өту",
   local: "Жергілікті орта",
   localHint: "Осы құрылғыдағы жұмыс кеңістігі",
-  loginEyebrow: "SMART JOBA · ОҚУ ПОРТАЛЫ",
+  loginEyebrow: "ОҚУЖОЛ · ОҚУ ПОРТАЛЫ",
   loginTitle: "Білімге бастайтын орта.",
   loginDescription:
-    "Курстар, тапсырмалар және сабақ кестесі — бір жерде. Оқу күніңізді Smart Joba-мен жоспарлаңыз.",
+    "Курстар, тапсырмалар және сабақ кестесі — бір жерде. Оқу күніңізді Оқужолмен жоспарлаңыз.",
   featureData: "Оқуға қажеттінің бәрі",
   featureDataBody: "Курс материалдары, тапсырмалар және оқытушының пікірі.",
   featureSchedule: "Сабақ кестесі",
