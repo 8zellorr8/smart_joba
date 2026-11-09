@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import select, text, update
 from sqlalchemy.exc import IntegrityError
 
-from backend.app.infrastructure.models import Group, RoleGrant, Scope, TeachingDemand, User
+from backend.app.infrastructure.models import Group, ImportContext, RoleGrant, Scope, TeachingDemand, User
 from backend.app.infrastructure.journal_models import JournalSetupChange, JournalSetupOperation, Student, StudentMembership
 from backend.app.application.journal_setup import JournalSetupService
 from .conftest import csrf, login
@@ -37,6 +37,14 @@ def journal(client, app):
 
 def member(j, student, **changes):
     return {"kind": "save_membership", "student_id": student, "context_id": j["demand"]["context_id"], "group_id": j["demand"]["group_id"], "start": "2026-09-01", "end": "2027-07-01", "source": "Synthetic confirmed roster", "confirmed": True, **changes}
+
+
+def roster(j, **changes):
+    names = changes.pop("students", ["SYNTHETIC roster student A", "SYNTHETIC roster student B"])
+    students = [name if isinstance(name, dict) else {"display_name": name, "student_id": None} for name in names]
+    return {"kind": "import_roster", "context_id": j["demand"]["context_id"], "group_id": j["demand"]["group_id"],
+            "start": "2026-09-01", "end": "2027-07-01", "source": "SYNTHETIC confirmed roster file",
+            "confirmed": True, "students": students, **changes}
 
 
 def assignment(j, **changes):
@@ -90,6 +98,111 @@ def test_overlapping_membership_and_update_reason(journal):
     assert j["send"](member(j, student)).json()["error"]["code"] == "JOURNAL_MEMBERSHIP_OVERLAP"
     assert j["send"](member(j, student, id=first["id"], end="2026-10-01")).status_code == 422
     assert j["send"](member(j, student, id=first["id"], end="2026-10-01", reason="Synthetic transfer")).status_code == 200
+
+
+def test_roster_import_creates_confirmed_memberships_atomically_and_is_idempotent(client, app, journal):
+    j = journal
+    same_name_profile = j["student"]("SYNTHETIC roster student A")
+    body = roster(j, students=["SYNTHETIC roster student A", "SYNTHETIC roster student B", "SYNTHETIC roster student C"])
+    response = j["send"](body)
+    assert response.status_code == 200, response.text
+    receipt = response.json()
+    assert receipt["kind"] == "import_roster" and receipt["count"] == 3
+    data = client.get(j["root"] + "/setup").json()
+    history = client.get(j["root"] + "/history").json()["items"][0]
+    assert history["action"] == "import_roster" and len(history["after"]["students"]) == 3
+    imported_ids = {student["id"] for student in history["after"]["students"]}
+    imported = [student for student in data["students"] if student["id"] in imported_ids]
+    assert len(imported) == 3 and all(student["data_kind"] == "synthetic" for student in imported)
+    assert len([student for student in imported if student["display_name"] == "SYNTHETIC roster student A"]) == 1
+    assert len([student for student in data["students"] if student["display_name"] == "SYNTHETIC roster student A"]) == 2
+    assert same_name_profile not in {student["id"] for student in imported}
+    memberships = [item for item in data["memberships"] if item["student_id"] in {s["id"] for s in imported}]
+    assert len(memberships) == 3
+    assert {(item["group_id"], item["start"], item["end"], item["source"]) for item in memberships} == {
+        (j["demand"]["group_id"], "2026-09-01", "2027-07-01", "SYNTHETIC confirmed roster file")
+    }
+    assert data["bindings"] == []
+    repeated = j["send"](body)
+    assert repeated.status_code == 200 and repeated.json() == receipt
+    repeated_data = client.get(j["root"] + "/setup").json()
+    assert {s["id"] for s in repeated_data["students"] if s["display_name"].startswith("SYNTHETIC roster")} == imported_ids | {same_name_profile}
+
+
+@pytest.mark.parametrize("changes,code", [
+    ({"confirmed": False}, "JOURNAL_CONFIRM_REQUIRED"),
+    ({"start": "2027-07-01", "end": "2026-09-01"}, "JOURNAL_INTERVAL_INVALID"),
+    ({"students": ["SYNTHETIC valid", "  "]}, "JOURNAL_REQUIRED"),
+    ({"students": ["S" * 161]}, "JOURNAL_NAME_TOO_LONG"),
+])
+def test_roster_import_rejects_invalid_batch_without_partial_writes(journal, client, changes, code):
+    j = journal
+    revision = client.get(j["root"] + "/setup").json()["revision"]
+    response = j["send"](roster(j, **changes))
+    assert response.status_code == 422 and response.json()["error"]["code"] == code
+    data = client.get(j["root"] + "/setup").json()
+    assert data["revision"] == revision and data["students"] == [] and data["memberships"] == []
+
+
+def test_roster_import_can_record_membership_in_legacy_context(client, app, journal):
+    j = journal
+    with app.state.session_factory.begin() as db:
+        context = ImportContext(scope_id=uuid.UUID(j["scope"]), academic_year="2025-2026", data_kind="synthetic")
+        group = Group(scope_id=uuid.UUID(j["scope"]), code="SYNTHETIC-OLD-GROUP", data_kind="synthetic")
+        db.add_all([context, group])
+        db.flush()
+        context_id, group_id = str(context.id), str(group.id)
+    legacy_import = j["send"](roster(j, context_id=context_id, group_id=group_id,
+                                    start="2024-09-01", end="2025-09-01",
+                                    students=["SYNTHETIC legacy roster student"]))
+    assert legacy_import.status_code == 200, legacy_import.text
+    legacy_membership = next(item for item in client.get(j["root"] + "/setup").json()["memberships"]
+                             if item["student_id"] == legacy_import.json()["id"])
+    assert legacy_membership["academic_year"] == "2025-2026"
+    assert legacy_membership["group"] == "SYNTHETIC-OLD-GROUP"
+    returning_student = j["student"]("SYNTHETIC returning student")
+    old_membership = j["send"](member(j, returning_student, context_id=context_id, group_id=group_id,
+                                        start="2025-09-01", end="2026-09-01"))
+    assert old_membership.status_code == 200
+    response = j["send"](roster(j, context_id=j["demand"]["context_id"], group_id=j["demand"]["group_id"],
+                                students=[{"display_name": "SYNTHETIC returning student", "student_id": returning_student}]))
+    assert response.status_code == 200, response.text
+    data = client.get(j["root"] + "/setup").json()
+    memberships = [item for item in data["memberships"] if item["student_id"] == returning_student]
+    current_group = next(group["code"] for group in j["data"]["groups"] if group["id"] == j["demand"]["group_id"])
+    assert {(item["academic_year"], item["group"]) for item in memberships} == {
+        ("2025-2026", "SYNTHETIC-OLD-GROUP"), ("2026-2027", current_group)
+    }
+    assert len([student for student in data["students"] if student["display_name"] == "SYNTHETIC returning student"]) == 1
+
+
+def test_roster_import_requires_explicit_existing_profile_selection(journal, client):
+    j = journal
+    student_id = j["student"]("SYNTHETIC returning student")
+    revision = client.get(j["root"] + "/setup").json()["revision"]
+    repeated_id = roster(j, students=[
+        {"display_name": "SYNTHETIC returning student", "student_id": student_id},
+        {"display_name": "SYNTHETIC returning student", "student_id": student_id},
+    ])
+    response = j["send"](repeated_id)
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "JOURNAL_ROSTER_DUPLICATE_STUDENT"
+    mismatch = j["send"](roster(j, students=[
+        {"display_name": "SYNTHETIC different name", "student_id": student_id},
+    ]))
+    assert mismatch.status_code == 422
+    assert mismatch.json()["error"]["code"] == "JOURNAL_ROSTER_PROFILE_NAME_MISMATCH"
+    data = client.get(j["root"] + "/setup").json()
+    assert data["revision"] == revision and data["memberships"] == []
+
+
+def test_roster_import_remains_admin_only(client, app, journal):
+    j = journal
+    login(client, app, "teacher")
+    response = client.post(j["root"] + "/commands", headers=csrf(client), json={
+        "operation_id": str(uuid.uuid4()), "expected_revision": 1, "command": roster(j),
+    })
+    assert response.status_code == 403
 
 
 def test_ac_jrn009_explicit_student_binding_own_projection_and_revocation(client, app, journal):

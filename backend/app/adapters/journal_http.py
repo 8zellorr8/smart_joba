@@ -39,6 +39,20 @@ class Membership(Evidence):
     end: date
 
 
+class RosterStudent(Contract):
+    display_name: str = Field(min_length=1, max_length=200)
+    student_id: uuid.UUID | None = None
+
+
+class RosterImport(Evidence):
+    kind: Literal["import_roster"]
+    context_id: uuid.UUID
+    group_id: uuid.UUID
+    start: date
+    end: date
+    students: list[RosterStudent] = Field(min_length=1, max_length=200)
+
+
 class Binding(Evidence):
     kind: Literal["bind_account"]
     user_id: uuid.UUID
@@ -69,7 +83,7 @@ class Assignment(Evidence):
 class SetupCommand(Contract):
     operation_id: uuid.UUID
     expected_revision: int = Field(strict=True, ge=0)
-    command: Annotated[Union[CreateStudent, RenameStudent, Membership, Binding, SyncGroup, CreateJournal, Assignment], Field(discriminator="kind")]
+    command: Annotated[Union[CreateStudent, RenameStudent, Membership, RosterImport, Binding, SyncGroup, CreateJournal, Assignment], Field(discriminator="kind")]
 
 
 def journal_router(service):

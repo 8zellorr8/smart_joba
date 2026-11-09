@@ -7,6 +7,7 @@ import { jm } from "./locales/journal.kk";
 import { PageHeading } from "./ui/PageHeading";
 import { demoName } from "./demo-labels";
 import { JournalLessonAdmin } from "./JournalLessonAdmin";
+import { StudentRosterImport } from "./StudentRosterImport";
 import { lm } from "./locales/lesson.kk";
 import "./journal.css";
 
@@ -587,6 +588,16 @@ export function JournalSetupPage({
                 )}
           </div>
           {edit === "sync" && <p className="journal-note">{jm.syncHelp}</p>}
+          <StudentRosterImport
+            data={data}
+            busy={busy}
+            blocked={stale || Boolean(pending)}
+            onDirty={() => {
+              changeDirty(true);
+              setSaved(false);
+            }}
+            onImport={(command) => save(command)}
+          />
         </>
       )}
       {tab === "bindings" && (
