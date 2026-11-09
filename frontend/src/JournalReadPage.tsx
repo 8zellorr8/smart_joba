@@ -9,6 +9,7 @@ import { PageHeading } from "./ui/PageHeading";
 import { Icon } from "./icons";
 import { JournalLessonsPanel } from "./JournalLessonsPanel";
 import { lm } from "./locales/lesson.kk";
+import type { LessonSummary } from "./lesson-api";
 import "./journal.css";
 import { StudentResultsPage } from "./StudentResultsPage";
 
@@ -19,6 +20,10 @@ type Props = {
   csrfToken?: string;
   onDirtyChange?: (dirty: boolean) => void;
   onSchedule?: () => void;
+  initialDate?: string;
+  initialJournalId?: string;
+  initialLessonId?: string;
+  initialEvent?: LessonSummary;
 };
 
 export function JournalReadPage(props: Props) {
@@ -38,14 +43,25 @@ function StaffJournalReadPage({
   onExpired,
   csrfToken = "",
   onDirtyChange = () => {},
+  initialDate = "",
+  initialJournalId,
+  initialLessonId,
+  initialEvent,
 }: {
   scope: string;
   onExpired: () => void;
   csrfToken?: string;
   onDirtyChange?: (dirty: boolean) => void;
+  initialDate?: string;
+  initialJournalId?: string;
+  initialLessonId?: string;
+  initialEvent?: LessonSummary;
 }) {
   const [catalog, setCatalog] = useState<Journal[] | null>(null);
   const [selected, setSelected] = useState<Journal | null>(null);
+  const queuedJournal = useRef(initialJournalId);
+  const [focusedLesson, setFocusedLesson] = useState(initialLessonId);
+  const [focusedEvent, setFocusedEvent] = useState(initialEvent);
   const [lessonMode, setLessonMode] = useState(false);
   const [date, setDate] = useState("");
   const [roster, setRoster] = useState<Roster | null>(null);
@@ -72,7 +88,17 @@ function StaffJournalReadPage({
     setRoster(null);
     setError("");
     const promise = journalApi.journals(scope).then((data) => {
-      if (epoch.current === id) setCatalog(data.journals);
+      if (epoch.current === id) {
+        setCatalog(data.journals);
+        const focus = data.journals.find(
+          (item) => item.id === queuedJournal.current,
+        );
+        queuedJournal.current = undefined;
+        if (focus) {
+          setSelected(focus);
+          setLessonMode(true);
+        }
+      }
     });
     void promise.catch((e: unknown) => {
       if (epoch.current === id) failed(e);
@@ -80,7 +106,7 @@ function StaffJournalReadPage({
     return () => {
       epoch.current++;
     };
-  }, [scope, visit]);
+  }, [scope, visit, initialJournalId]);
   async function showRoster() {
     if (!selected || !date) return;
     const id = ++epoch.current;
@@ -150,6 +176,8 @@ function StaffJournalReadPage({
                     ++epoch.current;
                     setSelected(j);
                     setLessonMode(true);
+                    setFocusedLesson(undefined);
+                    setFocusedEvent(undefined);
                     setError("");
                     setRoster(null);
                   }}
@@ -180,10 +208,15 @@ function StaffJournalReadPage({
           key={`${scope}-${selected.id}`}
           scope={scope}
           journal={selected}
+          initialDate={initialDate}
+          initialLessonId={focusedLesson}
+          initialEvent={focusedEvent}
           csrfToken={csrfToken}
           onExpired={onExpired}
           onDirtyChange={onDirtyChange}
           onClose={() => {
+            setFocusedLesson(undefined);
+            setFocusedEvent(undefined);
             setSelected(null);
             setLessonMode(false);
           }}

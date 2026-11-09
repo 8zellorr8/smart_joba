@@ -85,6 +85,71 @@ def get(client, e, saved):
     return client.get(e["root"] + f"/lessons/{saved['lesson_id']}")
 
 
+def test_teacher_filters_lessons_by_date_before_pagination(client, app, lesson_env):
+    e = lesson_env
+    path = e["root"] + f"/journals/{e['journal_id']}/lessons"
+    target = e["event"]["date"]
+    first = client.get(path, params={"on": target, "limit": 1})
+    assert first.status_code == 200
+    assert first.json()["total"] >= 1
+    assert all(row["date"] == target for row in first.json()["items"])
+    next_page = client.get(path, params={"on": target, "offset": 1, "limit": 1}).json()
+    assert next_page["total"] == first.json()["total"]
+    assert all(row["date"] == target for row in next_page["items"])
+    assert client.get(path, params={"on": "2030-01-01"}).json()["total"] == 0
+    assert client.get(path, params={"on": "not-a-date"}).status_code == 422
+
+    saved = record(client, e)
+    after = client.get(path, params={"on": target}).json()
+    assert sum(row["lesson_id"] == saved["lesson_id"] for row in after["items"]) == 1
+    assert after["total"] == first.json()["total"]
+    login(client, app, "student")
+    assert client.get(path, params={"on": target}).status_code == 403
+
+
+def test_teacher_queue_tracks_only_active_unmarked_attendance(client, app, lesson_env):
+    e = lesson_env
+    queue = e["root"].split("/journal")[0] + "/teacher/queue/attendance"
+    assert client.get(queue).json() == {"items": [], "next": None}
+    saved = record(client, e, attendance=[{"student_id": e["students"][0], "value": "present"}])
+    result = client.get(queue).json()
+    assert len(result["items"]) == 1
+    assert result["items"][0]["id"] == saved["lesson_id"]
+    assert result["items"][0]["missing"] == 1
+    assert client.get(queue, params={"after_id": saved["lesson_id"]}).status_code == 422
+    with app.state.session_factory.begin() as db:
+        db.execute(update(JournalAssignment).values(active=False))
+    assert client.get(queue).json()["items"] == []
+    with app.state.session_factory.begin() as db:
+        db.execute(update(JournalAssignment).values(active=True))
+    changed = modify(client, e, saved, attendance=[{"student_id": e["students"][1], "value": "present"}], reason="Complete marks")
+    assert send(client, e, changed).status_code == 200
+    assert client.get(queue).json()["items"] == []
+    login(client, app, "student")
+    assert client.get(queue).status_code == 403
+
+
+def test_teacher_opens_exact_event_from_agenda_with_current_assignment(client, app, lesson_env):
+    e = lesson_env
+    path = e["root"] + "/event-target"
+    params = {"publication_id": e["pub"]["publication_id"], "event_id": e["event"]["id"]}
+    target = client.get(path, params=params)
+    assert target.status_code == 200
+    assert target.json()["journal_id"] == e["journal_id"]
+    assert target.json()["lesson_id"] is None
+    saved = record(client, e)
+    assert client.get(path, params=params).json()["lesson_id"] == saved["lesson_id"]
+    assert client.get(path, params={**params, "event_id": str(uuid.uuid4())}).status_code == 403
+    assert client.get(path, params={**params, "publication_id": str(uuid.uuid4())}).status_code == 403
+    with app.state.session_factory.begin() as db:
+        db.execute(update(JournalAssignment).values(active=False))
+    assert client.get(path, params=params).status_code == 403
+    login(client, app, "student")
+    assert client.get(path, params=params).status_code == 403
+    login(client, app, "admin")
+    assert client.get(path, params=params).status_code == 403
+
+
 def test_preview_has_no_fact_then_fixed_source_roster_and_null_attendance(client, app, lesson_env):
     e = lesson_env; p = preview(client, e)
     assert p.status_code == 200 and p.json()["recorded"] is False

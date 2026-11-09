@@ -24,6 +24,9 @@ export function JournalLessonsPanel({
   onExpired,
   onDirtyChange,
   onClose,
+  initialDate = "",
+  initialLessonId,
+  initialEvent,
 }: {
   scope: string;
   journal: Journal;
@@ -31,8 +34,12 @@ export function JournalLessonsPanel({
   onExpired: () => void;
   onDirtyChange: (dirty: boolean) => void;
   onClose: () => void;
+  initialDate?: string;
+  initialLessonId?: string;
+  initialEvent?: LessonSummary;
 }) {
   const [page, setPage] = useState<LessonPage | null>(null);
+  const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selected, setSelected] = useState<LessonSummary | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [topic, setTopic] = useState("");
@@ -145,7 +152,7 @@ export function JournalLessonsPanel({
       dirtyHandler.current(false);
     };
   }, []);
-  async function loadList(offset = 0) {
+  async function loadList(offset = 0, onDate = selectedDate) {
     const id = ++epoch.current;
     setLoading(true);
     setError("");
@@ -154,7 +161,14 @@ export function JournalLessonsPanel({
     setHistory(null);
     setPage(null);
     try {
-      const data = await lessonApi.list(scope, journal.id, offset);
+      const data = await lessonApi.list(
+        scope,
+        journal.id,
+        offset,
+        false,
+        false,
+        onDate,
+      );
       if (epoch.current === id) setPage(data);
     } catch (e) {
       if (epoch.current === id) fail(e);
@@ -163,11 +177,46 @@ export function JournalLessonsPanel({
     }
   }
   useEffect(() => {
-    void loadList();
+    setSelectedDate(initialDate);
+    if (initialLessonId) void openInitial(initialLessonId);
+    else if (initialEvent) {
+      setSelectedDate(initialEvent.date);
+      void open(initialEvent, true);
+    } else void loadList(0, initialDate);
     return () => {
       ++epoch.current;
     };
-  }, [scope, journal.id]);
+  }, [scope, journal.id, initialDate, initialLessonId, initialEvent]);
+  async function openInitial(id: string) {
+    const request = ++epoch.current;
+    setLoading(true);
+    setError("");
+    setPage(null);
+    try {
+      const data = await lessonApi.get(scope, id);
+      if (data.journal_id !== journal.id)
+        throw new ApiError(403, "ACCESS_DENIED");
+      if (epoch.current === request) {
+        setSelectedDate(data.source.date);
+        setSelected({
+          lesson_id: id,
+          publication_id: data.source.publication_id,
+          event_id: data.source.event_id,
+          date: data.source.date,
+          start: data.source.start,
+          end: data.source.end,
+          recorded: true,
+          needs_mapping: false,
+          blocked: null,
+        });
+        install(data);
+      }
+    } catch (e) {
+      if (epoch.current === request) fail(e);
+    } finally {
+      if (epoch.current === request) setLoading(false);
+    }
+  }
   function canLeave() {
     return !command.busy && (!changeRef.current || window.confirm(jm.leave));
   }
@@ -272,6 +321,9 @@ export function JournalLessonsPanel({
   }
   const locked =
     command.busy || command.stale || !!command.pending || !lesson?.can_write;
+  const unmarkedCount =
+    lesson?.students.filter((s) => s.active && marks[s.student_id] == null)
+      .length ?? 0;
   const markLabel = (mark: Attendance) => lm.attendanceValues[mark ?? ""];
   const gradeLabel = (value: number | null | undefined) =>
     value == null ? lm.ungraded : String(value);
@@ -370,11 +422,37 @@ export function JournalLessonsPanel({
           </ul>
         </div>
       )}
+      {!selected && (
+        <div className="lesson-toolbar">
+          <label htmlFor="lesson-date">{lm.date}</label>
+          <input
+            id="lesson-date"
+            type="date"
+            value={selectedDate}
+            onChange={(event) => {
+              const date = event.target.value;
+              setSelectedDate(date);
+              void loadList(0, date);
+            }}
+          />
+          {selectedDate && (
+            <button
+              className="button button-quiet"
+              onClick={() => {
+                setSelectedDate("");
+                void loadList(0, "");
+              }}
+            >
+              {lm.clearDate}
+            </button>
+          )}
+        </div>
+      )}
       {!selected && page && (
         <div className="panel">
           <h3>{lm.title}</h3>
           {page.total === 0 ? (
-            <p>{lm.empty}</p>
+            <p>{selectedDate ? lm.emptyDate : lm.empty}</p>
           ) : (
             <>
               <div
@@ -513,6 +591,34 @@ export function JournalLessonsPanel({
                 {command.field === "topic" ? command.error : lm.topicHelp}
               </p>
               <h4>{lesson.recorded ? lm.snapshot : lm.preview}</h4>
+              {lesson.can_write && (
+                <div className="lesson-attendance-fill">
+                  <button
+                    className="button button-quiet"
+                    type="button"
+                    disabled={!unmarkedCount || unmarkedCount > 100}
+                    onClick={() =>
+                      setMarks((old) => {
+                        const next = { ...old };
+                        for (const student of lesson.students)
+                          if (
+                            student.active &&
+                            next[student.student_id] == null
+                          )
+                            next[student.student_id] = "present";
+                        return next;
+                      })
+                    }
+                  >
+                    {lm.fillPresent} · {unmarkedCount}
+                  </button>
+                  <p className="journal-note">
+                    {unmarkedCount > 100
+                      ? lm.fillPresentLimit
+                      : lm.fillPresentHelp}
+                  </p>
+                </div>
+              )}
               <p id="lesson-grade-help" className="journal-note">
                 {lm.gradeHelp}
               </p>

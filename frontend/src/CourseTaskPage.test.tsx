@@ -82,6 +82,29 @@ function mount() {
     onDirtyChange,
   };
 }
+it("opens the submission selected from the teacher queue", async () => {
+  vi.mocked(taskApi.get).mockResolvedValue({ ...base, can_manage: true });
+  render(
+    <CourseTaskPage
+      scope="scope"
+      course="course"
+      task="task"
+      initialSubmissionId="answer"
+      csrfToken="csrf"
+      onDenied={vi.fn()}
+      onBack={vi.fn()}
+      onDirtyChange={vi.fn()}
+    />,
+  );
+  await screen.findByLabelText(tm.grade);
+  expect(taskApi.attempts).toHaveBeenCalledWith(
+    "scope",
+    "course",
+    "task",
+    "answer",
+  );
+  expect(screen.getByText("Hello!")).toBeInTheDocument();
+});
 async function answer() {
   const field = await screen.findByLabelText(tm.answer);
   fireEvent.change(field, { target: { value: "My answer" } });

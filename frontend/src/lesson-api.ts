@@ -89,15 +89,25 @@ type HistoricalStudent = Omit<LessonStudent, "grade"> & {
 const path = (scope: string) =>
   `/api/scopes/${encodeURIComponent(scope)}/journal`;
 export const lessonApi = {
+  eventTarget: (scope: string, publication: string, event: string) =>
+    request<
+      Pick<
+        LessonSummary,
+        "lesson_id" | "publication_id" | "event_id" | "date" | "start" | "end"
+      > & { journal_id: string }
+    >(
+      `${path(scope)}/event-target?publication_id=${encodeURIComponent(publication)}&event_id=${encodeURIComponent(event)}`,
+    ),
   list: (
     scope: string,
     journal: string,
     offset = 0,
     admin = false,
     recordedOnly = false,
+    onDate = "",
   ) =>
     request<LessonPage>(
-      `${path(scope)}/${admin ? "lesson-admin/journals" : "journals"}/${encodeURIComponent(journal)}${admin ? "" : "/lessons"}?offset=${offset}${recordedOnly ? "&recorded_only=true" : ""}`,
+      `${path(scope)}/${admin ? "lesson-admin/journals" : "journals"}/${encodeURIComponent(journal)}${admin ? "" : "/lessons"}?offset=${offset}${recordedOnly ? "&recorded_only=true" : ""}${onDate ? `&on=${encodeURIComponent(onDate)}` : ""}`,
     ),
   preview: (scope: string, journal: string, row: LessonSummary) =>
     request<Lesson>(

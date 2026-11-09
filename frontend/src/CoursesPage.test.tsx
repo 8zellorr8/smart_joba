@@ -99,6 +99,42 @@ async function topicForm() {
     target: { value: "New topic" },
   });
 }
+it("opens a queued submission once and lets the teacher return to the course list", async () => {
+  vi.mocked(taskApi.submissions).mockResolvedValue({ items: [], next: null });
+  vi.mocked(taskApi.attempts).mockResolvedValue({
+    attempts: [
+      {
+        id: "answer",
+        student_name: "Демо студент",
+        attempt: 1,
+        submitted_at: "2026-11-06T10:00:00Z",
+        kind: "text",
+        text: "Hello!",
+        late: false,
+        review: null,
+        reviews: [],
+      },
+    ],
+  });
+  render(
+    <CoursesPage
+      scope="scope"
+      csrfToken="csrf"
+      onExpired={vi.fn()}
+      initialFocus={{ course: "course", task: "task", submission: "answer" }}
+    />,
+  );
+  await screen.findByText("Hello!");
+  expect(taskApi.attempts).toHaveBeenCalledWith(
+    "scope",
+    "course",
+    "task",
+    "answer",
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Курстарға оралу" }));
+  await screen.findByRole("button", { name: "Курсқа кіру" });
+  expect(taskApi.get).toHaveBeenCalledTimes(1);
+});
 const save = () =>
   fireEvent.click(screen.getByRole("button", { name: "Сақтау" }));
 

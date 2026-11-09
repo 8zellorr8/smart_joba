@@ -18,6 +18,9 @@ import { collectWeek } from "./timetable/pages";
 import { subjectTone } from "./timetable/WeekPanel";
 import { SubjectOverview } from "./SubjectOverview";
 import { portal } from "./locales/portal.kk";
+import { TeacherQueue } from "./TeacherQueue";
+import { lessonApi } from "./lesson-api";
+import type { LessonSummary } from "./lesson-api";
 
 export type WorkbenchDestination =
   | "import"
@@ -36,6 +39,10 @@ export function WorkbenchHome({
   onNavigate,
   onOpenDraft,
   onOpenPublication,
+  onOpenJournalDate,
+  onOpenTask,
+  onOpenLesson,
+  onOpenAgendaLesson,
   onExpired,
   onOpenSubject,
 }: {
@@ -47,6 +54,10 @@ export function WorkbenchHome({
     date: string,
     group: string,
   ) => void;
+  onOpenJournalDate?: (date: string) => void;
+  onOpenTask?: (course: string, task: string, submission: string) => void;
+  onOpenLesson?: (journal: string, lesson: string) => void;
+  onOpenAgendaLesson?: (journal: string, row: LessonSummary) => void;
   onExpired: () => void;
   onOpenSubject?: (key: string) => void;
 }) {
@@ -69,6 +80,8 @@ export function WorkbenchHome({
   const [events, setEvents] = useState<ReaderEvent[]>([]);
   const [busy, setBusy] = useState(canRead);
   const [error, setError] = useState("");
+  const [eventError, setEventError] = useState("");
+  const [openingEvent, setOpeningEvent] = useState("");
   const [reload, setReload] = useState(0);
   const expired = useRef(onExpired);
   expired.current = onExpired;
@@ -88,6 +101,7 @@ export function WorkbenchHome({
     setDraft(null);
     setDraftError("");
     setError("");
+    setEventError("");
     if (canDraft)
       void versionApi
         .list(workspace.scope.id)
@@ -148,6 +162,7 @@ export function WorkbenchHome({
     let active = true;
     setBusy(true);
     setError("");
+    setEventError("");
     setEvents([]);
     void collectWeek<ReaderEvent>(
       async (offset) => {
@@ -191,6 +206,39 @@ export function WorkbenchHome({
   const today = source
     ? todayInZone(source.timezone)
     : todayInZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  async function openAgendaLesson(eventId: string) {
+    if (!source || !onOpenAgendaLesson || openingEvent) return;
+    setOpeningEvent(eventId);
+    setEventError("");
+    try {
+      const target = await lessonApi.eventTarget(
+        workspace.scope.id,
+        source.publication_id,
+        eventId,
+      );
+      onOpenAgendaLesson(target.journal_id, {
+        lesson_id: target.lesson_id,
+        publication_id: target.publication_id,
+        event_id: target.event_id,
+        date: target.date,
+        start: target.start,
+        end: target.end,
+        recorded: !!target.lesson_id,
+        needs_mapping: false,
+        blocked: null,
+      });
+    } catch (problem) {
+      if (problem instanceof ApiError && problem.status === 401)
+        expired.current();
+      setEventError(
+        problem instanceof ApiError && problem.status === 409
+          ? wb.stale
+          : wb.openLessonError,
+      );
+    } finally {
+      setOpeningEvent("");
+    }
+  }
   const actions = [
     {
       view: "import" as const,
@@ -302,6 +350,18 @@ export function WorkbenchHome({
           ))}
         </nav>
       )}
+      {workspace.role_codes.includes("teacher") &&
+        workspace.permissions.includes("course.manage") &&
+        workspace.permissions.includes("journal.write.own") &&
+        onOpenTask &&
+        onOpenLesson && (
+          <TeacherQueue
+            scope={workspace.scope.id}
+            onExpired={onExpired}
+            onOpenTask={onOpenTask}
+            onOpenLesson={onOpenLesson}
+          />
+        )}
       <div
         className={`home-columns ${!canDraft && !actions.length ? "home-columns--reader" : ""}`}
       >
@@ -402,6 +462,7 @@ export function WorkbenchHome({
             </div>
           )}
           <div className="agenda-feedback" aria-live="polite">
+            {eventError && <p role="alert">{eventError}</p>}
             {busy && <p role="status">{wb.loading}</p>}
             {error && (
               <p role="alert" className="error-message">
@@ -441,6 +502,20 @@ export function WorkbenchHome({
                     <span>
                       {demoName(event.group, source?.data_kind ?? "college")}
                     </span>
+                    {workspace.role_codes.includes("teacher") &&
+                      workspace.permissions.includes("journal.write.own") &&
+                      onOpenAgendaLesson && (
+                        <button
+                          className="button button-quiet agenda-open-lesson"
+                          aria-label={`${wb.openLesson}: ${demoName(event.subject, source?.data_kind ?? "college")}, ${demoName(event.group, source?.data_kind ?? "college")}, ${event.start}`}
+                          disabled={!!openingEvent}
+                          onClick={() => void openAgendaLesson(event.id)}
+                        >
+                          {openingEvent === event.id
+                            ? wb.openingLesson
+                            : wb.openLesson}
+                        </button>
+                      )}
                   </div>
                 </li>
               ))}
@@ -457,6 +532,18 @@ export function WorkbenchHome({
                 {wb.openWeek}
                 <Icon name="arrow" size={18} />
               </button>
+              {events.length > 0 &&
+                workspace.role_codes.includes("teacher") &&
+                workspace.permissions.includes("journal.read.own") &&
+                onOpenJournalDate && (
+                  <button
+                    className="button button-quiet"
+                    onClick={() => onOpenJournalDate(date)}
+                  >
+                    {portal.journals}
+                    <Icon name="arrow" size={18} />
+                  </button>
+                )}
             </div>
           )}
           {!canRead && <p>{wb.permissionHint}</p>}

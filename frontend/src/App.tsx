@@ -24,6 +24,7 @@ import { WorkbenchHome } from "./WorkbenchHome";
 import { SubjectsPage, subjectsLabel } from "./SubjectOverview";
 import { portal } from "./locales/portal.kk";
 import { jm } from "./locales/journal.kk";
+import type { LessonSummary } from "./lesson-api";
 const CoursesPage = lazy(() =>
   import("./CoursesPage").then((module) => ({ default: module.CoursesPage })),
 );
@@ -345,6 +346,17 @@ function WorkspaceScreen({
   const [publicationFocus, setPublicationFocus] = useState<string>();
   const [publicationGroup, setPublicationGroup] = useState("");
   const [publicationDate, setPublicationDate] = useState<string>();
+  const [journalDate, setJournalDate] = useState("");
+  const [taskFocus, setTaskFocus] = useState<{
+    course: string;
+    task: string;
+    submission: string;
+  }>();
+  const [lessonFocus, setLessonFocus] = useState<{
+    journal: string;
+    lesson?: string;
+    event?: LessonSummary;
+  }>();
   const [planningDirty, setPlanningDirty] = useState(false);
   const navigationDialog = useRef<HTMLDialogElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -363,6 +375,9 @@ function WorkspaceScreen({
     )
       return;
     if (next !== view) setPlanningDirty(false);
+    if (next === "courses") setTaskFocus(undefined);
+    if (next === "journals") setJournalDate("");
+    if (next === "journals") setLessonFocus(undefined);
     setViewState(next);
     if (navigationDialog.current?.open) navigationDialog.current.close();
     requestAnimationFrame(() => document.getElementById("main")?.focus());
@@ -694,6 +709,7 @@ function WorkspaceScreen({
             <Suspense fallback={<p role="status">{jm.loading}</p>}>
               <CoursesPage
                 scope={workspace.scope.id}
+                initialFocus={taskFocus}
                 csrfToken={csrfToken}
                 onExpired={onExpired}
                 onDirtyChange={setPlanningDirty}
@@ -714,6 +730,10 @@ function WorkspaceScreen({
               <JournalReadPage
                 scope={workspace.scope.id}
                 personal={view === "study-profile"}
+                initialDate={journalDate}
+                initialJournalId={lessonFocus?.journal}
+                initialLessonId={lessonFocus?.lesson}
+                initialEvent={lessonFocus?.event}
                 onSchedule={() => {
                   setPublicationFocus(undefined);
                   setPublicationGroup("");
@@ -819,6 +839,22 @@ function WorkspaceScreen({
                   setView("subjects");
                 }}
                 onNavigate={setView}
+                onOpenJournalDate={(date) => {
+                  setView("journals");
+                  setJournalDate(date);
+                }}
+                onOpenTask={(course, task, submission) => {
+                  setView("courses");
+                  setTaskFocus({ course, task, submission });
+                }}
+                onOpenLesson={(journal, lesson) => {
+                  setView("journals");
+                  setLessonFocus({ journal, lesson });
+                }}
+                onOpenAgendaLesson={(journal, event) => {
+                  setView("journals");
+                  setLessonFocus({ journal, event });
+                }}
                 onExpired={onExpired}
                 onOpenDraft={(id) => {
                   setEditorDraftId(id);

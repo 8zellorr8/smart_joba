@@ -301,6 +301,8 @@
 }
 .portal-layout .agenda-actions {
   justify-content: stretch;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: 18px;
 }
 .portal-layout .agenda-actions .button {
@@ -325,6 +327,12 @@
   font-size: 14px;
 }
 .portal-layout .agenda-lesson > span {
+  font-size: 12px;
+}
+.portal-layout .agenda-open-lesson {
+  justify-self: start;
+  margin-top: 8px;
+  padding: 7px 10px;
   font-size: 12px;
 }
 .portal-layout .button-primary {

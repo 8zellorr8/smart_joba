@@ -7,7 +7,7 @@ The scope lock serializes facts with confirmed memberships and assignments.
 import uuid
 from datetime import UTC, date, datetime
 
-from sqlalchemy import select, text
+from sqlalchemy import Date, and_, cast, func, or_, select, text
 
 from .auth import ApiError, audit
 from .journal_setup import JournalSetupService, required, snapshot
@@ -15,9 +15,9 @@ from .planning_inputs import input_token
 from .publications import PUBLICATION_LOCK
 from ..domain.journal import attendance_change, grade_change, topic_value
 from ..domain.publication import utc_interval
-from ..infrastructure.journal_models import Journal, JournalRegistry, Student, StudentMembership
+from ..infrastructure.journal_models import Journal, JournalAssignment, JournalRegistry, Student, StudentMembership
 from ..infrastructure.lesson_models import JournalEventLink, JournalLesson, JournalLessonChange, JournalLessonOperation, JournalLessonStudent
-from ..infrastructure.models import Group, Publication, PublicationHead, Subject, Teacher, TeachingDemand, User
+from ..infrastructure.models import Group, ImportContext, Publication, PublicationHead, Subject, Teacher, TeachingDemand, User
 
 
 class JournalLessonService:
@@ -162,19 +162,49 @@ class JournalLessonService:
             lesson, _, _ = self.require_lesson(db, scope_id, lesson_id, grants, permissions)
             return self.dto(db, lesson, permissions, grants)
 
-    def list(self, token, scope_id, journal_id, offset=0, limit=50, admin=False, recorded_only=False):
+    def event_target(self, token, scope_id, publication_id, event_id):
+        with self.factory.begin() as db:
+            _, grants, permissions = self.access(db, token, scope_id, "journal.write.own")
+            publication = db.get(Publication, publication_id)
+            context = db.get(ImportContext, publication.context_id) if publication else None
+            if not context or context.scope_id != scope_id:
+                raise ApiError("ACCESS_DENIED", 403)
+            if not self.current(db, publication):
+                raise ApiError("JOURNAL_SOURCE_ARCHIVED", 409)
+            event = next((item for item in publication.snapshot["events"] if item["id"] == str(event_id)), None)
+            demand = db.get(TeachingDemand, uuid.UUID(event["demand_id"])) if event else None
+            journal = db.scalar(select(Journal).where(Journal.context_id == context.id,
+                Journal.group_id == uuid.UUID(event["group_id"]), Journal.subject_id == demand.subject_id,
+                Journal.semester == event["semester"])) if demand else None
+            if not journal:
+                raise ApiError("ACCESS_DENIED", 403)
+            self.journal(db, journal.id, scope_id)
+            _, event, link = self.event(db, scope_id, journal, context, publication_id, event_id)
+            if not self.allowed(db, journal, grants, permissions, event["date"], True, event["teacher_id"]):
+                raise ApiError("ACCESS_DENIED", 403)
+            return {"journal_id": journal.id, "lesson_id": link.lesson_id if link else None,
+                    "publication_id": publication.id, "event_id": event_id,
+                    "date": event["date"], "start": event["start"], "end": event["end"]}
+
+    def list(self, token, scope_id, journal_id, offset=0, limit=50, admin=False, recorded_only=False, on_date: date | None = None):
         with self.factory.begin() as db:
             _, grants, permissions = self.access(db, token, scope_id, "journal.setup" if admin else "journal.catalog.read")
             journal, context = self.journal(db, journal_id, scope_id)
             if not admin and "journal.read" not in permissions and not self.catalog.own_assignments(db, journal.id, grants):
                 raise ApiError("ACCESS_DENIED", 403)
-            lessons = list(db.scalars(select(JournalLesson).where(JournalLesson.journal_id == journal.id)))
+            target_date = on_date.isoformat() if on_date else None
+            lesson_query = select(JournalLesson).where(JournalLesson.journal_id == journal.id)
+            if target_date:
+                lesson_query = lesson_query.where(JournalLesson.source["date"].as_string() == target_date)
+            lessons = list(db.scalars(lesson_query))
             result = []
             publications = db.scalars(select(Publication).join(PublicationHead, Publication.id == PublicationHead.publication_id)
                                       .where(Publication.context_id == context.id)).all()
             for publication in publications:
                 for event in publication.snapshot["events"]:
                     if event["cancelled"] or event["group_id"] != str(journal.group_id) or event["semester"] != journal.semester:
+                        continue
+                    if target_date and event["date"] != target_date:
                         continue
                     link = self.link(db, publication.id, event["id"])
                     if link and link.journal_id != journal.id:
@@ -205,6 +235,40 @@ class JournalLessonService:
                 result = [r for r in result if r["recorded"]]
             return {"items": result[offset:offset + limit], "total": len(result), "offset": offset, "limit": limit,
                     "registry_revision": self.catalog.revision(db, scope_id)}
+
+    def pending_attendance(self, token, scope_id, after_date: date | None = None, after_id: uuid.UUID | None = None, limit=25):
+        if (after_date is None) != (after_id is None):
+            raise ApiError("VALIDATION_ERROR", 422)
+        with self.factory.begin() as db:
+            _, grants, _ = self.access(db, token, scope_id, "journal.write.own")
+            teacher_ids = [uuid.UUID(g["teacher_id"]) for g in grants if g["role"] == "teacher" and g["teacher_id"]]
+            lesson_date = JournalLesson.source["date"].astext
+            missing = (select(func.count()).where(JournalLessonStudent.lesson_id == JournalLesson.id,
+                JournalLessonStudent.active.is_(True), JournalLessonStudent.attendance.is_(None))
+                .correlate(JournalLesson).scalar_subquery())
+            assigned = (select(JournalAssignment.id).join(Teacher, Teacher.id == JournalAssignment.teacher_id)
+                .where(JournalAssignment.journal_id == JournalLesson.journal_id,
+                       JournalAssignment.teacher_id.in_(teacher_ids), JournalAssignment.active.is_(True),
+                       JournalAssignment.start <= cast(lesson_date, Date), JournalAssignment.end > cast(lesson_date, Date),
+                       Teacher.scope_id == scope_id, Teacher.data_kind == ImportContext.data_kind)
+                .correlate(JournalLesson, ImportContext).exists())
+            query = (select(JournalLesson.id, JournalLesson.journal_id, lesson_date.label("date"),
+                            JournalLesson.source["start"].astext.label("start"),
+                            JournalLesson.source["subject"].astext.label("subject"),
+                            JournalLesson.source["group"].astext.label("group"),
+                            ImportContext.data_kind, missing.label("missing"))
+                .join(Journal, Journal.id == JournalLesson.journal_id)
+                .join(ImportContext, ImportContext.id == Journal.context_id)
+                .join(Group, Group.id == Journal.group_id).join(Subject, Subject.id == Journal.subject_id)
+                .where(ImportContext.scope_id == scope_id, Group.scope_id == scope_id, Subject.scope_id == scope_id,
+                       Group.data_kind == ImportContext.data_kind, Subject.data_kind == ImportContext.data_kind,
+                       assigned, missing > 0))
+            if after_date:
+                query = query.where(or_(lesson_date < after_date.isoformat(),
+                    and_(lesson_date == after_date.isoformat(), JournalLesson.id < after_id)))
+            rows = db.execute(query.order_by(lesson_date.desc(), JournalLesson.id.desc()).limit(limit + 1)).mappings().all()
+            return {"items": [dict(row) for row in rows[:limit]],
+                    "next": {"on": rows[limit - 1]["date"], "id": rows[limit - 1]["id"]} if len(rows) > limit else None}
 
     def command(self, token, scope_id, body, request_id, admin=False):
         # Omitted/empty grades have the v0008 fingerprint: outstanding old

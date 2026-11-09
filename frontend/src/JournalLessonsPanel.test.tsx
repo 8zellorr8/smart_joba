@@ -130,6 +130,104 @@ async function open() {
   await screen.findByLabelText(lm.topic);
   return { expired, dirty, close };
 }
+it("filters a teacher's lesson list by date and restores all dates", async () => {
+  render(
+    <JournalLessonsPanel
+      scope="s"
+      journal={journal}
+      csrfToken="csrf"
+      onExpired={vi.fn()}
+      onDirtyChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  await screen.findByRole("button", { name: lm.openLesson });
+  vi.mocked(lessonApi.list).mockResolvedValue({
+    items: [],
+    total: 0,
+    offset: 0,
+    limit: 50,
+    registry_revision: 7,
+  });
+  fireEvent.change(screen.getByLabelText(lm.date), {
+    target: { value: "2026-09-02" },
+  });
+  await screen.findByText(lm.emptyDate);
+  expect(lessonApi.list).toHaveBeenLastCalledWith(
+    "s",
+    "j",
+    0,
+    false,
+    false,
+    "2026-09-02",
+  );
+  fireEvent.click(screen.getByRole("button", { name: lm.clearDate }));
+  await waitFor(() =>
+    expect(lessonApi.list).toHaveBeenLastCalledWith(
+      "s",
+      "j",
+      0,
+      false,
+      false,
+      "",
+    ),
+  );
+});
+it("starts with the date selected from the agenda", async () => {
+  render(
+    <JournalLessonsPanel
+      scope="s"
+      journal={journal}
+      csrfToken="csrf"
+      initialDate="2026-09-01"
+      onExpired={vi.fn()}
+      onDirtyChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  await screen.findByRole("button", { name: lm.openLesson });
+  expect(screen.getByLabelText(lm.date)).toHaveValue("2026-09-01");
+  expect(lessonApi.list).toHaveBeenCalledWith(
+    "s",
+    "j",
+    0,
+    false,
+    false,
+    "2026-09-01",
+  );
+});
+it("opens the exact recorded lesson selected from the teacher queue", async () => {
+  render(
+    <JournalLessonsPanel
+      scope="s"
+      journal={journal}
+      csrfToken="csrf"
+      initialLessonId="lesson"
+      onExpired={vi.fn()}
+      onDirtyChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  expect(await screen.findByLabelText(lm.topic)).toHaveValue("Тақырып");
+  expect(lessonApi.get).toHaveBeenCalledWith("s", "lesson");
+  expect(lessonApi.list).not.toHaveBeenCalled();
+});
+it("previews the exact published event selected from the agenda", async () => {
+  render(
+    <JournalLessonsPanel
+      scope="s"
+      journal={journal}
+      csrfToken="csrf"
+      initialEvent={row}
+      onExpired={vi.fn()}
+      onDirtyChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  expect(await screen.findByLabelText(lm.topic)).toBeInTheDocument();
+  expect(lessonApi.preview).toHaveBeenCalledWith("s", "j", row);
+  expect(lessonApi.list).not.toHaveBeenCalled();
+});
 function fill() {
   fireEvent.change(screen.getByLabelText(lm.topic), {
     target: { value: "Тақырып" },
@@ -162,6 +260,78 @@ it("opens without creating facts, sends only changed rows and explicit confirmat
     undefined,
   );
   await waitFor(() => expect(dirty).toHaveBeenLastCalledWith(false));
+});
+it("fills only active unmarked attendance without overwriting manual or saved marks", async () => {
+  vi.mocked(lessonApi.preview).mockResolvedValue({
+    ...structuredClone(fixture),
+    students: [
+      ...fixture.students,
+      {
+        student_id: "c",
+        display_name: "Демо В",
+        active: true,
+        attendance: "late",
+        grade: null,
+      },
+      {
+        student_id: "d",
+        display_name: "Демо Г",
+        active: false,
+        attendance: null,
+        grade: null,
+      },
+    ],
+  });
+  await open();
+  fireEvent.change(screen.getByLabelText(`${lm.attendance}: Демо А`), {
+    target: { value: "absent" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: `${lm.fillPresent} · 1` }),
+  );
+  expect(screen.getByLabelText(`${lm.attendance}: Демо А`)).toHaveValue(
+    "absent",
+  );
+  expect(screen.getByLabelText(`${lm.attendance}: Демо Б`)).toHaveValue(
+    "present",
+  );
+  expect(screen.getByLabelText(`${lm.attendance}: Демо В`)).toHaveValue("late");
+  expect(
+    screen.queryByLabelText(`${lm.attendance}: Демо Г`),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: `${lm.fillPresent} · 0` }),
+  ).toBeDisabled();
+  fireEvent.change(screen.getByLabelText(lm.topic), {
+    target: { value: "Тақырып" },
+  });
+  fireEvent.click(screen.getByLabelText(lm.conducted));
+  fireEvent.click(screen.getByRole("button", { name: jm.save }));
+  await screen.findByText(lm.saved);
+  expect(vi.mocked(lessonApi.command).mock.calls[0][2].command).toMatchObject({
+    attendance: [
+      { student_id: "a", value: "absent" },
+      { student_id: "b", value: "present" },
+    ],
+  });
+});
+it("does not bulk-fill more attendance rows than one server command allows", async () => {
+  vi.mocked(lessonApi.preview).mockResolvedValue({
+    ...structuredClone(fixture),
+    students: Array.from({ length: 101 }, (_, index) => ({
+      student_id: String(index),
+      display_name: `Демо ${index}`,
+      active: true,
+      attendance: null,
+      grade: null,
+    })),
+  });
+  await open();
+  expect(
+    screen.getByRole("button", { name: `${lm.fillPresent} · 101` }),
+  ).toBeDisabled();
+  expect(screen.getByText(lm.fillPresentLimit)).toBeVisible();
+  expect(lessonApi.command).not.toHaveBeenCalled();
 });
 it("retains input and focuses a linked validation error", async () => {
   vi.mocked(lessonApi.command).mockRejectedValue(
@@ -253,6 +423,9 @@ it("read-only approver sees saved marks without write controls", async () => {
   expect(screen.getByText(lm.attendanceValues.absent)).toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: jm.save }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /Бос қатысу белгілерін/ }),
   ).not.toBeInTheDocument();
   expect(screen.getByLabelText(lm.topic)).toBeDisabled();
 });
