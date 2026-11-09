@@ -70,6 +70,50 @@ def test_task_submit_return_resubmit_grade_and_history(client, app, task):
     assert "Private correction" not in response.text and "reviewer_id" not in response.text
 
 
+def test_task_edits_create_version_and_keep_each_submission_conditions(client, app, task):
+    login(client, app, "student")
+    first_id = submit(client, task).json()["id"]
+    login(client, app, "teacher")
+    update = {
+        "id": str(uuid.uuid4()), "expected_revision": 1, "title": "Updated task",
+        "instructions": "Use the new requirements.", "due_on": "2100-01-01",
+    }
+    edited = client.put(task["url"], headers=csrf(client), json=update)
+    assert edited.status_code == 200 and edited.json()["revision"] == 2
+    assert client.put(task["url"], headers=csrf(client), json=update).json() == edited.json()
+    stale = client.put(task["url"], headers=csrf(client), json={**update, "id": str(uuid.uuid4())})
+    assert stale.status_code == 409 and stale.json()["error"]["code"] == "TASK_STALE"
+
+    login(client, app, "student")
+    current = client.get(task["url"]).json()
+    assert current["task"]["revision"] == 2
+    assert current["task"]["instructions"] == "Use the new requirements."
+    assert current["attempts"][0]["conditions"]["revision"] == 1
+    assert current["attempts"][0]["conditions"]["instructions"] == task["body"]["instructions"]
+    assert current["attempts"][0]["late"] is True
+    second_id = submit(client, task, attempt=1).json()["id"]
+    second = client.get(task["url"]).json()["attempts"][0]
+    assert second["id"] == second_id and second["task_revision"] == 2 and second["late"] is False
+    assert second["conditions"]["title"] == "Updated task"
+
+    login(client, app, "teacher")
+    assert review(client, task, first_id, grade=75).status_code == 200
+    assert review(client, task, second_id, grade=90).status_code == 200
+    versions = client.get(task["url"] + f"/submissions/{second_id}").json()["attempts"]
+    assert [item["task_revision"] for item in versions] == [2, 1]
+    assert [item["conditions"]["instructions"] for item in versions] == [
+        "Use the new requirements.", task["body"]["instructions"],
+    ]
+
+
+def test_only_course_teacher_can_edit_task_conditions(client, app, task):
+    update = {"id": str(uuid.uuid4()), "expected_revision": 1, "title": "Changed",
+        "instructions": "Changed conditions", "due_on": None}
+    for role in ("student", "admin", "scheduler", "approver"):
+        login(client, app, role)
+        assert client.put(task["url"], headers=csrf(client), json=update).status_code == 403
+
+
 def test_student_cannot_read_peer_attempts_or_pdf(client, app, task, journal):
     login(client, app, "student")
     submission = submit(client, task, pdf=True).json()["id"]
@@ -153,7 +197,7 @@ def test_history_is_immutable_and_grade_does_not_write_journal(client, app, task
     login(client, app, "teacher")
     assert review(client, task, submission, grade=85).status_code == 200
     with app.state.engine.begin() as db:
-        for table in ("course_tasks", "course_submissions", "course_reviews"):
+        for table in ("course_tasks", "course_task_revisions", "course_submissions", "course_reviews"):
             for sql in (f"DELETE FROM {table}", f"UPDATE {table} SET id=id"):
                 with pytest.raises(IntegrityError):
                     with db.begin_nested(): db.execute(text(sql))

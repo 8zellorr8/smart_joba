@@ -65,6 +65,7 @@ export const vm = {
   resource: "Көрсетілетін ресурс",
   all: "Барлығы",
   show: "Көрсету",
+  exportXlsx: "XLSX жүктеу",
   date: "Күні",
   time: "Уақыты",
   group: "Топ",

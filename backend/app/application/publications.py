@@ -120,13 +120,14 @@ class PublicationService:
             if attempt + 1 < PUBLISH_ATTEMPTS: time.sleep(0.05)
         raise ApiError("PUBLICATION_BUSY", 409)
 
-    def reader(self, db, token, scope_id):
+    def reader(self, db, token, scope_id, action="read"):
         user = self.auth.resolve(db, token)
         if not user: raise ApiError("AUTH_REQUIRED", 401)
         grants = [g for g in self.auth.grants(db, user.id) if g["scope_id"] == str(scope_id)]
         permissions = permissions_for(grants, str(scope_id))
-        if not any(p.startswith("publication.read") for p in permissions): raise ApiError("ACCESS_DENIED", 403)
-        return ("publication.read" in permissions,
+        prefix = f"publication.{action}"
+        if not any(p == prefix or p.startswith(prefix + ".") for p in permissions): raise ApiError("ACCESS_DENIED", 403)
+        return (prefix in permissions,
             {g["teacher_id"] for g in grants if g["role"] == "teacher" and g["teacher_id"]},
             {g["group_id"] for g in grants if g["role"] == "student" and g["group_id"]})
 
@@ -155,14 +156,14 @@ class PublicationService:
                 .order_by(Publication.published_at.desc(), Publication.id)).all()
             return [self.metadata(db, p, events) for p in publications if (events := self.visible(p, access))]
 
-    def get(self, token, publication_id, start=None, end=None, view="group", resource_id=None, offset=0, limit=100):
+    def get(self, token, publication_id, start=None, end=None, view="group", resource_id=None, offset=0, limit=100, action="read"):
         with self.factory.begin() as db:
             db.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY"))
             if not self.auth.resolve(db, token): raise ApiError("AUTH_REQUIRED", 401)
             publication = db.get(Publication, publication_id)
             if not publication: raise ApiError("NOT_FOUND", 404)
             context = db.get(ImportContext, publication.context_id)
-            access = self.reader(db, token, context.scope_id)
+            access = self.reader(db, token, context.scope_id, action)
             events = self.visible(publication, access)
             if not events and not access[0]: raise ApiError("ACCESS_DENIED", 403)
             options = {kind: [{"id": key, "name": label} for key, label in sorted({e[kind + "_id"]: e[kind] for e in events}.items(), key=lambda item: (item[1], item[0]))]
@@ -174,5 +175,12 @@ class PublicationService:
             if resource_id: events = [e for e in events if e[view + "_id"] == resource_id]
             events = sorted(events, key=lambda e: (e["date"], e["start"], e["group"], e["id"]))
             fields = ("id", "date", "start", "end", "subject", "group", "teacher", "room")
-            return {**meta, "resources": options, "events": [{k: e[k] for k in fields} for e in events[offset:offset + limit]],
+            page = events[offset:offset + limit] if limit is not None else events
+            return {**meta, "resources": options, "events": [{k: e[k] for k in fields} for e in page],
                 "total": len(events), "offset": offset, "limit": limit}
+
+    def export(self, token, publication_id, start=None, end=None, view="group", resource_id=None):
+        from .publication_xlsx import build_workbook
+
+        result = self.get(token, publication_id, start, end, view, resource_id, limit=None, action="export")
+        return build_workbook(result, start, end, view, resource_id)

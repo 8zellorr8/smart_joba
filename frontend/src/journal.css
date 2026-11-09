@@ -61,9 +61,23 @@
   gap: 8px;
   min-width: 0;
 }
-.journal-form :is(input, select) {
+.journal-form :is(input, select, textarea) {
   width: 100%;
   min-width: 0;
+}
+.journal-form input[type="file"] {
+  padding: 8px;
+}
+.roster-preview {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ui-border);
+}
+.roster-preview ol {
+  max-height: 280px;
+  overflow: auto;
+  padding-left: 28px;
+  line-height: 1.7;
 }
 .journal-form .journal-check {
   display: flex;

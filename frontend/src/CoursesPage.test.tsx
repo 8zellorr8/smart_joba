@@ -10,6 +10,8 @@ import { CoursesPage } from "./CoursesPage";
 import { courseApi } from "./course-api";
 import type { Course, CourseContents } from "./course-api";
 import { ApiError } from "./api";
+import { taskApi } from "./task-api";
+import type { TaskDetails } from "./task-api";
 
 vi.mock("./course-api", () => ({
   courseApi: {
@@ -18,8 +20,22 @@ vi.mock("./course-api", () => ({
     open: vi.fn(),
     addTopic: vi.fn(),
     addMaterial: vi.fn(),
+    editMaterial: vi.fn(),
+    materialForEdit: vi.fn(),
     read: vi.fn(),
     download: vi.fn(),
+  },
+}));
+vi.mock("./task-api", () => ({
+  taskApi: {
+    create: vi.fn(),
+    update: vi.fn(),
+    get: vi.fn(),
+    submissions: vi.fn(),
+    attempts: vi.fn(),
+    submit: vi.fn(),
+    review: vi.fn(),
+    pdf: vi.fn(),
   },
 }));
 const course: Course = {
@@ -50,6 +66,18 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(courseApi.list).mockResolvedValue([structuredClone(course)]);
   vi.mocked(courseApi.contents).mockResolvedValue(structuredClone(detail));
+  vi.mocked(taskApi.get).mockResolvedValue({
+    task: {
+      id: "task",
+      title: "Homework",
+      instructions: "Read the prompt.",
+      due_on: null,
+      timezone: "Asia/Qyzylorda",
+      revision: 1,
+    },
+    can_manage: true,
+    attempts: [],
+  } satisfies TaskDetails);
 });
 function mount(scope = "scope") {
   const onExpired = vi.fn();
@@ -111,7 +139,9 @@ it("shows only read actions to a student and renders material as plain text", as
   await enter();
   expect(screen.getByRole("button", { name: /^1-апта/ })).toBeVisible();
   expect(screen.getByRole("button", { name: /^10-апта/ })).toBeVisible();
-  expect(screen.getByRole("button", { name: "Жалпы материалдар" })).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Жалпы материалдар" }),
+  ).toBeVisible();
   expect(
     screen.queryByRole("button", { name: "Тақырып қосу" }),
   ).not.toBeInTheDocument();
@@ -143,7 +173,9 @@ it("stores a new topic in the selected week and keeps general topics separate", 
   expect(screen.queryByText("Week 3")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: /^3-апта/ }));
   fireEvent.click(screen.getByRole("button", { name: "Тақырып қосу" }));
-  fireEvent.change(screen.getByLabelText("Тақырып атауы"), { target: { value: "New topic" } });
+  fireEvent.change(screen.getByLabelText("Тақырып атауы"), {
+    target: { value: "New topic" },
+  });
   save();
   await waitFor(() => expect(courseApi.addTopic).toHaveBeenCalledTimes(1));
   expect(vi.mocked(courseApi.addTopic).mock.calls[0][5]).toBe(3);
@@ -294,4 +326,89 @@ it("keeps material fields after a rejected upload and sends only the selected fo
   } finally {
     mock.mockRestore();
   }
+});
+
+it("loads and updates a text material without losing the saved content", async () => {
+  vi.mocked(courseApi.materialForEdit).mockResolvedValue({
+    id: "text",
+    title: "Reading",
+    kind: "text",
+    text: "Original reading",
+    revision: 1,
+  });
+  vi.mocked(courseApi.editMaterial).mockResolvedValue({
+    id: "text",
+    revision: 2,
+  });
+  mount();
+  await enter();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Reading · Материалды өңдеу" }),
+  );
+  expect(await screen.findByLabelText("Оқу мәтіні")).toHaveValue(
+    "Original reading",
+  );
+  fireEvent.change(screen.getByLabelText("Материал атауы"), {
+    target: { value: "Reading updated" },
+  });
+  save();
+  await waitFor(() => expect(courseApi.editMaterial).toHaveBeenCalledOnce());
+  const [scope, courseId, materialId, form, csrf] = vi.mocked(
+    courseApi.editMaterial,
+  ).mock.calls[0];
+  expect([scope, courseId, materialId, csrf]).toEqual([
+    "scope",
+    "course",
+    "text",
+    "csrf",
+  ]);
+  expect(form.get("expected_revision")).toBe("1");
+  expect(form.get("text")).toBe("Original reading");
+});
+
+it("lets a teacher create a new task condition revision", async () => {
+  const taskDetails: TaskDetails = {
+    task: {
+      id: "task",
+      title: "Homework",
+      instructions: "Read the prompt.",
+      due_on: null,
+      timezone: "Asia/Qyzylorda",
+      revision: 1,
+    },
+    can_manage: true,
+    attempts: [],
+  };
+  vi.mocked(courseApi.contents).mockResolvedValue({
+    ...detail,
+    topics: [
+      {
+        ...detail.topics[0],
+        tasks: [{ id: "task", title: "Homework", due_on: null, revision: 1 }],
+      },
+    ],
+  });
+  vi.mocked(taskApi.get).mockResolvedValue(taskDetails);
+  vi.mocked(taskApi.update).mockResolvedValue({ id: "task", revision: 2 });
+  mount();
+  await enter();
+  fireEvent.click(screen.getByRole("button", { name: "Homework · Өңдеу" }));
+  expect(await screen.findByLabelText("Тапсырма шарты")).toHaveValue(
+    "Read the prompt.",
+  );
+  fireEvent.change(screen.getByLabelText("Тапсырма шарты"), {
+    target: { value: "Use the revised prompt." },
+  });
+  save();
+  await waitFor(() => expect(taskApi.update).toHaveBeenCalledOnce());
+  expect(taskApi.update).toHaveBeenCalledWith(
+    "scope",
+    "course",
+    "task",
+    expect.objectContaining({
+      expected_revision: 1,
+      instructions: "Use the revised prompt.",
+    }),
+    "csrf",
+  );
 });

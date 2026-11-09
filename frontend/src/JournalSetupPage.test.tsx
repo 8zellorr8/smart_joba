@@ -124,6 +124,79 @@ it("sends an explicit kind, revision and operation key and shows server success"
   expect(dirty).toHaveBeenCalledWith(true);
   expect(dirty).toHaveBeenLastCalledWith(false);
 });
+it("previews a local roster file and sends only confirmed names and membership details", async () => {
+  await setup();
+  fireEvent.click(screen.getByRole("button", { name: jm.memberships }));
+  const file = new File(
+    ["Студенттің аты-жөні\r\nДемо студент А\r\nSYNTHETIC roster student B"],
+    "synthetic-roster.csv",
+    { type: "text/csv" },
+  );
+  fireEvent.change(screen.getByLabelText(jm.rosterFile), {
+    target: { files: [file] },
+  });
+  await waitFor(() =>
+    expect(screen.getByLabelText(jm.rosterNames)).toHaveValue(
+      "Студенттің аты-жөні\nДемо студент А\nSYNTHETIC roster student B",
+    ),
+  );
+  fireEvent.click(screen.getByLabelText(jm.rosterHasHeader));
+  fireEvent.change(document.querySelector("#roster-group")!, {
+    target: { value: "group" },
+  });
+  fireEvent.change(document.querySelector("#roster-start")!, {
+    target: { value: "2026-09-01" },
+  });
+  fireEvent.change(document.querySelector("#roster-end")!, {
+    target: { value: "2027-07-01" },
+  });
+  fireEvent.change(document.querySelector("#roster-source")!, {
+    target: { value: "SYNTHETIC confirmed roster file" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: jm.rosterPreview }));
+  await screen.findByText(jm.rosterPreviewCount.replace("{count}", "2"));
+  const match = screen.getByRole("combobox", {
+    name: jm.rosterMatch.replace("{number}", "1"),
+  });
+  expect(match).toHaveValue("");
+  fireEvent.change(match, { target: { value: "student-a" } });
+  fireEvent.click(document.querySelector("#roster-confirmed")!);
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: jm.rosterCommit.replace("{count}", "2"),
+    }),
+  );
+  await screen.findByText(jm.saved);
+  expect(journalApi.command).toHaveBeenCalledWith("scope", "csrf", {
+    expected_revision: 4,
+    operation_id: expect.any(String),
+    command: {
+      kind: "import_roster",
+      context_id: "context",
+      group_id: "group",
+      start: "2026-09-01",
+      end: "2027-07-01",
+      source: "SYNTHETIC confirmed roster file",
+      confirmed: true,
+      students: [
+        { display_name: "Демо студент А", student_id: "student-a" },
+        { display_name: "SYNTHETIC roster student B", student_id: null },
+      ],
+    },
+  });
+});
+it("rejects unsupported roster workbook formats in the browser", async () => {
+  await setup();
+  fireEvent.click(screen.getByRole("button", { name: jm.memberships }));
+  const file = new File(["not a roster"], "student-list.xlsx", {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  fireEvent.change(screen.getByLabelText(jm.rosterFile), {
+    target: { files: [file] },
+  });
+  await screen.findByText(jm.rosterFileType);
+  expect(screen.getByLabelText(jm.rosterNames)).toHaveValue("");
+});
 it("retains input and focuses the linked validation error", async () => {
   vi.mocked(journalApi.command).mockRejectedValue(
     new ApiError(422, "JOURNAL_REQUIRED", { field: "display_name" }),

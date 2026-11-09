@@ -90,6 +90,38 @@
   font-weight: 400;
   font-size: 13px;
 }
+.course-task-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 8px;
+}
+.course-task-row > .course-form {
+  grid-column: 1 / -1;
+}
+.course-task-row > .button-quiet:not(.course-task-link) {
+  margin-top: 12px;
+}
+.task-conditions {
+  margin-block: 12px;
+  padding: 12px;
+  border: 1px solid var(--ui-border);
+  border-radius: 8px;
+}
+.task-conditions summary {
+  cursor: pointer;
+  color: var(--ui-accent);
+  font-weight: 600;
+}
+@media (max-width: 560px) {
+  .course-task-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .course-task-row > .button-quiet:not(.course-task-link) {
+    justify-self: start;
+    margin-top: 0;
+  }
+}
 .task-description > p:not(.course-text) {
   margin-block: 16px 0;
 }

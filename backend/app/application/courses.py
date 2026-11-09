@@ -1,12 +1,13 @@
 """Course visibility follows current, confirmed academic links, not lesson history."""
 import uuid
 
-from sqlalchemy import Date, and_, cast, false, func, or_, select
+from sqlalchemy import Date, and_, cast, desc, false, func, or_, select
+from sqlalchemy.orm import aliased
 
 from .auth import ApiError
 from .journal_setup import JournalSetupService
 from ..infrastructure.course_models import Course, CourseMaterial, CourseTopic
-from ..infrastructure.task_models import CourseTask
+from ..infrastructure.task_models import CourseTask, CourseTaskRevision
 from ..infrastructure.journal_models import Journal, JournalAssignment, Student, StudentMembership
 from ..infrastructure.models import CalendarProfile, Group, ImportContext, Subject, Teacher
 
@@ -97,9 +98,17 @@ class CourseService:
             for item in db.execute(query):
                 topics[item.topic_id]["materials"].append({"id": item.id, "title": item.title,
                                                           "kind": "pdf" if item.is_pdf else "text"})
-            for task in db.scalars(select(CourseTask).join(CourseTopic).where(CourseTopic.journal_id == course_id)
-                                   .order_by(CourseTask.created_at, CourseTask.id)):
-                topics[task.topic_id]["tasks"].append({"id": task.id, "title": task.title, "due_on": task.due_on})
+            task_version = aliased(CourseTaskRevision)
+            latest_revision = (select(task_version.id)
+                .where(task_version.task_id == CourseTask.id)
+                .order_by(desc(task_version.revision)).limit(1).correlate(CourseTask).scalar_subquery())
+            task_query = (select(CourseTask.topic_id, CourseTask.id, CourseTaskRevision.title,
+                                 CourseTaskRevision.due_on, CourseTaskRevision.revision)
+                .join(CourseTopic).join(CourseTaskRevision, CourseTaskRevision.id == latest_revision)
+                .where(CourseTopic.journal_id == course_id).order_by(CourseTask.created_at, CourseTask.id))
+            for task in db.execute(task_query):
+                topics[task.topic_id]["tasks"].append({"id": task.id, "title": task.title,
+                    "due_on": task.due_on, "revision": task.revision})
             return {"course": dict(course), "topics": list(topics.values())}
 
     def add_topic(self, token, scope_id, course_id, topic_id, title, week_number=None):
@@ -142,3 +151,32 @@ class CourseService:
             if material is None:
                 raise ApiError("ACCESS_DENIED", 403)
             return material.title, material.body, material.pdf
+
+    def material_for_edit(self, token, scope_id, course_id, material_id):
+        with self.factory.begin() as db:
+            self.require(db, token, scope_id, course_id, write=True)
+            material = db.execute(select(CourseMaterial.id, CourseMaterial.title, CourseMaterial.body,
+                CourseMaterial.body.is_(None).label("is_pdf"), CourseMaterial.revision)
+                .join(CourseTopic).where(CourseMaterial.id == material_id,
+                    CourseTopic.journal_id == course_id)).mappings().one_or_none()
+            if material is None:
+                raise ApiError("ACCESS_DENIED", 403)
+            return {"id": material["id"], "title": material["title"], "kind": "pdf" if material["is_pdf"] else "text",
+                    "text": material["body"], "revision": material["revision"]}
+
+    def update_material(self, token, scope_id, course_id, material_id, expected_revision, title, text, pdf):
+        with self.factory.begin() as db:
+            self.require(db, token, scope_id, course_id, write=True)
+            material = db.scalar(select(CourseMaterial).join(CourseTopic)
+                .where(CourseMaterial.id == material_id, CourseTopic.journal_id == course_id))
+            if material is None:
+                raise ApiError("ACCESS_DENIED", 403)
+            body, file = (text, None) if text is not None else ((None, pdf) if pdf is not None else (material.body, material.pdf))
+            if material.revision != expected_revision:
+                if material.revision == expected_revision + 1 and (material.title, material.body, material.pdf) == (title, body, file):
+                    return {"id": material_id, "revision": material.revision}
+                raise ApiError("COURSE_MATERIAL_STALE", 409)
+            if (material.title, material.body, material.pdf) != (title, body, file):
+                material.title, material.body, material.pdf = title, body, file
+                material.revision += 1
+            return {"id": material_id, "revision": material.revision}

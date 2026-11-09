@@ -21,7 +21,19 @@ export interface Topic {
   title: string;
   week_number: number | null;
   materials: Material[];
-  tasks?: { id: string; title: string; due_on: string | null }[];
+  tasks?: {
+    id: string;
+    title: string;
+    due_on: string | null;
+    revision?: number;
+  }[];
+}
+export interface MaterialEdit {
+  id: string;
+  title: string;
+  kind: "text" | "pdf";
+  text: string | null;
+  revision: number;
 }
 export interface CourseContents {
   course: Course;
@@ -66,6 +78,19 @@ export const courseApi = {
       headers: { "X-CSRF-Token": csrf },
       body: form,
     }),
+  editMaterial: (
+    scope: string,
+    course: string,
+    id: string,
+    form: FormData,
+    csrf: string,
+  ) =>
+    request<{ id: string; revision: number }>(
+      `${root(scope)}/${course}/materials/${id}`,
+      { method: "PUT", headers: { "X-CSRF-Token": csrf }, body: form },
+    ),
+  materialForEdit: (scope: string, course: string, id: string) =>
+    request<MaterialEdit>(`${root(scope)}/${course}/materials/${id}/edit`),
   read: (scope: string, course: string, id: string) =>
     request<{ title: string; text: string }>(materialUrl(scope, course, id)),
   download: (scope: string, course: string, id: string) =>

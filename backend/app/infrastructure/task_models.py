@@ -1,4 +1,4 @@
-"""Immutable course tasks, student attempts and teacher reviews."""
+"""Versioned course tasks, student attempts and teacher reviews."""
 import uuid
 from datetime import date, datetime
 
@@ -19,10 +19,28 @@ class CourseTask(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class CourseTaskRevision(Base):
+    __tablename__ = "course_task_revisions"
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("course_tasks.id"), index=True)
+    revision: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(String(160))
+    instructions: Mapped[str] = mapped_column(Text)
+    due_on: Mapped[date | None] = mapped_column(Date)
+    timezone: Mapped[str] = mapped_column(String(64))
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (
+        UniqueConstraint("task_id", "revision"),
+        CheckConstraint("revision > 0", name="task_revision_positive"),
+    )
+
+
 class CourseSubmission(Base):
     __tablename__ = "course_submissions"
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     task_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("course_tasks.id"), index=True)
+    task_revision_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("course_task_revisions.id"), index=True)
     student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("students.id"))
     student_name: Mapped[str] = mapped_column(String(200))
     attempt: Mapped[int] = mapped_column(Integer)

@@ -6,6 +6,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Integer,
     LargeBinary,
     SmallInteger,
     String,
@@ -44,5 +45,9 @@ class CourseMaterial(Base):
     title: Mapped[str] = mapped_column(String(160))
     body: Mapped[str | None] = mapped_column(Text)
     pdf: Mapped[bytes | None] = mapped_column(LargeBinary, deferred=True)
+    revision: Mapped[int] = mapped_column(Integer, default=1, server_default="1")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    __table_args__ = (CheckConstraint("(body IS NULL) <> (pdf IS NULL)", name="course_material_one_format"),)
+    __table_args__ = (
+        CheckConstraint("(body IS NULL) <> (pdf IS NULL)", name="course_material_one_format"),
+        CheckConstraint("revision > 0", name="course_material_revision_positive"),
+    )

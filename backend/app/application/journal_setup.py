@@ -111,7 +111,13 @@ class JournalSetupService:
                     "assignments": [snapshot(a) for a in db.scalars(select(JournalAssignment).where(JournalAssignment.journal_id.in_([j.id for j in journals])).order_by(JournalAssignment.start, JournalAssignment.id))]}
 
     def command(self, token, scope_id, body, request_id):
-        digest = hashlib.sha256(json.dumps({"scope_id": str(scope_id), **body}, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        command = dict(body["command"])
+        request = {"scope_id": str(scope_id), **body}
+        if command["kind"] == "import_roster":
+            # The same confirmed roster is a no-op if an operator submits it
+            # again from a fresh page or after an uncertain response.
+            request = {"scope_id": str(scope_id), "command": command}
+        digest = hashlib.sha256(json.dumps(request, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         with self.factory.begin() as db:
             user, _, _ = self.access(db, token, scope_id, "journal.setup", write=True)
             previous = db.scalar(select(JournalSetupOperation).where(JournalSetupOperation.scope_id == scope_id, JournalSetupOperation.actor_id == user.id, JournalSetupOperation.operation_id == uuid.UUID(body["operation_id"])))
@@ -119,28 +125,85 @@ class JournalSetupService:
                 if previous.request_hash != digest:
                     raise ApiError("JOURNAL_OPERATION_CONFLICT", 409)
                 return previous.receipt
+            if command["kind"] == "import_roster":
+                previous_roster = db.scalar(select(JournalSetupOperation).where(
+                    JournalSetupOperation.scope_id == scope_id,
+                    JournalSetupOperation.actor_id == user.id,
+                    JournalSetupOperation.request_hash == digest,
+                ).order_by(JournalSetupOperation.id).limit(1))
+                if previous_roster:
+                    return previous_roster.receipt
             revision = self.revision(db, scope_id)
             if revision != body["expected_revision"]:
                 raise ApiError("JOURNAL_STALE", 409)
-            command = dict(body["command"])
             reason = command.get("reason", "").strip()
             if "source" in command:
                 command["source"] = required(command["source"], "source")
                 if not command["confirmed"]:
                     raise ApiError("JOURNAL_CONFIRM_REQUIRED", 422, {"field": "confirmed"})
-            before, row = self.apply(db, scope_id, user, command)
-            db.flush()
-            after = snapshot(row)
+            if command["kind"] == "import_roster":
+                before = {}
+                after = self.import_roster(db, scope_id, user, command)
+                receipt_id = after["students"][0]["id"]
+                count = len(command["students"])
+            else:
+                before, row = self.apply(db, scope_id, user, command)
+                db.flush()
+                after, receipt_id, count = snapshot(row), str(row.id), None
             registry = db.get(JournalRegistry, scope_id)
             if registry is None:
                 registry = JournalRegistry(scope_id=scope_id, revision=0)
                 db.add(registry)
             registry.revision = revision + 1
-            receipt = {"id": str(row.id), "revision": registry.revision, "kind": command["kind"]}
+            receipt = {"id": receipt_id, "revision": registry.revision, "kind": command["kind"]}
+            if count is not None:
+                receipt["count"] = count
             db.add(JournalSetupChange(scope_id=scope_id, revision=registry.revision, actor_id=user.id, action=command["kind"], before=before, after=after, reason=reason))
             db.add(JournalSetupOperation(scope_id=scope_id, actor_id=user.id, operation_id=uuid.UUID(body["operation_id"]), request_hash=digest, receipt=receipt))
             audit(db, "journal.setup", "saved", request_id, user.id)
             return receipt
+
+    def import_roster(self, db, scope_id, actor, c):
+        if not 1 <= len(c["students"]) <= 200:
+            raise ApiError("JOURNAL_ROSTER_LIMIT", 422)
+        context = self.scoped(db, ImportContext, c["context_id"], scope_id)
+        group = self.scoped(db, Group, c["group_id"], scope_id, context.data_kind)
+        start, end = date.fromisoformat(c["start"]), date.fromisoformat(c["end"])
+        if start >= end:
+            raise ApiError("JOURNAL_INTERVAL_INVALID", 422, {"field": "end"})
+        entries = c["students"]
+        names = [required(entry["display_name"], "students") for entry in entries]
+        if any(len(name) > 160 for name in names):
+            raise ApiError("JOURNAL_NAME_TOO_LONG", 422, {"field": "students"})
+        selected_ids = [entry["student_id"] for entry in entries if entry["student_id"]]
+        if len(selected_ids) != len(set(selected_ids)):
+            raise ApiError("JOURNAL_ROSTER_DUPLICATE_STUDENT", 422)
+        students, new_students = [], []
+        for entry, name in zip(entries, names):
+            if entry["student_id"]:
+                student = self.scoped(db, Student, entry["student_id"], scope_id, context.data_kind)
+                if student.display_name.casefold() != name.casefold():
+                    raise ApiError("JOURNAL_ROSTER_PROFILE_NAME_MISMATCH", 422, {"field": "students"})
+            else:
+                student = Student(scope_id=scope_id, data_kind=context.data_kind, display_name=name)
+                new_students.append(student)
+            students.append(student)
+        if selected_ids and db.scalar(select(StudentMembership.id).where(
+            StudentMembership.student_id.in_([uuid.UUID(student_id) for student_id in selected_ids]),
+            StudentMembership.context_id == context.id,
+            StudentMembership.start < end,
+            StudentMembership.end > start,
+        )):
+            raise ApiError("JOURNAL_MEMBERSHIP_OVERLAP", 422, {"field": "start"})
+        db.add_all(new_students)
+        db.flush()
+        memberships = [StudentMembership(student_id=student.id, context_id=context.id, group_id=group.id,
+                                         start=start, end=end, source=c["source"], confirmed_by=actor.id)
+                       for student in students]
+        db.add_all(memberships)
+        db.flush()
+        return {"students": [snapshot(student) for student in students],
+                "memberships": [snapshot(membership) for membership in memberships]}
 
     def apply(self, db, scope_id, actor, c):
         kind = c["kind"]

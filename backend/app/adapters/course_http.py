@@ -75,4 +75,23 @@ def course_router(service):
                 "Content-Disposition": "attachment; filename=material.pdf; filename*=UTF-8''" + quote(title + ".pdf", safe="")})
         return {"title": title, "text": text}
 
+    @router.get("/{course_id}/materials/{material_id}/edit")
+    def material_for_edit(scope_id: uuid.UUID, course_id: uuid.UUID, material_id: uuid.UUID, request: Request):
+        return service.material_for_edit(token(request), scope_id, course_id, material_id)
+
+    @router.put("/{course_id}/materials/{material_id}")
+    def update_material(scope_id: uuid.UUID, course_id: uuid.UUID, material_id: uuid.UUID, request: Request,
+                        expected_revision: Annotated[int, Form(ge=1)], title: Annotated[str, Form(max_length=160)],
+                        text: Annotated[str | None, Form(max_length=20000)] = None,
+                        file: Annotated[UploadFile | None, File()] = None):
+        title = title.strip()
+        if not title or (text is not None and file is not None):
+            raise ApiError("VALIDATION_ERROR", 422)
+        if text is not None or file is not None:
+            text, pdf = material_payload(text, file)
+        else:
+            text, pdf = None, None
+        return service.update_material(token(request), scope_id, course_id, material_id,
+            expected_revision, title, text, pdf)
+
     return router

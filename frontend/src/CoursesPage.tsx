@@ -2,18 +2,20 @@ import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { ApiError } from "./api";
 import { courseApi } from "./course-api";
-import type { Course, CourseContents } from "./course-api";
+import type { Course, CourseContents, MaterialEdit } from "./course-api";
 import { demoName } from "./demo-labels";
 import { Icon } from "./icons";
 import { PageHeading } from "./ui/PageHeading";
 import { CourseTaskPage, TaskCreateForm } from "./CourseTaskPage";
 import { taskApi } from "./task-api";
+import type { Task } from "./task-api";
 import { tm } from "./locales/tasks.kk";
 import "./courses.css";
 
 type Save = (operation: () => Promise<unknown>) => Promise<void>;
 function CourseForm({
   material,
+  editingMaterial,
   weekNumber,
   busy,
   save,
@@ -22,14 +24,23 @@ function CourseForm({
   onDirty,
 }: {
   material: boolean;
+  editingMaterial?: MaterialEdit;
   weekNumber: number | null;
   busy: boolean;
   save: Save;
-  onSave: (id: string, title: string, form: FormData, week: number | null) => Promise<void>;
+  onSave: (
+    id: string,
+    title: string,
+    form: FormData,
+    week: number | null,
+    expectedRevision?: number,
+  ) => Promise<void>;
   cancel: () => void;
   onDirty: () => void;
 }) {
-  const [kind, setKind] = useState("text");
+  const [kind, setKind] = useState<"text" | "pdf">(
+    editingMaterial?.kind ?? "text",
+  );
   const [error, setError] = useState("");
   const operation = useRef(crypto.randomUUID());
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -44,16 +55,34 @@ function CourseForm({
       setError("Міндетті өрістерді толтырыңыз.");
       return;
     }
-    if (
-      kind === "pdf" &&
-      (!(file instanceof File) || !file.size || file.size > 5 * 1024 * 1024)
-    ) {
-      setError("Көлемі 5 МБ-тан аспайтын PDF файлын таңдаңыз.");
-      return;
+    if (kind === "pdf") {
+      const hasFile = file instanceof File && file.size > 0;
+      if (
+        (!hasFile && editingMaterial?.kind !== "pdf") ||
+        (hasFile && file.size > 5 * 1024 * 1024)
+      ) {
+        setError("Көлемі 5 МБ-тан аспайтын PDF файлын таңдаңыз.");
+        return;
+      }
     }
     form.set("title", title);
-    form.set("id", operation.current);
-    await save(() => onSave(operation.current, title, form, weekNumber));
+    if (editingMaterial) {
+      form.delete("file");
+      if (file instanceof File && file.size) form.set("file", file);
+      form.set("expected_revision", String(editingMaterial.revision));
+      await save(() =>
+        onSave(
+          editingMaterial.id,
+          title,
+          form,
+          weekNumber,
+          editingMaterial.revision,
+        ),
+      );
+    } else {
+      form.set("id", operation.current);
+      await save(() => onSave(operation.current, title, form, weekNumber));
+    }
   }
   return (
     <form
@@ -66,10 +95,22 @@ function CourseForm({
       }}
     >
       <fieldset disabled={busy}>
-        <legend>{material ? "Жаңа материал" : "Жаңа тақырып"}</legend>
+        <legend>
+          {material
+            ? editingMaterial
+              ? "Материалды өңдеу"
+              : "Жаңа материал"
+            : "Жаңа тақырып"}
+        </legend>
         <label>
           {material ? "Материал атауы" : "Тақырып атауы"}
-          <input autoFocus required name="title" maxLength={160} />
+          <input
+            autoFocus
+            required
+            name="title"
+            maxLength={160}
+            defaultValue={editingMaterial?.title ?? ""}
+          />
         </label>
         {material && (
           <>
@@ -78,7 +119,7 @@ function CourseForm({
               <select
                 aria-label="Материал түрі"
                 value={kind}
-                onChange={(e) => setKind(e.target.value)}
+                onChange={(e) => setKind(e.target.value as "text" | "pdf")}
               >
                 <option value="text">Мәтін</option>
                 <option value="pdf">PDF құжаты</option>
@@ -87,13 +128,19 @@ function CourseForm({
             {kind === "text" ? (
               <label>
                 Оқу мәтіні
-                <textarea required name="text" rows={5} maxLength={20000} />
+                <textarea
+                  required
+                  name="text"
+                  rows={5}
+                  maxLength={20000}
+                  defaultValue={editingMaterial?.text ?? ""}
+                />
               </label>
             ) : (
               <label>
                 PDF файлы · 5 МБ дейін
                 <input
-                  required
+                  required={editingMaterial?.kind !== "pdf"}
                   type="file"
                   name="file"
                   accept="application/pdf,.pdf"
@@ -148,6 +195,10 @@ function CourseWorkspace({
     null,
   );
   const [form, setForm] = useState<string | null>(null);
+  const [editingMaterial, setEditingMaterial] = useState<MaterialEdit | null>(
+    null,
+  );
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -181,6 +232,8 @@ function CourseWorkspace({
   function cancelForm() {
     if (discard()) {
       setForm(null);
+      setEditingMaterial(null);
+      setEditingTask(null);
       setUnsaved(false);
     }
   }
@@ -194,11 +247,19 @@ function CourseWorkspace({
       setDetail(null);
       setReading(null);
       setForm(null);
+      setEditingMaterial(null);
+      setEditingTask(null);
       setActiveTask(null);
       setUnsaved(false);
       setNotice("");
       setError("Курсты көруге рұқсат жоқ.");
       if (e.status === 401) expired.current();
+    } else if (e instanceof ApiError && e.code === "COURSE_MATERIAL_STALE") {
+      setError(
+        "Материалды басқа мұғалім өзгерткен. Қайта жүктеп, өзгерісті қайталаңыз.",
+      );
+    } else if (e instanceof ApiError && e.code === "TASK_STALE") {
+      setError(tm.stale);
     } else if (e instanceof ApiError && e.code === "COURSE_PDF_INVALID") {
       setError("Файлды PDF пішімінде сақтап, қайта таңдаңыз.");
     } else if (e instanceof ApiError && e.status === 413) {
@@ -247,6 +308,8 @@ function CourseWorkspace({
     if (mounted.current) {
       setDetail(data);
       setForm(null);
+      setEditingMaterial(null);
+      setEditingTask(null);
       setReading(null);
       setActiveTask(null);
       setUnsaved(false);
@@ -255,6 +318,8 @@ function CourseWorkspace({
   async function saved(course: string) {
     if (!mounted.current) return;
     setForm(null);
+    setEditingMaterial(null);
+    setEditingTask(null);
     setUnsaved(false);
     setNotice("Сақталды.");
     try {
@@ -318,9 +383,11 @@ function CourseWorkspace({
           <button
             className="button button-quiet"
             disabled={busy}
-            onClick={() =>
-              detail ? void run(() => loadCourse(detail.course.id)) : back()
-            }
+            onClick={() => {
+              if (detail && discard())
+                void run(() => loadCourse(detail.course.id));
+              else if (!detail) back();
+            }}
           >
             Қайта жүктеу
           </button>
@@ -419,14 +486,26 @@ function CourseWorkspace({
         <>
           <div className="course-toolbar">
             <div>
-              <h2>{selectedWeek == null ? "Жалпы материалдар" : `${selectedWeek}-апта`}</h2>
-              <p>Аптаны таңдап, сабақ тақырыптары мен оқу материалдарын қараңыз.</p>
+              <h2>
+                {selectedWeek == null
+                  ? "Жалпы материалдар"
+                  : `${selectedWeek}-апта`}
+              </h2>
+              <p>
+                Аптаны таңдап, сабақ тақырыптары мен оқу материалдарын қараңыз.
+              </p>
             </div>
             {detail.course.can_manage && !form && (
               <button
                 className="button button-primary"
                 disabled={busy}
-                onClick={() => setForm(selectedWeek == null ? "topic:general" : `topic:${selectedWeek}`)}
+                onClick={() =>
+                  setForm(
+                    selectedWeek == null
+                      ? "topic:general"
+                      : `topic:${selectedWeek}`,
+                  )
+                }
               >
                 Тақырып қосу
               </button>
@@ -434,14 +513,49 @@ function CourseWorkspace({
           </div>
           <nav className="course-week-nav" aria-label="Курс аптасы">
             {Array.from({ length: 10 }, (_, index) => index + 1).map((week) => {
-              const count = detail.topics.filter((topic) => topic.week_number === week).length;
-              return <button key={week} type="button" aria-pressed={selectedWeek === week} className={`course-week-button${selectedWeek === week ? " is-active" : ""}`} onClick={() => { if (discard()) { setSelectedWeek(week); setForm(null); setUnsaved(false); } }}>
-                <span>{week}-апта</span>{count > 0 && <small>{count} тақырып</small>}
-              </button>;
+              const count = detail.topics.filter(
+                (topic) => topic.week_number === week,
+              ).length;
+              return (
+                <button
+                  key={week}
+                  type="button"
+                  aria-pressed={selectedWeek === week}
+                  className={`course-week-button${selectedWeek === week ? " is-active" : ""}`}
+                  onClick={() => {
+                    if (discard()) {
+                      setSelectedWeek(week);
+                      setForm(null);
+                      setEditingMaterial(null);
+                      setEditingTask(null);
+                      setUnsaved(false);
+                    }
+                  }}
+                >
+                  <span>{week}-апта</span>
+                  {count > 0 && <small>{count} тақырып</small>}
+                </button>
+              );
             })}
-            <button type="button" aria-pressed={selectedWeek == null} className={`course-week-button${selectedWeek == null ? " is-active" : ""}`} onClick={() => { if (discard()) { setSelectedWeek(null); setForm(null); setUnsaved(false); } }}>Жалпы материалдар</button>
+            <button
+              type="button"
+              aria-pressed={selectedWeek == null}
+              className={`course-week-button${selectedWeek == null ? " is-active" : ""}`}
+              onClick={() => {
+                if (discard()) {
+                  setSelectedWeek(null);
+                  setForm(null);
+                  setEditingMaterial(null);
+                  setEditingTask(null);
+                  setUnsaved(false);
+                }
+              }}
+            >
+              Жалпы материалдар
+            </button>
           </nav>
-          {(form === `topic:${selectedWeek}` || (form === "topic:general" && selectedWeek == null)) && (
+          {(form === `topic:${selectedWeek}` ||
+            (form === "topic:general" && selectedWeek == null)) && (
             <CourseForm
               key={form}
               material={false}
@@ -463,169 +577,274 @@ function CourseWorkspace({
               }}
             />
           )}
-          {!detail.topics.some((topic) => topic.week_number === selectedWeek) && (
-            <p className="panel">{selectedWeek == null ? "Жалпы материалдар әзірге жоқ." : "Бұл аптада тақырыптар әзірге жоқ."}</p>
+          {!detail.topics.some(
+            (topic) => topic.week_number === selectedWeek,
+          ) && (
+            <p className="panel">
+              {selectedWeek == null
+                ? "Жалпы материалдар әзірге жоқ."
+                : "Бұл аптада тақырыптар әзірге жоқ."}
+            </p>
           )}
-          {detail.topics.filter((topic) => topic.week_number === selectedWeek).map((topic, index) => (
-            <article className="panel course-topic" key={topic.id}>
-              <div className="course-toolbar">
-                <h3>
-                  <span className="topic-number" aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  {topic.title}
-                </h3>
-                {detail.course.can_manage && !form && (
-                  <div className="course-actions">
-                    <button
-                      className="button button-quiet"
-                      disabled={busy}
-                      onClick={() => setForm(topic.id)}
-                    >
-                      Материал қосу
-                    </button>
-                    <button
-                      className="button button-quiet"
-                      disabled={busy}
-                      onClick={() => setForm("task:" + topic.id)}
-                    >
-                      {tm.add}
-                    </button>
-                  </div>
-                )}
-              </div>
-              {!topic.materials.length && (
-                <p>Бұл тақырыпқа материал әлі қосылған жоқ.</p>
-              )}
-              {topic.tasks?.map((task) => (
-                <button
-                  className="button button-quiet course-task-link"
-                  aria-label={`${task.title} · ${tm.open}`}
-                  key={task.id}
-                  disabled={busy}
-                  onClick={() => {
-                    if (discard()) {
-                      setForm(null);
-                      setUnsaved(false);
-                      setNotice("");
-                      setError("");
-                      setActiveTask(task.id);
-                    }
-                  }}
-                >
-                  <Icon name="edit" size={21} />
-                  <span>
-                    {task.title}
-                    <small>{tm.open}</small>
-                  </span>
-                  <Icon name="right" size={18} />
-                </button>
-              ))}
-              {form === "task:" + topic.id && (
-                <TaskCreateForm
-                  topic={topic.id}
-                  timezone={detail.course.timezone ?? ""}
-                  busy={busy}
-                  dirty={() => setUnsaved(true)}
-                  save={run}
-                  cancel={cancelForm}
-                  onSave={async (body) => {
-                    await taskApi.create(
-                      scope,
-                      detail.course.id,
-                      body,
-                      csrfToken,
-                    );
-                    await saved(detail.course.id);
-                  }}
-                />
-              )}
-              {topic.materials.map((m) => (
-                <div className="course-item" key={m.id}>
-                  {m.kind === "pdf" ? (
-                    <button
-                      className="course-resource"
-                      aria-label={`${m.title} · PDF жүктеу`}
-                      disabled={busy}
-                      onClick={() =>
-                        void run(async () => {
-                          const blob = await courseApi.download(
-                            scope,
-                            detail.course.id,
-                            m.id,
-                          );
-                          if (!mounted.current) return;
-                          const url = URL.createObjectURL(blob);
-                          const link = document.createElement("a");
-                          link.href = url;
-                          link.download =
-                            m.title.replace(/[\\/:*?"<>|\u0000-\u001f]/g, "_") +
-                            ".pdf";
-                          link.click();
-                          setTimeout(() => URL.revokeObjectURL(url), 1000);
-                        })
-                      }
-                    >
-                      <Icon name="download" size={20} />
-                      <span>{m.title}</span>
-                      <small>PDF жүктеу</small>
-                    </button>
-                  ) : (
-                    <button
-                      className="course-resource"
-                      aria-label={`${m.title} · Мәтін`}
-                      aria-expanded={reading?.id === m.id}
-                      disabled={busy}
-                      onClick={() => {
-                        if (reading?.id === m.id) {
-                          setReading(null);
-                          return;
-                        }
-                        setReading(null);
-                        void run(async () => {
-                          const item = await courseApi.read(
-                            scope,
-                            detail.course.id,
-                            m.id,
-                          );
-                          if (mounted.current)
-                            setReading({ id: m.id, text: item.text });
-                        });
-                      }}
-                    >
-                      <Icon name="file" size={20} />
-                      <span>{m.title}</span>
-                      <small>Мәтін</small>
-                    </button>
-                  )}
-                  {reading?.id === m.id && (
-                    <div className="course-text">{reading.text}</div>
+          {detail.topics
+            .filter((topic) => topic.week_number === selectedWeek)
+            .map((topic, index) => (
+              <article className="panel course-topic" key={topic.id}>
+                <div className="course-toolbar">
+                  <h3>
+                    <span className="topic-number" aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    {topic.title}
+                  </h3>
+                  {detail.course.can_manage && !form && (
+                    <div className="course-actions">
+                      <button
+                        className="button button-quiet"
+                        disabled={busy}
+                        onClick={() => setForm(topic.id)}
+                      >
+                        Материал қосу
+                      </button>
+                      <button
+                        className="button button-quiet"
+                        disabled={busy}
+                        onClick={() => setForm("task:" + topic.id)}
+                      >
+                        {tm.add}
+                      </button>
+                    </div>
                   )}
                 </div>
-              ))}
-              {form === topic.id && (
-                <CourseForm
-                  key={topic.id}
-                  material
-                  weekNumber={null}
-                  busy={busy}
-                  save={run}
-                  cancel={cancelForm}
-                  onDirty={() => setUnsaved(true)}
-                  onSave={async (_id, _title, data) => {
-                    await courseApi.addMaterial(
-                      scope,
-                      detail.course.id,
-                      topic.id,
-                      data,
-                      csrfToken,
-                    );
-                    await saved(detail.course.id);
-                  }}
-                />
-              )}
-            </article>
-          ))}
+                {!topic.materials.length && (
+                  <p>Бұл тақырыпқа материал әлі қосылған жоқ.</p>
+                )}
+                {topic.tasks?.map((task) => (
+                  <div className="course-task-row" key={task.id}>
+                    <button
+                      className="button button-quiet course-task-link"
+                      aria-label={`${task.title} · ${tm.open}`}
+                      disabled={busy}
+                      onClick={() => {
+                        if (discard()) {
+                          setForm(null);
+                          setEditingMaterial(null);
+                          setEditingTask(null);
+                          setUnsaved(false);
+                          setNotice("");
+                          setError("");
+                          setActiveTask(task.id);
+                        }
+                      }}
+                    >
+                      <Icon name="edit" size={21} />
+                      <span>
+                        {task.title}
+                        <small>{tm.open}</small>
+                      </span>
+                      <Icon name="right" size={18} />
+                    </button>
+                    {detail.course.can_manage && (
+                      <button
+                        className="button button-quiet"
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          if (!discard()) return;
+                          void run(async () => {
+                            const loaded = await taskApi.get(
+                              scope,
+                              detail.course.id,
+                              task.id,
+                            );
+                            setEditingTask(loaded.task);
+                            setEditingMaterial(null);
+                            setForm(`task-edit:${task.id}`);
+                            setUnsaved(false);
+                          });
+                        }}
+                        aria-label={`${task.title} · ${tm.edit}`}
+                      >
+                        {tm.edit}
+                      </button>
+                    )}
+                    {form === `task-edit:${task.id}` && editingTask && (
+                      <TaskCreateForm
+                        key={`edit:${task.id}:${editingTask.revision}`}
+                        task={editingTask}
+                        topic={topic.id}
+                        timezone={detail.course.timezone ?? ""}
+                        busy={busy}
+                        dirty={() => setUnsaved(true)}
+                        save={run}
+                        cancel={cancelForm}
+                        onUpdate={async (body) => {
+                          await taskApi.update(
+                            scope,
+                            detail.course.id,
+                            task.id,
+                            body,
+                            csrfToken,
+                          );
+                          await saved(detail.course.id);
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+                {form === "task:" + topic.id && (
+                  <TaskCreateForm
+                    topic={topic.id}
+                    timezone={detail.course.timezone ?? ""}
+                    busy={busy}
+                    dirty={() => setUnsaved(true)}
+                    save={run}
+                    cancel={cancelForm}
+                    onSave={async (body) => {
+                      await taskApi.create(
+                        scope,
+                        detail.course.id,
+                        body,
+                        csrfToken,
+                      );
+                      await saved(detail.course.id);
+                    }}
+                  />
+                )}
+                {topic.materials.map((m) => (
+                  <div className="course-item" key={m.id}>
+                    {m.kind === "pdf" ? (
+                      <button
+                        className="course-resource"
+                        aria-label={`${m.title} · PDF жүктеу`}
+                        disabled={busy}
+                        onClick={() =>
+                          void run(async () => {
+                            const blob = await courseApi.download(
+                              scope,
+                              detail.course.id,
+                              m.id,
+                            );
+                            if (!mounted.current) return;
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement("a");
+                            link.href = url;
+                            link.download =
+                              m.title.replace(
+                                /[\\/:*?"<>|\u0000-\u001f]/g,
+                                "_",
+                              ) + ".pdf";
+                            link.click();
+                            setTimeout(() => URL.revokeObjectURL(url), 1000);
+                          })
+                        }
+                      >
+                        <Icon name="download" size={20} />
+                        <span>{m.title}</span>
+                        <small>PDF жүктеу</small>
+                      </button>
+                    ) : (
+                      <button
+                        className="course-resource"
+                        aria-label={`${m.title} · Мәтін`}
+                        aria-expanded={reading?.id === m.id}
+                        disabled={busy}
+                        onClick={() => {
+                          if (reading?.id === m.id) {
+                            setReading(null);
+                            return;
+                          }
+                          setReading(null);
+                          void run(async () => {
+                            const item = await courseApi.read(
+                              scope,
+                              detail.course.id,
+                              m.id,
+                            );
+                            if (mounted.current)
+                              setReading({ id: m.id, text: item.text });
+                          });
+                        }}
+                      >
+                        <Icon name="file" size={20} />
+                        <span>{m.title}</span>
+                        <small>Мәтін</small>
+                      </button>
+                    )}
+                    {reading?.id === m.id && (
+                      <div className="course-text">{reading.text}</div>
+                    )}
+                    {detail.course.can_manage && (
+                      <button
+                        className="button button-quiet"
+                        type="button"
+                        aria-label={`${m.title} · Материалды өңдеу`}
+                        disabled={busy}
+                        onClick={() => {
+                          if (!discard()) return;
+                          void run(async () => {
+                            const loaded = await courseApi.materialForEdit(
+                              scope,
+                              detail.course.id,
+                              m.id,
+                            );
+                            setEditingMaterial(loaded);
+                            setEditingTask(null);
+                            setForm(`material-edit:${m.id}`);
+                            setUnsaved(false);
+                          });
+                        }}
+                      >
+                        Материалды өңдеу
+                      </button>
+                    )}
+                    {form === `material-edit:${m.id}` && editingMaterial && (
+                      <CourseForm
+                        key={`material-edit:${m.id}:${editingMaterial.revision}`}
+                        material
+                        editingMaterial={editingMaterial}
+                        weekNumber={null}
+                        busy={busy}
+                        save={run}
+                        cancel={cancelForm}
+                        onDirty={() => setUnsaved(true)}
+                        onSave={async (id, _title, data) => {
+                          await courseApi.editMaterial(
+                            scope,
+                            detail.course.id,
+                            id,
+                            data,
+                            csrfToken,
+                          );
+                          await saved(detail.course.id);
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+                {form === topic.id && (
+                  <CourseForm
+                    key={topic.id}
+                    material
+                    weekNumber={null}
+                    busy={busy}
+                    save={run}
+                    cancel={cancelForm}
+                    onDirty={() => setUnsaved(true)}
+                    onSave={async (_id, _title, data) => {
+                      await courseApi.addMaterial(
+                        scope,
+                        detail.course.id,
+                        topic.id,
+                        data,
+                        csrfToken,
+                      );
+                      await saved(detail.course.id);
+                    }}
+                  />
+                )}
+              </article>
+            ))}
         </>
       )}
     </section>

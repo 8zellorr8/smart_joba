@@ -8,6 +8,8 @@ import type {
   TaskCreate,
   TaskDetails,
   TaskReview,
+  TaskUpdate,
+  Task,
 } from "./task-api";
 import { tm } from "./locales/tasks.kk";
 import { StatusBadge } from "./ui/StatusBadge";
@@ -34,12 +36,16 @@ export function TaskCreateForm({
   save,
   topic,
   timezone,
+  task,
   onSave,
+  onUpdate,
   cancel,
 }: FormProps & {
   topic: string;
   timezone: string;
-  onSave: (body: TaskCreate) => Promise<unknown>;
+  task?: Task;
+  onSave?: (body: TaskCreate) => Promise<unknown>;
+  onUpdate?: (body: TaskUpdate) => Promise<unknown>;
   cancel: () => void;
 }) {
   const operation = useRef(crypto.randomUUID());
@@ -60,30 +66,51 @@ export function TaskCreateForm({
           setError(tm.required);
           return;
         }
-        void save(() =>
-          onSave({
-            id: operation.current,
-            topic_id: topic,
-            title,
-            instructions,
-            due_on: String(data.get("due_on")) || null,
-          }),
-        );
+        const values = {
+          title,
+          instructions,
+          due_on: String(data.get("due_on")) || null,
+        };
+        if (task && onUpdate) {
+          void save(() =>
+            onUpdate({
+              id: operation.current,
+              expected_revision: task.revision ?? 1,
+              ...values,
+            }),
+          );
+        } else if (!task && onSave) {
+          void save(() =>
+            onSave({ id: operation.current, topic_id: topic, ...values }),
+          );
+        }
       }}
     >
       <fieldset disabled={busy}>
-        <legend>{tm.add}</legend>
+        <legend>{task ? tm.edit : tm.add}</legend>
         <label>
           {tm.title}
-          <input name="title" required maxLength={160} autoFocus />
+          <input
+            name="title"
+            required
+            maxLength={160}
+            autoFocus
+            defaultValue={task?.title ?? ""}
+          />
         </label>
         <label>
           {tm.instructions}
-          <textarea name="instructions" required maxLength={20000} rows={5} />
+          <textarea
+            name="instructions"
+            required
+            maxLength={20000}
+            rows={5}
+            defaultValue={task?.instructions ?? ""}
+          />
         </label>
         <label>
           {tm.due}
-          <input name="due_on" type="date" />
+          <input name="due_on" type="date" defaultValue={task?.due_on ?? ""} />
         </label>
         <p className="task-hint">
           {tm.dueHint} {timezone}
@@ -401,7 +428,9 @@ export function CourseTaskPage({
   const canSubmit =
     data &&
     !data.can_manage &&
-    (!latest || latest.review?.outcome === "returned");
+    (!latest ||
+      (latest.task_revision ?? 1) < (data.task.revision ?? 1) ||
+      latest.review?.outcome === "returned");
   function download(id: string) {
     void run(async () => {
       const blob = await taskApi.pdf(scope, course, task, id);
@@ -508,7 +537,8 @@ export function CourseTaskPage({
                   >
                     <strong>{row.student_name}</strong>
                     <span>
-                      {tm.attempt} {row.attempt} · {resultLabel(row.review)}
+                      {tm.attempt} {row.attempt} · {resultLabel(row.review)} ·{" "}
+                      {tm.conditionsVersion} {row.task_revision ?? 1}
                     </span>
                     {row.late && <span className="task-late">{tm.late}</span>}
                   </button>
@@ -540,7 +570,12 @@ export function CourseTaskPage({
           )}
           {canSubmit && (
             <>
-              {latest && <p className="task-return">{tm.returnHint}</p>}
+              {latest &&
+              (latest.task_revision ?? 1) < (data.task.revision ?? 1) ? (
+                <p className="task-return">{tm.updatedTerms}</p>
+              ) : (
+                latest && <p className="task-return">{tm.returnHint}</p>
+              )}
               <AnswerForm
                 key={latest?.id ?? "first"}
                 busy={busy}
@@ -557,12 +592,31 @@ export function CourseTaskPage({
           {!!attempts?.length && (
             <section aria-label={tm.history}>
               <h3>{tm.history}</h3>
-              {attempts.map((item, index) => (
+              {attempts.map((item) => (
                 <article className="panel task-attempt" key={item.id}>
                   <h4>
                     {data.can_manage ? item.student_name + " · " : ""}
                     {tm.attempt} {item.attempt}
                   </h4>
+                  <p>
+                    {tm.conditionsVersion} {item.task_revision ?? 1}
+                  </p>
+                  {item.conditions && (
+                    <details className="task-conditions">
+                      <summary>{tm.conditionsAtSubmission}</summary>
+                      <h5>{item.conditions.title}</h5>
+                      <p className="course-text">
+                        {item.conditions.instructions}
+                      </p>
+                      <p>
+                        {tm.due}:{" "}
+                        {item.conditions.due_on
+                          ? day(item.conditions.due_on)
+                          : tm.noDue}{" "}
+                        · {item.conditions.timezone}
+                      </p>
+                    </details>
+                  )}
                   <p>
                     {time(item.submitted_at, data.task.timezone)}{" "}
                     {item.late && <span className="task-late">{tm.late}</span>}
@@ -605,26 +659,31 @@ export function CourseTaskPage({
                       )}
                     </div>
                   ))}
-                  {data.can_manage && index === 0 && (
-                    <ReviewForm
-                      key={item.id + ":" + (item.review?.revision ?? 0)}
-                      busy={busy}
-                      stale={stale}
-                      dirty={() => change(true)}
-                      save={(op) => run(op, true)}
-                      submission={item}
-                      onSave={(body) =>
-                        taskApi.review(
-                          scope,
-                          course,
-                          task,
-                          item.id,
-                          body,
-                          csrfToken,
-                        )
-                      }
-                    />
-                  )}
+                  {data.can_manage &&
+                    attempts?.find(
+                      (candidate) =>
+                        (candidate.task_revision ?? 1) ===
+                        (item.task_revision ?? 1),
+                    )?.id === item.id && (
+                      <ReviewForm
+                        key={item.id + ":" + (item.review?.revision ?? 0)}
+                        busy={busy}
+                        stale={stale}
+                        dirty={() => change(true)}
+                        save={(op) => run(op, true)}
+                        submission={item}
+                        onSave={(body) =>
+                          taskApi.review(
+                            scope,
+                            course,
+                            task,
+                            item.id,
+                            body,
+                            csrfToken,
+                          )
+                        }
+                      />
+                    )}
                 </article>
               ))}
             </section>

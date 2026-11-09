@@ -1,4 +1,4 @@
-"""Task writes serialize with catalog changes; attempts and reviews are append-only."""
+"""Task condition revisions, submissions and reviews are append-only."""
 import uuid
 from zoneinfo import ZoneInfo
 
@@ -7,7 +7,7 @@ from sqlalchemy.orm import aliased
 from .auth import ApiError
 from ..infrastructure.course_models import CourseTopic
 from ..infrastructure.journal_models import Student
-from ..infrastructure.task_models import CourseReview, CourseSubmission, CourseTask
+from ..infrastructure.task_models import CourseReview, CourseSubmission, CourseTask, CourseTaskRevision
 
 
 class CourseTaskService:
@@ -31,9 +31,14 @@ class CourseTaskService:
         return uuid.UUID(grant["student_id"])
 
     @staticmethod
-    def task_dto(task):
-        return {"id": task.id, "title": task.title, "instructions": task.instructions,
-                "due_on": task.due_on, "timezone": task.timezone}
+    def latest_revision(db, task_id):
+        return db.scalar(select(CourseTaskRevision).where(CourseTaskRevision.task_id == task_id)
+            .order_by(CourseTaskRevision.revision.desc()).limit(1))
+
+    @staticmethod
+    def task_dto(task_id, version):
+        return {"id": task_id, "title": version.title, "instructions": version.instructions,
+                "due_on": version.due_on, "timezone": version.timezone, "revision": version.revision}
 
     @staticmethod
     def last_review(db, submission):
@@ -57,12 +62,15 @@ class CourseTaskService:
 
     def submission_dto(self, db, row, task, teacher, *, full=False):
         review = self.last_review(db, row)
+        version = db.get(CourseTaskRevision, row.task_revision_id)
         result = {"id": row.id, "student_name": row.student_name, "attempt": row.attempt,
                   "submitted_at": row.submitted_at, "kind": "pdf" if row.body is None else "text",
-                  "late": bool(task.due_on and row.submitted_at.astimezone(ZoneInfo(task.timezone)).date() > task.due_on),
+                  "late": bool(version.due_on and row.submitted_at.astimezone(ZoneInfo(version.timezone)).date() > version.due_on),
+                  "task_revision": version.revision,
                   "review": self.review_dto(review, teacher)}
         if full:
             result["text"] = row.body
+            result["conditions"] = self.task_dto(task.id, version)
             result["reviews"] = [self.review_dto(r, teacher) for r in db.scalars(select(CourseReview)
                 .where(CourseReview.submission_id == row.id).order_by(CourseReview.revision.desc()))]
         return result
@@ -75,23 +83,49 @@ class CourseTaskService:
                 raise ApiError("ACCESS_DENIED", 403)
             existing = db.get(CourseTask, body["id"])
             values = {k: body[k] for k in ("topic_id", "title", "instructions", "due_on")}
+            version_values = {k: body[k] for k in ("title", "instructions", "due_on")}
             if existing:
-                if existing.created_by != user.id or any(getattr(existing, k) != v for k, v in values.items()):
+                version = db.scalar(select(CourseTaskRevision).where(
+                    CourseTaskRevision.task_id == existing.id, CourseTaskRevision.revision == 1))
+                if existing.created_by != user.id or not version or any(getattr(version, k) != v for k, v in version_values.items()):
                     raise ApiError("COURSE_OPERATION_CONFLICT", 409)
             else:
                 db.add(CourseTask(id=body["id"], timezone=row["timezone"], created_by=user.id, **values))
+                db.add(CourseTaskRevision(id=uuid.uuid4(), task_id=body["id"], revision=1,
+                    timezone=row["timezone"], created_by=user.id, **version_values))
             return {"id": body["id"]}
+
+    def update(self, token, scope, course, task_id, body):
+        with self.factory.begin() as db:
+            user, _, task = self.context(db, token, scope, course, task_id, teacher=True, write=True)
+            current = self.latest_revision(db, task_id)
+            values = {k: body[k] for k in ("title", "instructions", "due_on")}
+            existing = db.get(CourseTaskRevision, body["id"])
+            if existing:
+                if (existing.task_id != task_id or existing.created_by != user.id or
+                    existing.revision != body["expected_revision"] + 1 or
+                    any(getattr(existing, k) != v for k, v in values.items())):
+                    raise ApiError("COURSE_OPERATION_CONFLICT", 409)
+                return {"id": task_id, "revision": existing.revision}
+            if current.revision != body["expected_revision"]:
+                raise ApiError("TASK_STALE", 409)
+            if all(getattr(current, key) == value for key, value in values.items()):
+                return {"id": task_id, "revision": current.revision}
+            db.add(CourseTaskRevision(id=body["id"], task_id=task.id, revision=current.revision + 1,
+                timezone=current.timezone, created_by=user.id, **values))
+            return {"id": task_id, "revision": current.revision + 1}
 
     def details(self, token, scope, course, task_id):
         with self.factory.begin() as db:
             user, row, task = self.context(db, token, scope, course, task_id)
+            version = self.latest_revision(db, task_id)
             attempts = []
             if not row["can_manage"]:
                 student_id = self.student_id(db, user, scope)
                 attempts = [self.submission_dto(db, a, task, False, full=True) for a in db.scalars(select(CourseSubmission)
                     .where(CourseSubmission.task_id == task_id, CourseSubmission.student_id == student_id)
                     .order_by(CourseSubmission.attempt.desc()))]
-            return {"task": self.task_dto(task), "can_manage": row["can_manage"], "attempts": attempts}
+            return {"task": self.task_dto(task_id, version), "can_manage": row["can_manage"], "attempts": attempts}
 
     def submissions(self, token, scope, course, task_id, after=None):
         with self.factory.begin() as db:
@@ -129,14 +163,15 @@ class CourseTaskService:
                     raise ApiError("COURSE_OPERATION_CONFLICT", 409)
                 return {"id": existing.id, "attempt": existing.attempt}
             previous = self.last_attempt(db, task_id, student_id)
+            version = self.latest_revision(db, task_id)
             if (previous.attempt if previous else 0) != expected_attempt:
                 raise ApiError("TASK_STALE", 409)
             if previous:
                 review = self.last_review(db, previous)
-                if not review or review.outcome != "returned":
+                if previous.task_revision_id == version.id and (not review or review.outcome != "returned"):
                     raise ApiError("TASK_ALREADY_SUBMITTED", 409)
             student = db.get(Student, student_id)
-            db.add(CourseSubmission(id=operation_id, task_id=task_id, student_id=student_id,
+            db.add(CourseSubmission(id=operation_id, task_id=task_id, task_revision_id=version.id, student_id=student_id,
                 student_name=student.display_name, attempt=expected_attempt + 1, body=text, pdf=pdf))
             return {"id": operation_id, "attempt": expected_attempt + 1}
 
@@ -154,10 +189,14 @@ class CourseTaskService:
                     or any(getattr(existing, k) != v for k, v in values.items())):
                     raise ApiError("COURSE_OPERATION_CONFLICT", 409)
                 return {"id": existing.id, "revision": existing.revision}
-            latest = self.last_attempt(db, task_id, submission.student_id)
             previous = self.last_review(db, submission)
             revision = previous.revision if previous else 0
-            if latest.id != submission_id or revision != body["expected_revision"]:
+            newer = aliased(CourseSubmission)
+            has_newer_same_version = db.scalar(select(newer.id).where(
+                newer.task_id == task_id, newer.student_id == submission.student_id,
+                newer.task_revision_id == submission.task_revision_id,
+                newer.attempt > submission.attempt).limit(1)) is not None
+            if has_newer_same_version or revision != body["expected_revision"]:
                 raise ApiError("TASK_STALE", 409)
             if revision and not body["reason"]:
                 raise ApiError("TASK_REASON_REQUIRED", 422)

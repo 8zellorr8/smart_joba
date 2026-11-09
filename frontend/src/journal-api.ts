@@ -73,6 +73,7 @@ export interface SetupReceipt {
   id: string;
   revision: number;
   kind: string;
+  count?: number;
 }
 export interface Roster {
   journal_id: string;
