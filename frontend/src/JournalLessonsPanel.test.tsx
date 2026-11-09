@@ -163,6 +163,78 @@ it("opens without creating facts, sends only changed rows and explicit confirmat
   );
   await waitFor(() => expect(dirty).toHaveBeenLastCalledWith(false));
 });
+it("fills only active unmarked attendance without overwriting manual or saved marks", async () => {
+  vi.mocked(lessonApi.preview).mockResolvedValue({
+    ...structuredClone(fixture),
+    students: [
+      ...fixture.students,
+      {
+        student_id: "c",
+        display_name: "Демо В",
+        active: true,
+        attendance: "late",
+        grade: null,
+      },
+      {
+        student_id: "d",
+        display_name: "Демо Г",
+        active: false,
+        attendance: null,
+        grade: null,
+      },
+    ],
+  });
+  await open();
+  fireEvent.change(screen.getByLabelText(`${lm.attendance}: Демо А`), {
+    target: { value: "absent" },
+  });
+  fireEvent.click(
+    screen.getByRole("button", { name: `${lm.fillPresent} · 1` }),
+  );
+  expect(screen.getByLabelText(`${lm.attendance}: Демо А`)).toHaveValue(
+    "absent",
+  );
+  expect(screen.getByLabelText(`${lm.attendance}: Демо Б`)).toHaveValue(
+    "present",
+  );
+  expect(screen.getByLabelText(`${lm.attendance}: Демо В`)).toHaveValue("late");
+  expect(
+    screen.queryByLabelText(`${lm.attendance}: Демо Г`),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.getByRole("button", { name: `${lm.fillPresent} · 0` }),
+  ).toBeDisabled();
+  fireEvent.change(screen.getByLabelText(lm.topic), {
+    target: { value: "Тақырып" },
+  });
+  fireEvent.click(screen.getByLabelText(lm.conducted));
+  fireEvent.click(screen.getByRole("button", { name: jm.save }));
+  await screen.findByText(lm.saved);
+  expect(vi.mocked(lessonApi.command).mock.calls[0][2].command).toMatchObject({
+    attendance: [
+      { student_id: "a", value: "absent" },
+      { student_id: "b", value: "present" },
+    ],
+  });
+});
+it("does not bulk-fill more attendance rows than one server command allows", async () => {
+  vi.mocked(lessonApi.preview).mockResolvedValue({
+    ...structuredClone(fixture),
+    students: Array.from({ length: 101 }, (_, index) => ({
+      student_id: String(index),
+      display_name: `Демо ${index}`,
+      active: true,
+      attendance: null,
+      grade: null,
+    })),
+  });
+  await open();
+  expect(
+    screen.getByRole("button", { name: `${lm.fillPresent} · 101` }),
+  ).toBeDisabled();
+  expect(screen.getByText(lm.fillPresentLimit)).toBeVisible();
+  expect(lessonApi.command).not.toHaveBeenCalled();
+});
 it("retains input and focuses a linked validation error", async () => {
   vi.mocked(lessonApi.command).mockRejectedValue(
     new ApiError(422, "JOURNAL_REQUIRED", { field: "reason" }),
@@ -253,6 +325,9 @@ it("read-only approver sees saved marks without write controls", async () => {
   expect(screen.getByText(lm.attendanceValues.absent)).toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: jm.save }),
+  ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /Бос қатысу белгілерін/ }),
   ).not.toBeInTheDocument();
   expect(screen.getByLabelText(lm.topic)).toBeDisabled();
 });

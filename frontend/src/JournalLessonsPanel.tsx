@@ -272,6 +272,9 @@ export function JournalLessonsPanel({
   }
   const locked =
     command.busy || command.stale || !!command.pending || !lesson?.can_write;
+  const unmarkedCount =
+    lesson?.students.filter((s) => s.active && marks[s.student_id] == null)
+      .length ?? 0;
   const markLabel = (mark: Attendance) => lm.attendanceValues[mark ?? ""];
   const gradeLabel = (value: number | null | undefined) =>
     value == null ? lm.ungraded : String(value);
@@ -513,6 +516,34 @@ export function JournalLessonsPanel({
                 {command.field === "topic" ? command.error : lm.topicHelp}
               </p>
               <h4>{lesson.recorded ? lm.snapshot : lm.preview}</h4>
+              {lesson.can_write && (
+                <div className="lesson-attendance-fill">
+                  <button
+                    className="button button-quiet"
+                    type="button"
+                    disabled={!unmarkedCount || unmarkedCount > 100}
+                    onClick={() =>
+                      setMarks((old) => {
+                        const next = { ...old };
+                        for (const student of lesson.students)
+                          if (
+                            student.active &&
+                            next[student.student_id] == null
+                          )
+                            next[student.student_id] = "present";
+                        return next;
+                      })
+                    }
+                  >
+                    {lm.fillPresent} · {unmarkedCount}
+                  </button>
+                  <p className="journal-note">
+                    {unmarkedCount > 100
+                      ? lm.fillPresentLimit
+                      : lm.fillPresentHelp}
+                  </p>
+                </div>
+              )}
               <p id="lesson-grade-help" className="journal-note">
                 {lm.gradeHelp}
               </p>

@@ -38,6 +38,15 @@
 .lesson-card label {
   font-weight: 600;
 }
+.lesson-attendance-fill {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.lesson-attendance-fill .journal-note {
+  margin: 0;
+}
 .lesson-card fieldset:disabled textarea {
   opacity: 1;
   color: var(--ui-text);
