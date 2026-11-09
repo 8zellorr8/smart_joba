@@ -192,3 +192,27 @@ def test_upload_limits_origin_and_topic_validation(client, course):
     payload["text"] = "Оқу мәтіні " * 1000
     assert client.post(path, headers=csrf(client), data=payload).status_code == 200
     assert len(client.get(url).json()["topics"][0]["materials"]) == 2
+
+
+@pytest.mark.parametrize("week", [1, 10])
+def test_course_topics_can_be_assigned_to_first_and_last_week(client, course, week):
+    _, url = course
+    topic = {
+        "id": str(uuid.uuid4()),
+        "title": "Апталық тақырып",
+        "week_number": week,
+    }
+    assert client.post(url + "/open", headers=csrf(client)).is_success
+    response = client.post(url + "/topics", headers=csrf(client), json=topic)
+    assert response.status_code == 200
+    assert client.get(url).json()["topics"][0]["week_number"] == week
+
+
+@pytest.mark.parametrize("week", [0, 11, 1.5, "2"])
+def test_course_topic_rejects_invalid_week_number(client, course, week):
+    _, url = course
+    assert client.post(url + "/open", headers=csrf(client)).is_success
+    response = client.post(url + "/topics", headers=csrf(client), json={
+        "id": str(uuid.uuid4()), "title": "Қате апта", "week_number": week,
+    })
+    assert response.status_code == 422

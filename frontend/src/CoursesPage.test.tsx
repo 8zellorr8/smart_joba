@@ -38,6 +38,7 @@ const detail: CourseContents = {
     {
       id: "topic-1",
       title: "Greetings",
+      week_number: 1,
       materials: [
         { id: "text", title: "Reading", kind: "text" },
         { id: "pdf", title: "Handout", kind: "pdf" },
@@ -61,7 +62,7 @@ function mount(scope = "scope") {
 }
 async function enter() {
   fireEvent.click(await screen.findByRole("button", { name: "Курсқа кіру" }));
-  await screen.findByText("Greetings");
+  await screen.findByRole("button", { name: "Курстарға оралу" });
 }
 async function topicForm() {
   await enter();
@@ -108,6 +109,9 @@ it("shows only read actions to a student and renders material as plain text", as
   });
   const { container } = mount();
   await enter();
+  expect(screen.getByRole("button", { name: /^1-апта/ })).toBeVisible();
+  expect(screen.getByRole("button", { name: /^10-апта/ })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Жалпы материалдар" })).toBeVisible();
   expect(
     screen.queryByRole("button", { name: "Тақырып қосу" }),
   ).not.toBeInTheDocument();
@@ -119,6 +123,31 @@ it("shows only read actions to a student and renders material as plain text", as
   expect(container.querySelector("script")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Reading · Мәтін" }));
   expect(screen.queryByText("<script>hello</script>")).not.toBeInTheDocument();
+});
+it("stores a new topic in the selected week and keeps general topics separate", async () => {
+  vi.mocked(courseApi.contents).mockResolvedValue({
+    course,
+    topics: [
+      { ...detail.topics[0], week_number: null },
+      { ...detail.topics[0], id: "topic-2", title: "Week 3", week_number: 3 },
+    ],
+  });
+  mount();
+  await enter();
+  expect(screen.getByText("Бұл аптада тақырыптар әзірге жоқ.")).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: /3-апта/ }));
+  expect(screen.getByText("Week 3")).toBeVisible();
+  expect(screen.queryByText("Greetings")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Жалпы материалдар" }));
+  expect(screen.getByText("Greetings")).toBeVisible();
+  expect(screen.queryByText("Week 3")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /^3-апта/ }));
+  fireEvent.click(screen.getByRole("button", { name: "Тақырып қосу" }));
+  fireEvent.change(screen.getByLabelText("Тақырып атауы"), { target: { value: "New topic" } });
+  save();
+  await waitFor(() => expect(courseApi.addTopic).toHaveBeenCalledTimes(1));
+  expect(vi.mocked(courseApi.addTopic).mock.calls[0][5]).toBe(3);
+  expect(screen.getByRole("heading", { name: "3-апта" })).toBeVisible();
 });
 it("opens an assigned course before requesting its contents", async () => {
   vi.mocked(courseApi.list).mockResolvedValue([{ ...course, opened: false }]);

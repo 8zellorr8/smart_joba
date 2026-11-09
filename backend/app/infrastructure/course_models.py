@@ -2,7 +2,17 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, LargeBinary, String, Text, Uuid, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    LargeBinary,
+    SmallInteger,
+    String,
+    Text,
+    Uuid,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .models import Base
@@ -20,7 +30,11 @@ class CourseTopic(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
     journal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("courses.journal_id"), index=True)
     title: Mapped[str] = mapped_column(String(160))
+    week_number: Mapped[int | None] = mapped_column(SmallInteger())
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    __table_args__ = (
+        CheckConstraint("week_number IS NULL OR week_number BETWEEN 1 AND 10", name="course_topic_week_number"),
+    )
 
 
 class CourseMaterial(Base):

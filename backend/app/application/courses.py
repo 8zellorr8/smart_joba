@@ -76,8 +76,20 @@ class CourseService:
     def contents(self, token, scope_id, course_id):
         with self.factory.begin() as db:
             _, course = self.require(db, token, scope_id, course_id)
-            topics = {t.id: {"id": t.id, "title": t.title, "materials": [], "tasks": []} for t in db.scalars(
-                select(CourseTopic).where(CourseTopic.journal_id == course_id).order_by(CourseTopic.created_at, CourseTopic.id))}
+            topics = {
+                t.id: {
+                    "id": t.id,
+                    "title": t.title,
+                    "week_number": t.week_number,
+                    "materials": [],
+                    "tasks": [],
+                }
+                for t in db.scalars(
+                    select(CourseTopic)
+                    .where(CourseTopic.journal_id == course_id)
+                    .order_by(CourseTopic.created_at, CourseTopic.id)
+                )
+            }
             query = (select(CourseMaterial.id, CourseMaterial.topic_id, CourseMaterial.title,
                             CourseMaterial.body.is_(None).label("is_pdf"))
                      .join(CourseTopic).where(CourseTopic.journal_id == course_id)
@@ -90,13 +102,22 @@ class CourseService:
                 topics[task.topic_id]["tasks"].append({"id": task.id, "title": task.title, "due_on": task.due_on})
             return {"course": dict(course), "topics": list(topics.values())}
 
-    def add_topic(self, token, scope_id, course_id, topic_id, title):
+    def add_topic(self, token, scope_id, course_id, topic_id, title, week_number=None):
         with self.factory.begin() as db:
             self.require(db, token, scope_id, course_id, write=True)
             existing = db.get(CourseTopic, topic_id)
             if existing is None:
-                db.add(CourseTopic(id=topic_id, journal_id=course_id, title=title))
-            elif (existing.journal_id, existing.title) != (course_id, title):
+                db.add(CourseTopic(
+                    id=topic_id,
+                    journal_id=course_id,
+                    title=title,
+                    week_number=week_number,
+                ))
+            elif (existing.journal_id, existing.title, existing.week_number) != (
+                course_id,
+                title,
+                week_number,
+            ):
                 raise ApiError("COURSE_OPERATION_CONFLICT", 409)
             return {"id": topic_id}
 
