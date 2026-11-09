@@ -162,6 +162,30 @@ class JournalLessonService:
             lesson, _, _ = self.require_lesson(db, scope_id, lesson_id, grants, permissions)
             return self.dto(db, lesson, permissions, grants)
 
+    def event_target(self, token, scope_id, publication_id, event_id):
+        with self.factory.begin() as db:
+            _, grants, permissions = self.access(db, token, scope_id, "journal.write.own")
+            publication = db.get(Publication, publication_id)
+            context = db.get(ImportContext, publication.context_id) if publication else None
+            if not context or context.scope_id != scope_id:
+                raise ApiError("ACCESS_DENIED", 403)
+            if not self.current(db, publication):
+                raise ApiError("JOURNAL_SOURCE_ARCHIVED", 409)
+            event = next((item for item in publication.snapshot["events"] if item["id"] == str(event_id)), None)
+            demand = db.get(TeachingDemand, uuid.UUID(event["demand_id"])) if event else None
+            journal = db.scalar(select(Journal).where(Journal.context_id == context.id,
+                Journal.group_id == uuid.UUID(event["group_id"]), Journal.subject_id == demand.subject_id,
+                Journal.semester == event["semester"])) if demand else None
+            if not journal:
+                raise ApiError("ACCESS_DENIED", 403)
+            self.journal(db, journal.id, scope_id)
+            _, event, link = self.event(db, scope_id, journal, context, publication_id, event_id)
+            if not self.allowed(db, journal, grants, permissions, event["date"], True, event["teacher_id"]):
+                raise ApiError("ACCESS_DENIED", 403)
+            return {"journal_id": journal.id, "lesson_id": link.lesson_id if link else None,
+                    "publication_id": publication.id, "event_id": event_id,
+                    "date": event["date"], "start": event["start"], "end": event["end"]}
+
     def list(self, token, scope_id, journal_id, offset=0, limit=50, admin=False, recorded_only=False, on_date: date | None = None):
         with self.factory.begin() as db:
             _, grants, permissions = self.access(db, token, scope_id, "journal.setup" if admin else "journal.catalog.read")

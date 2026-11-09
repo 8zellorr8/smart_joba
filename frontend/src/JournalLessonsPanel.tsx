@@ -26,6 +26,7 @@ export function JournalLessonsPanel({
   onClose,
   initialDate = "",
   initialLessonId,
+  initialEvent,
 }: {
   scope: string;
   journal: Journal;
@@ -35,6 +36,7 @@ export function JournalLessonsPanel({
   onClose: () => void;
   initialDate?: string;
   initialLessonId?: string;
+  initialEvent?: LessonSummary;
 }) {
   const [page, setPage] = useState<LessonPage | null>(null);
   const [selectedDate, setSelectedDate] = useState(initialDate);
@@ -177,11 +179,14 @@ export function JournalLessonsPanel({
   useEffect(() => {
     setSelectedDate(initialDate);
     if (initialLessonId) void openInitial(initialLessonId);
-    else void loadList(0, initialDate);
+    else if (initialEvent) {
+      setSelectedDate(initialEvent.date);
+      void open(initialEvent, true);
+    } else void loadList(0, initialDate);
     return () => {
       ++epoch.current;
     };
-  }, [scope, journal.id, initialDate, initialLessonId]);
+  }, [scope, journal.id, initialDate, initialLessonId, initialEvent]);
   async function openInitial(id: string) {
     const request = ++epoch.current;
     setLoading(true);

@@ -89,6 +89,15 @@ type HistoricalStudent = Omit<LessonStudent, "grade"> & {
 const path = (scope: string) =>
   `/api/scopes/${encodeURIComponent(scope)}/journal`;
 export const lessonApi = {
+  eventTarget: (scope: string, publication: string, event: string) =>
+    request<
+      Pick<
+        LessonSummary,
+        "lesson_id" | "publication_id" | "event_id" | "date" | "start" | "end"
+      > & { journal_id: string }
+    >(
+      `${path(scope)}/event-target?publication_id=${encodeURIComponent(publication)}&event_id=${encodeURIComponent(event)}`,
+    ),
   list: (
     scope: string,
     journal: string,

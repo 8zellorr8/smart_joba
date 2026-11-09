@@ -83,6 +83,10 @@ def lesson_router(service):
     def event(scope_id: uuid.UUID, journal_id: uuid.UUID, request: Request, publication_id: uuid.UUID, event_id: uuid.UUID):
         return service.preview(token(request), scope_id, journal_id, publication_id, event_id)
 
+    @router.get("/event-target")
+    def event_target(scope_id: uuid.UUID, request: Request, publication_id: uuid.UUID, event_id: uuid.UUID):
+        return service.event_target(token(request), scope_id, publication_id, event_id)
+
     @router.get("/lessons/{lesson_id}")
     def lesson(scope_id: uuid.UUID, lesson_id: uuid.UUID, request: Request):
         return service.get(token(request), scope_id, lesson_id)

@@ -8,12 +8,14 @@ import type { Workspace } from "./api";
 import { ApiError } from "./api";
 import { wb } from "./locales/workbench.kk";
 import { portal } from "./locales/portal.kk";
+import { lessonApi } from "./lesson-api";
 
 // The subject projection has separate pagination, privacy and navigation tests.
 vi.mock("./SubjectOverview", () => ({ SubjectOverview: () => null }));
 vi.mock("./TeacherQueue", () => ({
   TeacherQueue: () => <p>Teacher queue marker</p>,
 }));
+vi.mock("./lesson-api", () => ({ lessonApi: { eventTarget: vi.fn() } }));
 
 vi.mock("./publication-api", () => ({
   publicationApi: { list: vi.fn(), get: vi.fn() },
@@ -70,6 +72,15 @@ beforeEach(() => {
   vi.mocked(publicationApi.list).mockResolvedValue([publication()]);
   vi.mocked(publicationApi.get).mockResolvedValue(publication());
   vi.mocked(versionApi.list).mockResolvedValue([]);
+  vi.mocked(lessonApi.eventTarget).mockResolvedValue({
+    journal_id: "journal",
+    lesson_id: null,
+    publication_id: "pub",
+    event_id: "own",
+    date: "2026-10-22",
+    start: "09:00",
+    end: "10:30",
+  });
 });
 afterEach(() => vi.useRealTimers());
 const setup = (props = {}) =>
@@ -131,6 +142,9 @@ it("opens the student's own results and courses through the home shortcuts", asy
   expect(
     screen.queryByRole("button", { name: /^Журналдар$/ }),
   ).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: new RegExp(wb.openLesson) }),
+  ).not.toBeInTheDocument();
 });
 
 it("keeps courses and student results out of the administrator's shortcuts", async () => {
@@ -184,6 +198,60 @@ it("opens a teacher's journals with the selected agenda date", async () => {
   await screen.findByText("Қазақ тілі");
   fireEvent.click(screen.getByRole("button", { name: /^Журналдар$/ }));
   expect(openJournalDate).toHaveBeenCalledWith("2026-10-22");
+});
+it("resolves the exact agenda event before opening the teacher's journal", async () => {
+  const onOpenAgendaLesson = vi.fn();
+  setup({
+    workspace: {
+      ...workspace,
+      role_codes: ["teacher"],
+      permissions: [
+        "publication.read.own",
+        "journal.read.own",
+        "journal.write.own",
+      ],
+    },
+    onOpenAgendaLesson,
+  });
+  fireEvent.click(
+    await screen.findByRole("button", { name: new RegExp(wb.openLesson) }),
+  );
+  await waitFor(() =>
+    expect(onOpenAgendaLesson).toHaveBeenCalledWith(
+      "journal",
+      expect.objectContaining({
+        publication_id: "pub",
+        event_id: "own",
+        lesson_id: null,
+      }),
+    ),
+  );
+  expect(lessonApi.eventTarget).toHaveBeenCalledWith("scope", "pub", "own");
+});
+it("keeps the teacher on the agenda when the event has no authorized journal", async () => {
+  vi.mocked(lessonApi.eventTarget).mockRejectedValue(
+    new ApiError(403, "ACCESS_DENIED"),
+  );
+  const onOpenAgendaLesson = vi.fn();
+  setup({
+    workspace: {
+      ...workspace,
+      role_codes: ["teacher"],
+      permissions: [
+        "publication.read.own",
+        "journal.read.own",
+        "journal.write.own",
+      ],
+    },
+    onOpenAgendaLesson,
+  });
+  fireEvent.click(
+    await screen.findByRole("button", { name: new RegExp(wb.openLesson) }),
+  );
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    wb.openLessonError,
+  );
+  expect(onOpenAgendaLesson).not.toHaveBeenCalled();
 });
 it("shows an empty agenda only after the server confirms zero lessons", async () => {
   vi.mocked(publicationApi.get).mockResolvedValue({

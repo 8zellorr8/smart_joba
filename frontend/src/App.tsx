@@ -24,6 +24,7 @@ import { WorkbenchHome } from "./WorkbenchHome";
 import { SubjectsPage, subjectsLabel } from "./SubjectOverview";
 import { portal } from "./locales/portal.kk";
 import { jm } from "./locales/journal.kk";
+import type { LessonSummary } from "./lesson-api";
 const CoursesPage = lazy(() =>
   import("./CoursesPage").then((module) => ({ default: module.CoursesPage })),
 );
@@ -353,7 +354,8 @@ function WorkspaceScreen({
   }>();
   const [lessonFocus, setLessonFocus] = useState<{
     journal: string;
-    lesson: string;
+    lesson?: string;
+    event?: LessonSummary;
   }>();
   const [planningDirty, setPlanningDirty] = useState(false);
   const navigationDialog = useRef<HTMLDialogElement>(null);
@@ -731,6 +733,7 @@ function WorkspaceScreen({
                 initialDate={journalDate}
                 initialJournalId={lessonFocus?.journal}
                 initialLessonId={lessonFocus?.lesson}
+                initialEvent={lessonFocus?.event}
                 onSchedule={() => {
                   setPublicationFocus(undefined);
                   setPublicationGroup("");
@@ -847,6 +850,10 @@ function WorkspaceScreen({
                 onOpenLesson={(journal, lesson) => {
                   setView("journals");
                   setLessonFocus({ journal, lesson });
+                }}
+                onOpenAgendaLesson={(journal, event) => {
+                  setView("journals");
+                  setLessonFocus({ journal, event });
                 }}
                 onExpired={onExpired}
                 onOpenDraft={(id) => {

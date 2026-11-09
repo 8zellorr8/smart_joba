@@ -129,6 +129,27 @@ def test_teacher_queue_tracks_only_active_unmarked_attendance(client, app, lesso
     assert client.get(queue).status_code == 403
 
 
+def test_teacher_opens_exact_event_from_agenda_with_current_assignment(client, app, lesson_env):
+    e = lesson_env
+    path = e["root"] + "/event-target"
+    params = {"publication_id": e["pub"]["publication_id"], "event_id": e["event"]["id"]}
+    target = client.get(path, params=params)
+    assert target.status_code == 200
+    assert target.json()["journal_id"] == e["journal_id"]
+    assert target.json()["lesson_id"] is None
+    saved = record(client, e)
+    assert client.get(path, params=params).json()["lesson_id"] == saved["lesson_id"]
+    assert client.get(path, params={**params, "event_id": str(uuid.uuid4())}).status_code == 403
+    assert client.get(path, params={**params, "publication_id": str(uuid.uuid4())}).status_code == 403
+    with app.state.session_factory.begin() as db:
+        db.execute(update(JournalAssignment).values(active=False))
+    assert client.get(path, params=params).status_code == 403
+    login(client, app, "student")
+    assert client.get(path, params=params).status_code == 403
+    login(client, app, "admin")
+    assert client.get(path, params=params).status_code == 403
+
+
 def test_preview_has_no_fact_then_fixed_source_roster_and_null_attendance(client, app, lesson_env):
     e = lesson_env; p = preview(client, e)
     assert p.status_code == 200 and p.json()["recorded"] is False

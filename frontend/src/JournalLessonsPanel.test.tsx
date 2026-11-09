@@ -212,6 +212,22 @@ it("opens the exact recorded lesson selected from the teacher queue", async () =
   expect(lessonApi.get).toHaveBeenCalledWith("s", "lesson");
   expect(lessonApi.list).not.toHaveBeenCalled();
 });
+it("previews the exact published event selected from the agenda", async () => {
+  render(
+    <JournalLessonsPanel
+      scope="s"
+      journal={journal}
+      csrfToken="csrf"
+      initialEvent={row}
+      onExpired={vi.fn()}
+      onDirtyChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  expect(await screen.findByLabelText(lm.topic)).toBeInTheDocument();
+  expect(lessonApi.preview).toHaveBeenCalledWith("s", "j", row);
+  expect(lessonApi.list).not.toHaveBeenCalled();
+});
 function fill() {
   fireEvent.change(screen.getByLabelText(lm.topic), {
     target: { value: "Тақырып" },

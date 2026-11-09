@@ -9,6 +9,7 @@ import { PageHeading } from "./ui/PageHeading";
 import { Icon } from "./icons";
 import { JournalLessonsPanel } from "./JournalLessonsPanel";
 import { lm } from "./locales/lesson.kk";
+import type { LessonSummary } from "./lesson-api";
 import "./journal.css";
 import { StudentResultsPage } from "./StudentResultsPage";
 
@@ -22,6 +23,7 @@ type Props = {
   initialDate?: string;
   initialJournalId?: string;
   initialLessonId?: string;
+  initialEvent?: LessonSummary;
 };
 
 export function JournalReadPage(props: Props) {
@@ -44,6 +46,7 @@ function StaffJournalReadPage({
   initialDate = "",
   initialJournalId,
   initialLessonId,
+  initialEvent,
 }: {
   scope: string;
   onExpired: () => void;
@@ -52,11 +55,13 @@ function StaffJournalReadPage({
   initialDate?: string;
   initialJournalId?: string;
   initialLessonId?: string;
+  initialEvent?: LessonSummary;
 }) {
   const [catalog, setCatalog] = useState<Journal[] | null>(null);
   const [selected, setSelected] = useState<Journal | null>(null);
   const queuedJournal = useRef(initialJournalId);
   const [focusedLesson, setFocusedLesson] = useState(initialLessonId);
+  const [focusedEvent, setFocusedEvent] = useState(initialEvent);
   const [lessonMode, setLessonMode] = useState(false);
   const [date, setDate] = useState("");
   const [roster, setRoster] = useState<Roster | null>(null);
@@ -172,6 +177,7 @@ function StaffJournalReadPage({
                     setSelected(j);
                     setLessonMode(true);
                     setFocusedLesson(undefined);
+                    setFocusedEvent(undefined);
                     setError("");
                     setRoster(null);
                   }}
@@ -204,11 +210,13 @@ function StaffJournalReadPage({
           journal={selected}
           initialDate={initialDate}
           initialLessonId={focusedLesson}
+          initialEvent={focusedEvent}
           csrfToken={csrfToken}
           onExpired={onExpired}
           onDirtyChange={onDirtyChange}
           onClose={() => {
             setFocusedLesson(undefined);
+            setFocusedEvent(undefined);
             setSelected(null);
             setLessonMode(false);
           }}
