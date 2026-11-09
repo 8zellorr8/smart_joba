@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 import { JournalSetupPage } from "./JournalSetupPage";
@@ -185,17 +186,70 @@ it("previews a local roster file and sends only confirmed names and membership d
     },
   });
 });
+it("previews a synthetic XLSX in the browser without uploading the workbook", async () => {
+  await setup();
+  fireEvent.click(screen.getByRole("button", { name: jm.memberships }));
+  const bytes = readFileSync("src/test-fixtures/synthetic-roster.xlsx");
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  const file = new File([buffer], "synthetic-roster.xlsx");
+  Object.defineProperty(file, "arrayBuffer", { value: async () => buffer });
+  fireEvent.change(screen.getByLabelText(jm.rosterFile), {
+    target: { files: [file] },
+  });
+  await waitFor(() =>
+    expect(screen.getByLabelText(jm.rosterNames)).toHaveValue(
+      'Студенттің аты-жөні\nSYNTHETIC Student One\n"SYNTHETIC Student, Two"',
+    ),
+  );
+  fireEvent.click(screen.getByLabelText(jm.rosterHasHeader));
+  fireEvent.change(document.querySelector("#roster-group")!, {
+    target: { value: "group" },
+  });
+  fireEvent.change(document.querySelector("#roster-start")!, {
+    target: { value: "2026-09-01" },
+  });
+  fireEvent.change(document.querySelector("#roster-end")!, {
+    target: { value: "2027-07-01" },
+  });
+  fireEvent.change(document.querySelector("#roster-source")!, {
+    target: { value: "SYNTHETIC workbook" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: jm.rosterPreview }));
+  await screen.findByText(jm.rosterPreviewCount.replace("{count}", "2"));
+  expect(screen.getByText("SYNTHETIC Student, Two")).toBeVisible();
+  expect(journalApi.command).not.toHaveBeenCalled();
+});
 it("rejects unsupported roster workbook formats in the browser", async () => {
   await setup();
   fireEvent.click(screen.getByRole("button", { name: jm.memberships }));
-  const file = new File(["not a roster"], "student-list.xlsx", {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  });
+  const file = new File(["not a roster"], "student-list.xls");
   fireEvent.change(screen.getByLabelText(jm.rosterFile), {
     target: { files: [file] },
   });
   await screen.findByText(jm.rosterFileType);
   expect(screen.getByLabelText(jm.rosterNames)).toHaveValue("");
+});
+it("clears a previous roster when a chosen workbook cannot be read", async () => {
+  await setup();
+  fireEvent.click(screen.getByRole("button", { name: jm.memberships }));
+  const input = screen.getByLabelText(jm.rosterFile);
+  fireEvent.change(input, {
+    target: { files: [new File(["SYNTHETIC Student"], "roster.csv")] },
+  });
+  await waitFor(() =>
+    expect(screen.getByLabelText(jm.rosterNames)).toHaveValue(
+      "SYNTHETIC Student",
+    ),
+  );
+  const invalid = new File(["invalid"], "broken.xlsx");
+  Object.defineProperty(invalid, "arrayBuffer", {
+    value: async () => new TextEncoder().encode("invalid").buffer,
+  });
+  fireEvent.change(input, { target: { files: [invalid] } });
+  await screen.findByText(jm.rosterFileError);
+  expect(screen.getByLabelText(jm.rosterNames)).toHaveValue("");
+  expect(journalApi.command).not.toHaveBeenCalled();
 });
 it("retains input and focuses the linked validation error", async () => {
   vi.mocked(journalApi.command).mockRejectedValue(

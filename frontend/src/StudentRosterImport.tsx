@@ -6,6 +6,14 @@ import { jm } from "./locales/journal.kk";
 
 const MAX_FILE_BYTES = 250_000;
 const MAX_STUDENTS = 200;
+const workbookErrors: Record<string, string> = {
+  sheets: jm.rosterSheets,
+  one_column: jm.rosterOneColumn,
+  limit: jm.rosterLimit,
+  name_long: jm.rosterNameLong,
+  cell: jm.rosterCellText,
+  archive_limit: jm.rosterArchiveLarge,
+};
 type PreviewStudent = {
   display_name: string;
   student_id: string | null;
@@ -82,7 +90,8 @@ export function StudentRosterImport({
     event.currentTarget.value = "";
     if (!file) return;
     changed();
-    if (!/\.(txt|csv)$/i.test(file.name)) {
+    setText("");
+    if (!/\.(txt|csv|xlsx)$/i.test(file.name)) {
       setLocalError(jm.rosterFileType);
       return;
     }
@@ -92,14 +101,23 @@ export function StudentRosterImport({
     }
     setReading(true);
     try {
-      const content = await file.text();
-      if (content.includes("\uFFFD")) {
-        setLocalError(jm.rosterEncoding);
-        return;
+      if (/\.xlsx$/i.test(file.name)) {
+        const { readRosterWorkbook } = await import("./roster-xlsx");
+        setText(await readRosterWorkbook(await file.arrayBuffer()));
+      } else {
+        const content = await file.text();
+        if (content.includes("\uFFFD")) {
+          setLocalError(jm.rosterEncoding);
+          return;
+        }
+        setText(content.replace(/^\uFEFF/, ""));
       }
-      setText(content.replace(/^\uFEFF/, ""));
-    } catch {
-      setLocalError(jm.rosterFileError);
+    } catch (error) {
+      setLocalError(
+        error instanceof Error
+          ? (workbookErrors[error.message] ?? jm.rosterFileError)
+          : jm.rosterFileError,
+      );
     } finally {
       setReading(false);
     }
@@ -175,7 +193,7 @@ export function StudentRosterImport({
             <input
               id="roster-file"
               type="file"
-              accept=".txt,.csv,text/plain,text/csv"
+              accept=".txt,.csv,.xlsx,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={(event) => void readFile(event)}
             />
           </label>
