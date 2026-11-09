@@ -33,6 +33,7 @@ export function JournalLessonsPanel({
   onClose: () => void;
 }) {
   const [page, setPage] = useState<LessonPage | null>(null);
+  const [selectedDate, setSelectedDate] = useState("");
   const [selected, setSelected] = useState<LessonSummary | null>(null);
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [topic, setTopic] = useState("");
@@ -145,7 +146,7 @@ export function JournalLessonsPanel({
       dirtyHandler.current(false);
     };
   }, []);
-  async function loadList(offset = 0) {
+  async function loadList(offset = 0, onDate = selectedDate) {
     const id = ++epoch.current;
     setLoading(true);
     setError("");
@@ -154,7 +155,14 @@ export function JournalLessonsPanel({
     setHistory(null);
     setPage(null);
     try {
-      const data = await lessonApi.list(scope, journal.id, offset);
+      const data = await lessonApi.list(
+        scope,
+        journal.id,
+        offset,
+        false,
+        false,
+        onDate,
+      );
       if (epoch.current === id) setPage(data);
     } catch (e) {
       if (epoch.current === id) fail(e);
@@ -163,7 +171,8 @@ export function JournalLessonsPanel({
     }
   }
   useEffect(() => {
-    void loadList();
+    setSelectedDate("");
+    void loadList(0, "");
     return () => {
       ++epoch.current;
     };
@@ -373,11 +382,37 @@ export function JournalLessonsPanel({
           </ul>
         </div>
       )}
+      {!selected && (
+        <div className="lesson-toolbar">
+          <label htmlFor="lesson-date">{lm.date}</label>
+          <input
+            id="lesson-date"
+            type="date"
+            value={selectedDate}
+            onChange={(event) => {
+              const date = event.target.value;
+              setSelectedDate(date);
+              void loadList(0, date);
+            }}
+          />
+          {selectedDate && (
+            <button
+              className="button button-quiet"
+              onClick={() => {
+                setSelectedDate("");
+                void loadList(0, "");
+              }}
+            >
+              {lm.clearDate}
+            </button>
+          )}
+        </div>
+      )}
       {!selected && page && (
         <div className="panel">
           <h3>{lm.title}</h3>
           {page.total === 0 ? (
-            <p>{lm.empty}</p>
+            <p>{selectedDate ? lm.emptyDate : lm.empty}</p>
           ) : (
             <>
               <div

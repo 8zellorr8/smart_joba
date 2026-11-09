@@ -85,6 +85,28 @@ def get(client, e, saved):
     return client.get(e["root"] + f"/lessons/{saved['lesson_id']}")
 
 
+def test_teacher_filters_lessons_by_date_before_pagination(client, app, lesson_env):
+    e = lesson_env
+    path = e["root"] + f"/journals/{e['journal_id']}/lessons"
+    target = e["event"]["date"]
+    first = client.get(path, params={"on": target, "limit": 1})
+    assert first.status_code == 200
+    assert first.json()["total"] >= 1
+    assert all(row["date"] == target for row in first.json()["items"])
+    next_page = client.get(path, params={"on": target, "offset": 1, "limit": 1}).json()
+    assert next_page["total"] == first.json()["total"]
+    assert all(row["date"] == target for row in next_page["items"])
+    assert client.get(path, params={"on": "2030-01-01"}).json()["total"] == 0
+    assert client.get(path, params={"on": "not-a-date"}).status_code == 422
+
+    saved = record(client, e)
+    after = client.get(path, params={"on": target}).json()
+    assert sum(row["lesson_id"] == saved["lesson_id"] for row in after["items"]) == 1
+    assert after["total"] == first.json()["total"]
+    login(client, app, "student")
+    assert client.get(path, params={"on": target}).status_code == 403
+
+
 def test_preview_has_no_fact_then_fixed_source_roster_and_null_attendance(client, app, lesson_env):
     e = lesson_env; p = preview(client, e)
     assert p.status_code == 200 and p.json()["recorded"] is False

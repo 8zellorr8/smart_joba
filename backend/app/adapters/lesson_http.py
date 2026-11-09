@@ -1,4 +1,5 @@
 import uuid
+from datetime import date
 from typing import Annotated, Literal, Union
 
 from fastapi import APIRouter, Query, Request
@@ -75,8 +76,8 @@ def lesson_router(service):
         return request.cookies.get("smart_joba_session")
 
     @router.get("/journals/{journal_id}/lessons")
-    def lessons(scope_id: uuid.UUID, journal_id: uuid.UUID, request: Request, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
-        return service.list(token(request), scope_id, journal_id, offset, limit)
+    def lessons(scope_id: uuid.UUID, journal_id: uuid.UUID, request: Request, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), on: date | None = None):
+        return service.list(token(request), scope_id, journal_id, offset, limit, on_date=on)
 
     @router.get("/journals/{journal_id}/event")
     def event(scope_id: uuid.UUID, journal_id: uuid.UUID, request: Request, publication_id: uuid.UUID, event_id: uuid.UUID):

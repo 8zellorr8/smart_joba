@@ -162,19 +162,25 @@ class JournalLessonService:
             lesson, _, _ = self.require_lesson(db, scope_id, lesson_id, grants, permissions)
             return self.dto(db, lesson, permissions, grants)
 
-    def list(self, token, scope_id, journal_id, offset=0, limit=50, admin=False, recorded_only=False):
+    def list(self, token, scope_id, journal_id, offset=0, limit=50, admin=False, recorded_only=False, on_date: date | None = None):
         with self.factory.begin() as db:
             _, grants, permissions = self.access(db, token, scope_id, "journal.setup" if admin else "journal.catalog.read")
             journal, context = self.journal(db, journal_id, scope_id)
             if not admin and "journal.read" not in permissions and not self.catalog.own_assignments(db, journal.id, grants):
                 raise ApiError("ACCESS_DENIED", 403)
-            lessons = list(db.scalars(select(JournalLesson).where(JournalLesson.journal_id == journal.id)))
+            target_date = on_date.isoformat() if on_date else None
+            lesson_query = select(JournalLesson).where(JournalLesson.journal_id == journal.id)
+            if target_date:
+                lesson_query = lesson_query.where(JournalLesson.source["date"].as_string() == target_date)
+            lessons = list(db.scalars(lesson_query))
             result = []
             publications = db.scalars(select(Publication).join(PublicationHead, Publication.id == PublicationHead.publication_id)
                                       .where(Publication.context_id == context.id)).all()
             for publication in publications:
                 for event in publication.snapshot["events"]:
                     if event["cancelled"] or event["group_id"] != str(journal.group_id) or event["semester"] != journal.semester:
+                        continue
+                    if target_date and event["date"] != target_date:
                         continue
                     link = self.link(db, publication.id, event["id"])
                     if link and link.journal_id != journal.id:

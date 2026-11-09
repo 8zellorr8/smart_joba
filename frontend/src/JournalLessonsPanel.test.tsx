@@ -130,6 +130,49 @@ async function open() {
   await screen.findByLabelText(lm.topic);
   return { expired, dirty, close };
 }
+it("filters a teacher's lesson list by date and restores all dates", async () => {
+  render(
+    <JournalLessonsPanel
+      scope="s"
+      journal={journal}
+      csrfToken="csrf"
+      onExpired={vi.fn()}
+      onDirtyChange={vi.fn()}
+      onClose={vi.fn()}
+    />,
+  );
+  await screen.findByRole("button", { name: lm.openLesson });
+  vi.mocked(lessonApi.list).mockResolvedValue({
+    items: [],
+    total: 0,
+    offset: 0,
+    limit: 50,
+    registry_revision: 7,
+  });
+  fireEvent.change(screen.getByLabelText(lm.date), {
+    target: { value: "2026-09-02" },
+  });
+  await screen.findByText(lm.emptyDate);
+  expect(lessonApi.list).toHaveBeenLastCalledWith(
+    "s",
+    "j",
+    0,
+    false,
+    false,
+    "2026-09-02",
+  );
+  fireEvent.click(screen.getByRole("button", { name: lm.clearDate }));
+  await waitFor(() =>
+    expect(lessonApi.list).toHaveBeenLastCalledWith(
+      "s",
+      "j",
+      0,
+      false,
+      false,
+      "",
+    ),
+  );
+});
 function fill() {
   fireEvent.change(screen.getByLabelText(lm.topic), {
     target: { value: "Тақырып" },

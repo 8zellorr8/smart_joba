@@ -95,9 +95,10 @@ export const lessonApi = {
     offset = 0,
     admin = false,
     recordedOnly = false,
+    onDate = "",
   ) =>
     request<LessonPage>(
-      `${path(scope)}/${admin ? "lesson-admin/journals" : "journals"}/${encodeURIComponent(journal)}${admin ? "" : "/lessons"}?offset=${offset}${recordedOnly ? "&recorded_only=true" : ""}`,
+      `${path(scope)}/${admin ? "lesson-admin/journals" : "journals"}/${encodeURIComponent(journal)}${admin ? "" : "/lessons"}?offset=${offset}${recordedOnly ? "&recorded_only=true" : ""}${onDate ? `&on=${encodeURIComponent(onDate)}` : ""}`,
     ),
   preview: (scope: string, journal: string, row: LessonSummary) =>
     request<Lesson>(
