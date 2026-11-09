@@ -3,6 +3,7 @@ from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Query, Request
+from fastapi.responses import Response
 from pydantic import Field
 
 from .calendar_http import Contract
@@ -85,5 +86,14 @@ def publication_router(versions, publications):
                         offset: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=500)):
         return publications.get(token(request), publication_id, start.isoformat() if start else None, end.isoformat() if end else None,
             view, str(resource_id) if resource_id else None, offset, limit)
+
+    @router.get("/api/publications/{publication_id}/export.xlsx")
+    def publication_export(publication_id: uuid.UUID, request: Request, start: date | None = None, end: date | None = None,
+                           view: Literal["group", "teacher", "room"] = "group", resource_id: uuid.UUID | None = None):
+        content = publications.export(token(request), publication_id, start.isoformat() if start else None,
+            end.isoformat() if end else None, view, str(resource_id) if resource_id else None)
+        return Response(content, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f'attachment; filename="smart-joba-{publication_id}.xlsx"',
+                     "Cache-Control": "no-store"})
 
     return router

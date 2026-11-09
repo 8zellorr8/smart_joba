@@ -49,3 +49,6 @@
 .publication-table table {
   min-width: 900px;
 }
+.publication-export-button {
+  margin-left: auto;
+}

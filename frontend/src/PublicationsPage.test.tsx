@@ -9,7 +9,7 @@ import { vm } from "./locales/publication.kk";
 import { wb } from "./locales/workbench.kk";
 
 vi.mock("./publication-api", () => ({
-  publicationApi: { list: vi.fn(), get: vi.fn() },
+  publicationApi: { list: vi.fn(), get: vi.fn(), export: vi.fn() },
 }));
 const view = (): PublishedView => ({
   publication_id: "publication",
@@ -53,6 +53,33 @@ beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(publicationApi.list).mockResolvedValue([view()]);
   vi.mocked(publicationApi.get).mockResolvedValue(view());
+  vi.mocked(publicationApi.export).mockResolvedValue(new Blob(["xlsx"]));
+});
+
+it("downloads the selected publication with applied filters, not the current page offset", async () => {
+  URL.createObjectURL = vi.fn(() => "blob:synthetic-xlsx");
+  URL.revokeObjectURL = vi.fn();
+  const click = vi
+    .spyOn(HTMLAnchorElement.prototype, "click")
+    .mockImplementation(() => {});
+  render(<PublicationsPage scope="scope" onExpired={vi.fn()} />);
+  await screen.findByRole("table");
+  const user = userEvent.setup();
+  await user.type(screen.getByLabelText(vm.start), "2026-09-01");
+  await user.type(screen.getByLabelText(vm.end), "2026-09-08");
+  await user.selectOptions(screen.getByLabelText(vm.view), "teacher");
+  await user.selectOptions(screen.getByLabelText(vm.resource), "own-teacher");
+  await user.click(screen.getByRole("button", { name: vm.show }));
+  await user.click(screen.getByRole("button", { name: vm.exportXlsx }));
+  await waitFor(() => expect(click).toHaveBeenCalledOnce());
+  expect(publicationApi.export).toHaveBeenCalledWith("publication", {
+    start: "2026-09-01",
+    end: "2026-09-08",
+    view: "teacher",
+    resource_id: "own-teacher",
+    offset: 0,
+  });
+  click.mockRestore();
 });
 
 it("shows selected publication number, date, scope and readable demo names", async () => {

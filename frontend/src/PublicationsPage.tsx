@@ -278,6 +278,26 @@ export function PublicationsPage({
                 {value.is_current ? vm.current : vm.archived}
               </StatusBadge>
             </div>
+            <button
+              className="button button-quiet publication-export-button"
+              disabled={busy}
+              onClick={() =>
+                void act(async () => {
+                  const blob = await publicationApi.export(
+                    value.publication_id,
+                    mode === "week" ? (weekQuery.current ?? applied) : applied,
+                  );
+                  const url = URL.createObjectURL(blob);
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.download = `smart-joba-${value.publication_id}.xlsx`;
+                  link.click();
+                  setTimeout(() => URL.revokeObjectURL(url), 1000);
+                })
+              }
+            >
+              {vm.exportXlsx}
+            </button>
           </div>
           <p className="publication-context">
             {value.academic_year} · {vm.semester} {value.semester} ·{" "}

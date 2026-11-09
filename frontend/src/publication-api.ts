@@ -1,4 +1,4 @@
-import { request } from "./api";
+import { request, requestBlob } from "./api";
 import type { IndependentReport, Diagnostic } from "./planning-api";
 
 export type VersionStatus =
@@ -197,5 +197,16 @@ export const publicationApi = {
         ...(filter.resource_id ? { resource_id: filter.resource_id } : {}),
         offset: String(filter.offset),
       })}`,
+    ),
+  export: (id: string, filter: PublicationFilter) =>
+    requestBlob(
+      `/api/publications/${encodeURIComponent(id)}/export.xlsx?${new URLSearchParams(
+        {
+          ...(filter.start ? { start: filter.start } : {}),
+          ...(filter.end ? { end: filter.end } : {}),
+          view: filter.view,
+          ...(filter.resource_id ? { resource_id: filter.resource_id } : {}),
+        },
+      )}`,
     ),
 };
